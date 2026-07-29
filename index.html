@@ -28,7 +28,7 @@
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
             width: 100%;
-            max-width: 980px;
+            max-width: 1080px;
             padding: 8px 15px;
             border-radius: 6px;
             margin-bottom: 12px;
@@ -49,7 +49,7 @@
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px; width: 100%; max-width: 980px;
+            display: flex; align-items: center; gap: 10px; width: 100%; max-width: 1080px;
         }
         .search-container label { font-weight: bold; color: #511d9b; font-size: 13px; white-space: nowrap; }
         .search-container input {
@@ -69,13 +69,12 @@
             cursor: pointer; margin-left: 10px;
         }
 
-        /* Layout Grid Principal (Ticket + Dashboard Lado a Lado) */
         .main-layout {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             width: 100%;
-            max-width: 980px;
+            max-width: 1080px;
             align-items: flex-start;
             justify-content: center;
         }
@@ -83,7 +82,7 @@
         .ticket-card {
             flex: 1;
             min-width: 320px;
-            max-width: 480px;
+            max-width: 440px;
             background-color: #fff;
             border: 2px solid #000;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -91,11 +90,10 @@
             overflow: hidden;
         }
 
-        /* Painel de Estatísticas ao Lado */
         .dashboard-card {
-            flex: 1;
-            min-width: 320px;
-            max-width: 480px;
+            flex: 1.3;
+            min-width: 340px;
+            max-width: 620px;
             background-color: #ffffff;
             border: 2px solid #000;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -142,7 +140,7 @@
             padding: 10px;
             text-align: center;
         }
-        .stat-box .number { font-size: 20px; font-weight: bold; color: #511d9b; }
+        .stat-box .number { font-size: 18px; font-weight: bold; color: #511d9b; }
         .stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
 
         .dash-section-title {
@@ -156,6 +154,7 @@
         }
 
         .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .dash-table th { background-color: #f3e8ff; color: #511d9b; font-size: 10px; text-transform: uppercase; padding: 5px; border: 1px solid #d8b4fe; }
         .dash-table td { border: 1px solid #ddd; padding: 4px 6px; font-size: 11px; }
         .dash-table .title-col { font-weight: bold; background-color: #f8fafc; }
         .dash-table .num-col { text-align: right; font-weight: bold; }
@@ -202,7 +201,6 @@
         <!-- TICKET BALANÇA -->
         <div class="ticket-card" id="ticket">
             <div class="logo-container">
-                <!-- Logotipo com Lógica de Fallback Automático entre links do Drive -->
                 <img id="companyLogo" 
                      src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
                      alt="Logo Frimesa FIDF"
@@ -266,22 +264,40 @@
                     <div class="label">Total Veículos</div>
                 </div>
                 <div class="stat-box">
-                    <div class="number" id="dashTotalPallets">0</div>
-                    <div class="label">Volume (Pallets)</div>
+                    <div class="number" id="dashTotalVolumeNf">0,00 KG</div>
+                    <div class="label">Volume (Peso NF)</div>
                 </div>
             </div>
 
             <div class="dash-section-title">Por Tipo de Carga</div>
             <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Tipo Carga</th>
+                        <th>Qt Veíc.</th>
+                        <th>Qt Pallet</th>
+                        <th>Peso NF (KG)</th>
+                        <th>Peso Vazio (KG)</th>
+                    </tr>
+                </thead>
                 <tbody id="dashTableCarga">
-                    <tr><td colspan="2" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                    <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
                 </tbody>
             </table>
 
             <div class="dash-section-title">Por Movimento</div>
             <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;">Movimento</th>
+                        <th>Qt Veíc.</th>
+                        <th>Qt Pallet</th>
+                        <th>Peso NF (KG)</th>
+                        <th>Peso Vazio (KG)</th>
+                    </tr>
+                </thead>
                 <tbody id="dashTableMovimento">
-                    <tr><td colspan="2" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                    <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
                 </tbody>
             </table>
         </div>
@@ -301,7 +317,6 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        // Trata erro de carregamento de imagem com links de contingência do Drive
         function tratarErroLogo(img) {
             if (logoTentativa === 1) {
                 logoTentativa = 2;
@@ -370,25 +385,6 @@
                     const idVal = limpar(col[0]);
                     if (!idVal || idVal.toUpperCase() === 'ID') continue;
 
-                    // Mapeamento Atualizado:
-                    // Coluna A (0)  = ID
-                    // Coluna B (1)  = Placa
-                    // Coluna C (2)  = Veículo / Modelo
-                    // Coluna D (3)  = Motorista
-                    // Coluna F (5)  = Movimento (Entrada/Saída)
-                    // Coluna G (6)  = Tipo de Carga
-                    // Coluna I (8)  = Data Entrada
-                    // Coluna J (9)  = Hora Entrada
-                    // Coluna K (10) = Data Saida
-                    // Coluna L (11) = Hora Saida
-                    // Coluna M (12) = Lacre Saida
-                    // Coluna P (15) = Total Pallets
-                    // Coluna Q (16) = Peso Pallets
-                    // Coluna R (17) = Peso Cheio
-                    // Coluna S (18) = Peso Vazio
-                    // Coluna U (20) = Peso NF
-                    // Coluna W (22) = Conferente / Tolerância Tipo
-
                     const dataEntradaRaw = limpar(col[8]);
                     const dataEntradaStr = (dataEntradaRaw + ' ' + limpar(col[9])).trim();
                     const dataSaidaStr = (limpar(col[10]) + ' ' + limpar(col[11])).trim();
@@ -424,7 +420,6 @@
 
                 atualizarFarol(true);
 
-                // Define data padrão de hoje no filtro caso esteja vazio
                 const filterInput = document.getElementById('filterDate');
                 if (!filterInput.value) {
                     const hoje = new Date().toISOString().split('T')[0];
@@ -456,52 +451,78 @@
             const filterValue = document.getElementById('filterDate').value;
             if (!filterValue) return;
 
-            // Converte formato YYYY-MM-DD para DD/MM/YYYY
             const partes = filterValue.split('-');
             const dataFiltroFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
 
-            // Filtra tickets pela data de entrada
             const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dataFiltroFormatada || t.dataEntradaRaw.includes(dataFiltroFormatada));
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
             
-            const totalPallets = filtrados.reduce((sum, item) => sum + item.quantPallets, 0);
-            document.getElementById('dashTotalPallets').innerText = totalPallets;
+            // Soma do Volume = Peso NF
+            const totalVolumeNf = filtrados.reduce((sum, item) => sum + item.pesoNf, 0);
+            document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVolumeNf) + " KG";
 
-            // Agrupa por Tipo de Carga
+            // Agrupamentos
             const cargasMap = {};
-            // Agrupa por Movimento
             const movimentoMap = {};
 
             filtrados.forEach(t => {
                 const c = t.tipoCarga.toUpperCase() || 'NÃO ESPECIFICADO';
-                cargasMap[c] = (cargasMap[c] || 0) + 1;
+                if (!cargasMap[c]) {
+                    cargasMap[c] = { veiculos: 0, pallets: 0, pesoNf: 0, pesoVazio: 0 };
+                }
+                cargasMap[c].veiculos += 1;
+                cargasMap[c].pallets += t.quantPallets;
+                cargasMap[c].pesoNf += t.pesoNf;
+                cargasMap[c].pesoVazio += t.pesoVazio;
 
                 const m = t.movimento.toUpperCase() || 'NÃO ESPECIFICADO';
-                movimentoMap[m] = (movimentoMap[m] || 0) + 1;
+                if (!movimentoMap[m]) {
+                    movimentoMap[m] = { veiculos: 0, pallets: 0, pesoNf: 0, pesoVazio: 0 };
+                }
+                movimentoMap[m].veiculos += 1;
+                movimentoMap[m].pallets += t.quantPallets;
+                movimentoMap[m].pesoNf += t.pesoNf;
+                movimentoMap[m].pesoVazio += t.pesoVazio;
             });
 
-            // Monta tabela Tipo de Carga
+            // Tabela Tipo de Carga
             const tbodyCarga = document.getElementById('dashTableCarga');
             tbodyCarga.innerHTML = "";
             const cargasKeys = Object.keys(cargasMap);
             if (cargasKeys.length === 0) {
-                tbodyCarga.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhum registro nesta data</td></tr>';
+                tbodyCarga.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>';
             } else {
                 cargasKeys.forEach(key => {
-                    tbodyCarga.innerHTML += `<tr><td class="title-col">${key}</td><td class="num-col">${cargasMap[key]} veíc.</td></tr>`;
+                    const obj = cargasMap[key];
+                    tbodyCarga.innerHTML += `
+                        <tr>
+                            <td class="title-col">${key}</td>
+                            <td class="num-col">${obj.veiculos}</td>
+                            <td class="num-col">${obj.pallets}</td>
+                            <td class="num-col">${formatarNumero(obj.pesoNf)}</td>
+                            <td class="num-col">${formatarNumero(obj.pesoVazio)}</td>
+                        </tr>`;
                 });
             }
 
-            // Monta tabela Movimento
+            // Tabela Movimento
             const tbodyMov = document.getElementById('dashTableMovimento');
             tbodyMov.innerHTML = "";
             const movKeys = Object.keys(movimentoMap);
             if (movKeys.length === 0) {
-                tbodyMov.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhum registro nesta data</td></tr>';
+                tbodyMov.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>';
             } else {
                 movKeys.forEach(key => {
-                    tbodyMov.innerHTML += `<tr><td class="title-col">${key}</td><td class="num-col">${movimentoMap[key]} veíc.</td></tr>`;
+                    const obj = movimentoMap[key];
+                    tbodyMov.innerHTML += `
+                        <tr>
+                            <td class="title-col">${key}</td>
+                            <td class="num-col">${obj.veiculos}</td>
+                            <td class="num-col">${obj.pallets}</td>
+                            <td class="num-col">${formatarNumero(obj.pesoNf)}</td>
+                            <td class="num-col">${formatarNumero(obj.pesoVazio)}</td>
+                        </tr>`;
                 });
             }
         }
