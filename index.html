@@ -13,9 +13,6 @@
 
     <!-- Biblioteca para geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <!-- Biblioteca para geração de QR Code -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
@@ -93,7 +90,7 @@
             border: 2px solid #000;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
             border-radius: 4px;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .ticket-actions {
@@ -193,40 +190,39 @@
         .dash-table .title-col { font-weight: bold; background-color: #f8fafc; }
         .dash-table .num-col { text-align: right; font-weight: bold; }
 
-        .logo-container { text-align: center; padding: 15px 10px 10px 10px; background-color: #fff; }
-        .logo-container img { max-width: 220px; max-height: 90px; width: auto; height: auto; object-fit: contain; }
+        .logo-container { text-align: center; padding: 12px 10px 8px 10px; background-color: #fff; }
+        .logo-container img { max-width: 200px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
 
-        .header-title { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
-        .header-subtitle { text-align: center; font-size: 13px; padding: 4px 0; font-weight: bold; }
-        .header-date { background-color: #d9d9d9; text-align: center; padding: 6px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 13px; }
+        .header-title { text-align: center; font-weight: bold; font-size: 16px; padding: 4px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
+        .header-subtitle { text-align: center; font-size: 12px; padding: 4px 0; font-weight: bold; }
+        .header-date { background-color: #d9d9d9; text-align: center; padding: 4px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px; }
 
         table { width: 100%; border-collapse: collapse; }
-        td { border: 1px solid #000; padding: 5px 8px; font-size: 12px; }
+        td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
         .label { font-weight: bold; text-transform: uppercase; width: 50%; }
         .value { text-align: left; }
         .value-highlight { background-color: #ffff00; font-weight: bold; }
         .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
         .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
-        .spacer-row td { border: none; height: 8px; }
+        .spacer-row td { border: none; height: 6px; }
         select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: bold; cursor: pointer; }
 
-        /* Rodapé de Autenticação com QR Code */
+        /* Rodapé de Autenticação com QR Code Integrado */
         .qr-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px;
+            padding: 6px 8px;
             border-top: 1px solid #000;
             background-color: #fafafa;
         }
         .qr-info {
-            font-size: 9px;
+            font-size: 8px;
             color: #333;
-            line-height: 1.3;
+            line-height: 1.2;
         }
-        .qr-info strong { display: block; color: #000; font-size: 10px; margin-bottom: 2px; }
-        #qrcode { width: 65px; height: 65px; }
-        #qrcode img { width: 65px; height: 65px; }
+        .qr-info strong { display: block; color: #000; font-size: 9px; margin-bottom: 2px; }
+        .qr-img { width: 60px; height: 60px; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -308,13 +304,13 @@
                         <span>Frimesa Cooperativa Central - Filial FIDF</span><br>
                         <span>Autenticação: <span id="authHash">---</span></span>
                     </div>
-                    <div id="qrcode"></div>
+                    <img id="qrCodeImg" class="qr-img" src="" alt="QR Code Autenticação">
                 </div>
             </div>
 
-            <!-- Botões de Ação com Link Direto do WhatsApp -->
+            <!-- Botões de Ação -->
             <div class="ticket-actions">
-                <a id="btnWspLink" href="#" target="_blank" class="btn-action btn-wsp" onclick="validarCliqueWsp(event)">💬 Enviar WhatsApp</a>
+                <a href="https://wa.me" target="_blank" class="btn-action btn-wsp">💬 Enviar WhatsApp</a>
                 <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 Baixar PDF</button>
             </div>
         </div>
@@ -380,7 +376,6 @@
         let ticketAtual = null;
         let deferredPrompt;
         let logoTentativa = 1;
-        let qrcodeObj = null;
 
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
@@ -672,8 +667,7 @@
             document.getElementById('toleranciaSelect').value = tolAutomatica;
             
             recalcularToleranciaManual();
-            gerarAutenticacaoQRCode(t);
-            atualizarLinkWhatsApp();
+            gerarQRCodeNativo(t);
         }
 
         function recalcularToleranciaManual() {
@@ -690,79 +684,21 @@
             const statusEl = document.getElementById('status');
             statusEl.innerText = status;
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
-
-            atualizarLinkWhatsApp();
         }
 
-        // --- GERAÇÃO DO QR CODE E HASH DE AUTENTICAÇÃO ---
-        function gerarAutenticacaoQRCode(t) {
+        // --- GERAÇÃO DE QR CODE NATIVO DIRETO ---
+        function gerarQRCodeNativo(t) {
             const hash = `FRM-${t.id}-${t.placa}-${Math.abs(t.divergencia).toFixed(0)}`;
             document.getElementById('authHash').innerText = hash;
 
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = "";
-
-            const dadosVerificacao = `FRIMESA FIDF | TICKET: ${t.id} | PLACA: ${t.placa} | DIVERGENCIA: ${t.divergencia}KG | AUTH: ${hash}`;
-
-            qrcodeObj = new QRCode(qrContainer, {
-                text: dadosVerificacao,
-                width: 65,
-                height: 65,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            const payload = encodeURIComponent(`FRIMESA FIDF|TICKET:${t.id}|PLACA:${t.placa}|DIVERGENCIA:${t.divergencia}KG|AUTH:${hash}`);
+            
+            // API ultra rápida e leve para imagem nativa de QR Code que funciona sempre
+            const qrUrl = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
+            document.getElementById('qrCodeImg').src = qrUrl;
         }
 
-        // --- ATUALIZA O LINK DO BOTÃO WHATSAPP DINAMICAMENTE ---
-        function atualizarLinkWhatsApp() {
-            if (!ticketAtual) return;
-
-            const tipoSel = document.getElementById('toleranciaSelect').value;
-            const resultado = document.getElementById('resultado').innerText;
-            const status = document.getElementById('status').innerText;
-            const hash = document.getElementById('authHash').innerText;
-
-            const mensagem = 
-`*FRIMESA FILIAL FIDF*
-*TICKET BALANÇA*
-📅 Emissão: ${new Date().toLocaleString('pt-BR')}
-
-📌 *ID:* ${ticketAtual.id}
-🚛 *PLACA:* ${ticketAtual.placa}
-🚚 *VEÍCULO:* ${ticketAtual.veiculoModelo}
-👤 *MOTORISTA:* ${ticketAtual.motorista}
-📥 *ENTRADA:* ${ticketAtual.dataEntradaTexto}
-📤 *SAÍDA:* ${ticketAtual.dataSaidaTexto}
-🔒 *LACRE(S):* ${ticketAtual.lacres}
-
-📦 *QT. PALLETS:* ${ticketAtual.quantPallets}
-⚖️ *PESO PALLETS:* ${formatarNumero(ticketAtual.pesoPallets)} KG
-
-🚛 *PESO CHEIO:* ${formatarNumero(ticketAtual.pesoCheio)} KG
-🚛 *PESO VAZIO / TARA:* ${formatarNumero(ticketAtual.pesoVazio)} KG
-⚖️ *PESO LÍQUIDO:* ${formatarNumero(ticketAtual.pesoLiquido)} KG
-📄 *PESO NF:* ${formatarNumero(ticketAtual.pesoNf)} KG
-📊 *DIVERGÊNCIA:* ${formatarNumero(ticketAtual.divergencia)} KG
-
-📐 *REGRA:* ${tipoSel}
-🚨 *RESULTADO:* ${resultado}
-✅ *STATUS:* ${status}
-👷 *CONFERENTE:* ${ticketAtual.conferente}
-🔑 *AUTENTICAÇÃO:* ${hash}`;
-
-            const urlWsp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-            document.getElementById('btnWspLink').href = urlWsp;
-        }
-
-        function validarCliqueWsp(e) {
-            if (!ticketAtual) {
-                e.preventDefault();
-                alert("Por favor, pesquise e selecione um Ticket primeiro.");
-            }
-        }
-
-        // --- BAIXAR TICKET EM PDF ---
+        // --- BAIXAR TICKET EM PDF COMPLETO (SEM CORTES) ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -772,14 +708,15 @@
             const element = document.getElementById('ticket');
             
             const opt = {
-                margin:       [0.2, 0.2, 0.2, 0.2],
+                margin:       [0.1, 0.1, 0.1, 0.1],
                 filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 
                     scale: 2, 
                     useCORS: true,
                     scrollY: 0,
-                    scrollX: 0
+                    scrollX: 0,
+                    windowWidth: document.documentElement.offsetWidth
                 },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
