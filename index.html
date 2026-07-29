@@ -5,31 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket Balança - Frimesa Filial FIDF</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body { background: linear-gradient(135deg, #e0202c 0%, #80001a 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 30px 15px; margin: 0; }
-        .search-container { background-color: #ffffff; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 480px; }
-        .search-container label { font-weight: bold; color: #80001a; font-size: 13px; white-space: nowrap; }
-        .search-container input { flex: 1; padding: 10px; font-size: 14px; border: 2px solid #ddd; border-radius: 4px; font-family: inherit; outline: none; text-transform: uppercase; }
-        .search-container input:focus { border-color: #e0202c; }
-        .btn-search { background-color: #80001a; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .ticket-card { width: 100%; max-width: 480px; background-color: #fff; border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; }
-        .logo-container { text-align: center; padding: 12px 10px 5px 10px; background-color: #fff; }
-        .logo-container img { max-width: 170px; height: auto; }
-        .header-title { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
-        .header-subtitle { text-align: center; font-size: 13px; padding: 4px 0; font-weight: bold; }
-        .header-date { background-color: #d9d9d9; text-align: center; padding: 6px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; }
-        td { border: 1px solid #000; padding: 5px 8px; font-size: 13px; }
-        .label { font-weight: bold; text-transform: uppercase; width: 50%; }
-        .value { text-align: left; }
-        .value-highlight { background-color: #ffff00; font-weight: bold; }
-        .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
-        .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
-        .spacer-row td { border: none; height: 10px; }
-        select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: bold; cursor: pointer; }
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0202c 0%, #80001a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px;
+            margin: 0;
+        }
+
+        /* Barra Discreta de Status / Conexão */
+        .status-bar {
+            background-color: rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            padding: 6px 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ffcc00; /* Amarelo: Conectando */
+            box-shadow: 0 0 6px rgba(0,0,0,0.5);
+            transition: background-color 0.3s;
+        }
+
+        .status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
+        .status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
+
+        .search-container {
+            background-color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .search-container label {
+            font-weight: bold;
+            color: #80001a;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .search-container input:focus {
+            border-color: #e0202c;
+        }
+
+        .btn-search {
+            background-color: #80001a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ticket-card {
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 12px 10px 5px 10px;
+            background-color: #fff;
+        }
+
+        .logo-container img {
+            max-width: 170px;
+            height: auto;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 6px 0;
+            border-bottom: 1px solid #000;
+            text-transform: uppercase;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            font-size: 13px;
+            padding: 4px 0;
+            font-weight: bold;
+        }
+
+        .header-date {
+            background-color: #d9d9d9;
+            text-align: center;
+            padding: 6px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .label {
+            font-weight: bold;
+            text-transform: uppercase;
+            width: 50%;
+        }
+
+        .value {
+            text-align: left;
+        }
+
+        .value-highlight {
+            background-color: #ffff00;
+            font-weight: bold;
+        }
+
+        .status-falta {
+            background-color: #ffff00;
+            color: #d00000;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background-color: #a8f0a8;
+            color: #006000;
+            font-weight: bold;
+        }
+
+        .spacer-row td {
+            border: none;
+            height: 10px;
+        }
+
+        select.table-select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Barba Discreta de Diagnóstico -->
+    <div class="status-bar">
+        <div class="status-indicator">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">CONECTANDO PLANILHA...</span>
+        </div>
+        <div>
+            ÚLTIMA SYNC: <span id="lastSyncTime">--:--:--</span>
+        </div>
+    </div>
 
     <div class="search-container">
         <label for="inputId">PESQUISAR ID:</label>
@@ -84,9 +268,12 @@
     </div>
 
     <script>
+        // URL direta + Proxy de emergência para bypass em navegadores restritivos
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7xkoiMc8GHf7ExRRvhBtQqkvEYuFbspMIxuu-1eHZ-LJd0IwfpBBxWAKXHVnGAg/pub?gid=2099001465&single=true&output=csv";
+        const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_CSV_URL);
+
         let ticketsCache = [];
         let ticketAtual = null;
-        const API_URL = "https://fidf-api.onrender.com/api/tickets";
 
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5,
@@ -99,14 +286,88 @@
             "TOLERÂNCIA CARRETA": 56.0
         };
 
-        async function sincronizarDados() {
+        function atualizarFarolConexao(online, mensagem) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            const sync = document.getElementById('lastSyncTime');
+
+            if (online) {
+                dot.className = 'status-dot online';
+                txt.innerText = mensagem || 'PLANILHA ONLINE (' + ticketsCache.length + ' REGISTROS)';
+                sync.innerText = new Date().toLocaleTimeString('pt-BR');
+            } else {
+                dot.className = 'status-dot offline';
+                txt.innerText = mensagem || 'ERRO DE CONEXÃO COM PLANILHA';
+            }
+        }
+
+        async function obterConteudoCSV() {
             try {
-                const res = await fetch(API_URL);
-                ticketsCache = await res.json();
-                
+                // Tentativa 1: Direta
+                let resp = await fetch(SHEET_CSV_URL);
+                if (resp.ok) return await resp.text();
+            } catch (e) { console.warn("Fetch direto falhou, usando rota secundária..."); }
+
+            try {
+                // Tentativa 2: Via Proxy (Garante o descarte de bloqueios CORS)
+                let resp = await fetch(PROXY_URL);
+                if (resp.ok) return await resp.text();
+            } catch (e) { console.error("Falha no proxy secundário:", e); }
+
+            return null;
+        }
+
+        async function carregarDadosPlanilha() {
+            const csvText = await obterConteudoCSV();
+
+            if (!csvText) {
+                atualizarFarolConexao(false, 'FALHA DE COMUNICAÇÃO');
+                return;
+            }
+
+            try {
+                const linhas = csvText.split(/\r?\n/);
+                ticketsCache = [];
+
+                for (let i = 1; i < linhas.length; i++) {
+                    const linha = linhas[i].trim();
+                    if (!linha) continue;
+
+                    // Suporta vírgula e ponto e vírgula
+                    const col = linha.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|;/);
+                    if (col.length < 2) continue;
+
+                    const idVal = limpar(col[0]);
+                    if (!idVal || idVal.toUpperCase() === 'ID') continue;
+
+                    const pesoCheio = parseNum(col[7]);
+                    const pesoVazio = parseNum(col[8]);
+                    const pesoNf = parseNum(col[9]);
+                    const pesoLiquido = pesoCheio - pesoVazio;
+                    const divergencia = pesoLiquido - pesoNf;
+
+                    ticketsCache.push({
+                        id: idVal,
+                        placa: limpar(col[1]),
+                        dataEntradaTexto: limpar(col[2]),
+                        dataSaidaTexto: limpar(col[3]),
+                        lacres: limpar(col[4]),
+                        quantPallets: parseNum(col[5]),
+                        pesoPallets: parseNum(col[6]),
+                        pesoCheio: pesoCheio,
+                        pesoVazio: pesoVazio,
+                        pesoLiquido: pesoLiquido,
+                        pesoNf: pesoNf,
+                        divergencia: divergencia,
+                        toleranciaTipo: limpar(col[10]) || "TOLERÂNCIA TRUCK"
+                    });
+                }
+
+                atualizarFarolConexao(true);
+
+                // Preenche o autocompletar da caixa de pesquisa
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
-
                 ticketsCache.forEach(t => {
                     const opt = document.createElement('option');
                     opt.value = t.id;
@@ -115,38 +376,43 @@
                 });
 
                 if (ticketAtual) {
-                    const atualizado = ticketsCache.find(x => x.id === ticketAtual.id);
-                    if (atualizado) carregarTicket(atualizado.id);
-                } else if (ticketsCache.length > 0) {
-                    carregarTicket(ticketsCache[0].id);
+                    const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
+                    if (recarregado) renderizarTicket(recarregado);
                 }
             } catch (err) {
-                console.error("Erro ao sincronizar:", err);
+                console.error("Erro ao processar CSV:", err);
+                atualizarFarolConexao(false, 'ERRO AO PROCESSAR DADOS');
             }
+        }
+
+        function limpar(val) {
+            return val ? val.replace(/"/g, '').replace(/\r/g, '').trim() : '';
+        }
+
+        function parseNum(val) {
+            if (!val) return 0;
+            const limpo = val.replace(/"/g, '').replace(/\./g, '').replace(',', '.').trim();
+            const n = parseFloat(limpo);
+            return isNaN(n) ? 0 : n;
         }
 
         function tratarKeyPress(e) {
             if (e.key === 'Enter') executarBusca();
         }
 
-        function extrairPrimeiroID(texto) {
-            if (!texto) return "";
-            return texto.trim().split(/[\s,;]+/)[0].toUpperCase();
-        }
-
         function executarBusca() {
             const rawVal = document.getElementById('inputId').value;
-            const idBuscado = extrairPrimeiroID(rawVal);
-            
-            if (!idBuscado) return;
+            if (!rawVal) return;
 
-            document.getElementById('inputId').value = idBuscado;
+            const termoLimpo = rawVal.trim().toUpperCase();
 
-            const encontrado = ticketsCache.find(x => x.id.toUpperCase() === idBuscado);
+            const encontrado = ticketsCache.find(x => x.id.toUpperCase() === termoLimpo || x.id.toUpperCase().includes(termoLimpo));
+
             if (encontrado) {
-                carregarTicket(encontrado.id);
+                document.getElementById('inputId').value = encontrado.id;
+                renderizarTicket(encontrado);
             } else {
-                alert("ID não encontrado na base de dados!");
+                alert("Nenhum ticket encontrado para o ID: " + rawVal);
             }
         }
 
@@ -155,10 +421,7 @@
             return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        function carregarTicket(id) {
-            const t = ticketsCache.find(x => x.id === id);
-            if (!t) return;
-
+        function renderizarTicket(t) {
             ticketAtual = t;
 
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
@@ -209,8 +472,9 @@
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
-        sincronizarDados();
-        setInterval(sincronizarDados, 5000);
+        // Sincronização automática a cada 3 segundos
+        carregarDadosPlanilha();
+        setInterval(carregarDadosPlanilha, 3000);
     </script>
 </body>
 </html>
