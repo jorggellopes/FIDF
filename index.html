@@ -113,6 +113,7 @@
             justify-content: center;
             gap: 6px;
             color: white;
+            text-decoration: none;
             transition: opacity 0.2s;
         }
         .btn-action:hover { opacity: 0.9; }
@@ -599,6 +600,23 @@
             return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // --- FUNÇÃO DE MAREADOR AUTOMÁTICO DE TOLERÂNCIA PELO TIPO DE VEÍCULO ---
+        function identificarToleranciaPorVeiculo(veiculo) {
+            if (!veiculo) return 'TOLERÂNCIA TRUCK';
+            const v = veiculo.toUpperCase();
+
+            if (v.includes('VAN')) return 'TOLERÂNCIA VAN';
+            if (v.includes('VUC')) return 'TOLERÂNCIA VUC';
+            if (v.includes('3/4') || v.includes('34')) return 'TOLERÂNCIA 34';
+            if (v.includes('TOCO')) return 'TOLERÂNCIA TOCO';
+            if (v.includes('BITRUCK')) return 'TOLERÂNCIA BITRUCK';
+            if (v.includes('TRUCK')) return 'TOLERÂNCIA TRUCK';
+            if (v.includes('CARRETA')) return 'TOLERÂNCIA CARRETA';
+            if (v.includes('UTILITARIO') || v.includes('UTILITÁRIO')) return 'TOLERÂNCIA UTILITARIO';
+
+            return 'TOLERÂNCIA TRUCK'; // padrão se não identificar
+        }
+
         function renderizarTicket(t) {
             ticketAtual = t;
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
@@ -618,7 +636,10 @@
             document.getElementById('divergencia').innerText = formatarNumero(t.divergencia);
             document.getElementById('conferente').innerText = t.conferente;
 
-            document.getElementById('toleranciaSelect').value = t.toleranciaTipo || 'TOLERÂNCIA TRUCK';
+            // Associação Automática da Tolerância baseada na descrição do Veículo
+            const tolAutomatica = identificarToleranciaPorVeiculo(t.veiculoModelo);
+            document.getElementById('toleranciaSelect').value = tolAutomatica;
+            
             recalcularToleranciaManual();
         }
 
@@ -638,7 +659,7 @@
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
-        // --- ENVIAR VIA WHATSAPP WEB ---
+        // --- ENVIAR VIA WHATSAPP (Abertura Direta Universal) ---
         function enviarWhatsApp() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -676,11 +697,8 @@
 ✅ *STATUS:* ${status}
 👷 *CONFERENTE:* ${ticketAtual.conferente}`;
 
-            // URL direta do WhatsApp Web / App para abrir a lista de seleção de contatos
-            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            const baseUrl = isMobile ? "https://api.whatsapp.com/send?text=" : "https://web.whatsapp.com/send?text=";
-            
-            window.open(baseUrl + encodeURIComponent(mensagem), '_blank');
+            const urlWsp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+            window.open(urlWsp, '_blank');
         }
 
         // --- BAIXAR TICKET COMPLETO EM PDF ---
@@ -692,7 +710,6 @@
 
             const element = document.getElementById('ticket');
             
-            // Configurações otimizadas para capturar o card inteiro sem cortes
             const opt = {
                 margin:       [0.2, 0.2, 0.2, 0.2],
                 filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
