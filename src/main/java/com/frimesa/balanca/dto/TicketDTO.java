@@ -1,12 +1,10 @@
 package com.frimesa.balanca.dto;
 
-import java.time.LocalDateTime;
-
 public class TicketDTO {
     private String id;
     private String placa;
-    private LocalDateTime dataEntrada;
-    private LocalDateTime dataSaida;
+    private String dataEntradaTexto;
+    private String dataSaidaTexto;
     private String lacres;
     private Integer quantPallets;
     private Double pesoPallets;
@@ -24,10 +22,10 @@ public class TicketDTO {
     public void setId(String id) { this.id = id; }
     public String getPlaca() { return placa; }
     public void setPlaca(String placa) { this.placa = placa; }
-    public LocalDateTime getDataEntrada() { return dataEntrada; }
-    public void setDataEntrada(LocalDateTime dataEntrada) { this.dataEntrada = dataEntrada; }
-    public LocalDateTime getDataSaida() { return dataSaida; }
-    public void setDataSaida(LocalDateTime dataSaida) { this.dataSaida = dataSaida; }
+    public String getDataEntradaTexto() { return dataEntradaTexto; }
+    public void setDataEntradaTexto(String dataEntradaTexto) { this.dataEntradaTexto = dataEntradaTexto; }
+    public String getDataSaidaTexto() { return dataSaidaTexto; }
+    public void setDataSaidaTexto(String dataSaidaTexto) { this.dataSaidaTexto = dataSaidaTexto; }
     public String getLacres() { return lacres; }
     public void setLacres(String lacres) { this.lacres = lacres; }
     public Integer getQuantPallets() { return quantPallets; }
