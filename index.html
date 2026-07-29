@@ -20,13 +20,12 @@
             margin: 0;
         }
 
-        /* Barra Discreta de Status / Conexão */
         .status-bar {
-            background-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.5);
             color: #ffffff;
             width: 100%;
             max-width: 480px;
-            padding: 6px 15px;
+            padding: 8px 15px;
             border-radius: 6px;
             margin-bottom: 12px;
             display: flex;
@@ -45,7 +44,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background-color: #ffcc00; /* Amarelo: Conectando */
+            background-color: #ffcc00;
             box-shadow: 0 0 6px rgba(0,0,0,0.5);
             transition: background-color 0.3s;
         }
@@ -201,10 +200,11 @@
             cursor: pointer;
         }
     </style>
+    <!-- Script Oficial do Google para Leitura de Planilhas Sem CORS -->
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body>
 
-    <!-- Barba Discreta de Diagnóstico -->
     <div class="status-bar">
         <div class="status-indicator">
             <span class="status-dot" id="statusDot"></span>
@@ -268,10 +268,12 @@
     </div>
 
     <script>
-        // URL direta + Proxy de emergência para bypass em navegadores restritivos
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7xkoiMc8GHf7ExRRvhBtQqkvEYuFbspMIxuu-1eHZ-LJd0IwfpBBxWAKXHVnGAg/pub?gid=2099001465&single=true&output=csv";
-        const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_CSV_URL);
+        // Carrega a API de Leitura de Dados nativa do Google
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(iniciarSincronizacao);
 
+        const SHEET_ID = "2PACX-1vR7xkoiMc8GHf7ExRRvhBtQqkvEYuFbspMIxuu-1eHZ-LJd0IwfpBBxWAKXHVnGAg";
+        
         let ticketsCache = [];
         let ticketAtual = null;
 
@@ -286,6 +288,81 @@
             "TOLERÂNCIA CARRETA": 56.0
         };
 
+        function iniciarSincronizacao() {
+            carregarDadosGoogleVisualization();
+            setInterval(carregarDadosGoogleVisualization, 3000);
+        }
+
+        function carregarDadosGoogleVisualization() {
+            // URL da Query API do Google (Lê dados estruturados sem restrição de CORS)
+            const queryUrl = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/gviz/tq?tqx=out:json&gid=2099001465`;
+
+            fetch(queryUrl)
+                .then(res => res.text())
+                .then(data => {
+                    // Trata o JSONP retornado pelo Google Visualization
+                    const jsonString = data.substring(data.indexOf("{"), data.lastIndexOf("}") + 1);
+                    const json = JSON.parse(jsonString);
+                    processarDadosGoogle(json.table);
+                })
+                .catch(err => {
+                    console.error("Erro na consulta do Google Sheets:", err);
+                    atualizarFarolConexao(false, 'FALHA DE COMUNICAÇÃO');
+                });
+        }
+
+        function processarDadosGoogle(table) {
+            ticketsCache = [];
+            const rows = table.rows;
+
+            for (let i = 0; i < rows.length; i++) {
+                const c = rows[i].c;
+                if (!c || !c[0] || !c[0].v) continue;
+
+                const idVal = limpar(c[0].v);
+                if (idVal.toUpperCase() === 'ID') continue;
+
+                const pesoCheio = parseNum(c[7] ? c[7].v : 0);
+                const pesoVazio = parseNum(c[8] ? c[8].v : 0);
+                const pesoNf = parseNum(c[9] ? c[9].v : 0);
+                const pesoLiquido = pesoCheio - pesoVazio;
+                const divergencia = pesoLiquido - pesoNf;
+
+                ticketsCache.push({
+                    id: idVal,
+                    placa: limpar(c[1] ? c[1].v : ''),
+                    dataEntradaTexto: formatarDataHora(c[2]),
+                    dataSaidaTexto: formatarDataHora(c[3]),
+                    lacres: limpar(c[4] ? c[4].v : ''),
+                    quantPallets: parseNum(c[5] ? c[5].v : 0),
+                    pesoPallets: parseNum(c[6] ? c[6].v : 0),
+                    pesoCheio: pesoCheio,
+                    pesoVazio: pesoVazio,
+                    pesoLiquido: pesoLiquido,
+                    pesoNf: pesoNf,
+                    divergencia: divergencia,
+                    toleranciaTipo: limpar(c[10] ? c[10].v : '') || "TOLERÂNCIA TRUCK"
+                });
+            }
+
+            atualizarFarolConexao(true);
+
+            // Popula sugestões de autocompletar na pesquisa
+            const datalist = document.getElementById('idList');
+            datalist.innerHTML = "";
+            ticketsCache.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.label = `${t.id} - ${t.placa}`;
+                datalist.appendChild(opt);
+            });
+
+            if (ticketAtual) {
+                const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
+                if (recarregado) renderizarTicket(recarregado);
+            }
+        }
+
         function atualizarFarolConexao(online, mensagem) {
             const dot = document.getElementById('statusDot');
             const txt = document.getElementById('statusText');
@@ -293,7 +370,7 @@
 
             if (online) {
                 dot.className = 'status-dot online';
-                txt.innerText = mensagem || 'PLANILHA ONLINE (' + ticketsCache.length + ' REGISTROS)';
+                txt.innerText = 'PLANILHA ONLINE (' + ticketsCache.length + ' REGISTROS)';
                 sync.innerText = new Date().toLocaleTimeString('pt-BR');
             } else {
                 dot.className = 'status-dot offline';
@@ -301,99 +378,23 @@
             }
         }
 
-        async function obterConteudoCSV() {
-            try {
-                // Tentativa 1: Direta
-                let resp = await fetch(SHEET_CSV_URL);
-                if (resp.ok) return await resp.text();
-            } catch (e) { console.warn("Fetch direto falhou, usando rota secundária..."); }
-
-            try {
-                // Tentativa 2: Via Proxy (Garante o descarte de bloqueios CORS)
-                let resp = await fetch(PROXY_URL);
-                if (resp.ok) return await resp.text();
-            } catch (e) { console.error("Falha no proxy secundário:", e); }
-
-            return null;
-        }
-
-        async function carregarDadosPlanilha() {
-            const csvText = await obterConteudoCSV();
-
-            if (!csvText) {
-                atualizarFarolConexao(false, 'FALHA DE COMUNICAÇÃO');
-                return;
-            }
-
-            try {
-                const linhas = csvText.split(/\r?\n/);
-                ticketsCache = [];
-
-                for (let i = 1; i < linhas.length; i++) {
-                    const linha = linhas[i].trim();
-                    if (!linha) continue;
-
-                    // Suporta vírgula e ponto e vírgula
-                    const col = linha.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|;/);
-                    if (col.length < 2) continue;
-
-                    const idVal = limpar(col[0]);
-                    if (!idVal || idVal.toUpperCase() === 'ID') continue;
-
-                    const pesoCheio = parseNum(col[7]);
-                    const pesoVazio = parseNum(col[8]);
-                    const pesoNf = parseNum(col[9]);
-                    const pesoLiquido = pesoCheio - pesoVazio;
-                    const divergencia = pesoLiquido - pesoNf;
-
-                    ticketsCache.push({
-                        id: idVal,
-                        placa: limpar(col[1]),
-                        dataEntradaTexto: limpar(col[2]),
-                        dataSaidaTexto: limpar(col[3]),
-                        lacres: limpar(col[4]),
-                        quantPallets: parseNum(col[5]),
-                        pesoPallets: parseNum(col[6]),
-                        pesoCheio: pesoCheio,
-                        pesoVazio: pesoVazio,
-                        pesoLiquido: pesoLiquido,
-                        pesoNf: pesoNf,
-                        divergencia: divergencia,
-                        toleranciaTipo: limpar(col[10]) || "TOLERÂNCIA TRUCK"
-                    });
-                }
-
-                atualizarFarolConexao(true);
-
-                // Preenche o autocompletar da caixa de pesquisa
-                const datalist = document.getElementById('idList');
-                datalist.innerHTML = "";
-                ticketsCache.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t.id;
-                    opt.label = `${t.id} - ${t.placa}`;
-                    datalist.appendChild(opt);
-                });
-
-                if (ticketAtual) {
-                    const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
-                    if (recarregado) renderizarTicket(recarregado);
-                }
-            } catch (err) {
-                console.error("Erro ao processar CSV:", err);
-                atualizarFarolConexao(false, 'ERRO AO PROCESSAR DADOS');
-            }
-        }
-
         function limpar(val) {
-            return val ? val.replace(/"/g, '').replace(/\r/g, '').trim() : '';
+            return val !== null && val !== undefined ? val.toString().replace(/"/g, '').trim() : '';
         }
 
         function parseNum(val) {
-            if (!val) return 0;
-            const limpo = val.replace(/"/g, '').replace(/\./g, '').replace(',', '.').trim();
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            const limpo = val.toString().replace(/"/g, '').replace(/\./g, '').replace(',', '.').trim();
             const n = parseFloat(limpo);
             return isNaN(n) ? 0 : n;
+        }
+
+        function formatarDataHora(celula) {
+            if (!celula) return '';
+            if (celula.f) return celula.f; // Retorna o texto formatado pelo Google Sheets
+            if (celula.v) return celula.v.toString();
+            return '';
         }
 
         function tratarKeyPress(e) {
@@ -405,7 +406,6 @@
             if (!rawVal) return;
 
             const termoLimpo = rawVal.trim().toUpperCase();
-
             const encontrado = ticketsCache.find(x => x.id.toUpperCase() === termoLimpo || x.id.toUpperCase().includes(termoLimpo));
 
             if (encontrado) {
@@ -471,10 +471,6 @@
             statusEl.innerText = status;
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
-
-        // Sincronização automática a cada 3 segundos
-        carregarDadosPlanilha();
-        setInterval(carregarDadosPlanilha, 3000);
     </script>
 </body>
 </html>
