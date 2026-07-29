@@ -93,7 +93,6 @@
             overflow: hidden;
         }
 
-        /* Botões de Ação do Ticket */
         .ticket-actions {
             display: flex;
             gap: 10px;
@@ -280,7 +279,7 @@
                 </table>
             </div>
 
-            <!-- Botões de Ação para Envio e Impressão -->
+            <!-- Botões de Ação -->
             <div class="ticket-actions">
                 <button class="btn-action btn-wsp" onclick="enviarWhatsApp()">💬 Enviar WhatsApp</button>
                 <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 Baixar PDF</button>
@@ -639,7 +638,7 @@
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
-        // --- ENVIAR TICKET FORMATADO VIA WHATSAPP ---
+        // --- ENVIAR VIA WHATSAPP WEB ---
         function enviarWhatsApp() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -677,11 +676,14 @@
 ✅ *STATUS:* ${status}
 👷 *CONFERENTE:* ${ticketAtual.conferente}`;
 
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-            window.open(url, '_blank');
+            // URL direta do WhatsApp Web / App para abrir a lista de seleção de contatos
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const baseUrl = isMobile ? "https://api.whatsapp.com/send?text=" : "https://web.whatsapp.com/send?text=";
+            
+            window.open(baseUrl + encodeURIComponent(mensagem), '_blank');
         }
 
-        // --- BAIXAR TICKET EM PDF ---
+        // --- BAIXAR TICKET COMPLETO EM PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -689,11 +691,18 @@
             }
 
             const element = document.getElementById('ticket');
+            
+            // Configurações otimizadas para capturar o card inteiro sem cortes
             const opt = {
-                margin:       0.2,
+                margin:       [0.2, 0.2, 0.2, 0.2],
                 filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0
+                },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
