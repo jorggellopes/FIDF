@@ -137,7 +137,6 @@
     </div>
 
     <script>
-        // Cole a URL que você copiou da Implantação entre as aspas abaixo:
         const APPS_SCRIPT_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbzL5dkaPY41u5aGVpojnN7AtpCWEUC4I7MxO2J0w3SCGC5x2xB23BH_ImYf6sazMHeMnuA/exec";
 
         let ticketsCache = [];
@@ -149,16 +148,26 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        async function carregarDados() {
-            if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("COLE_AQUI")) {
-                atualizarFarol(false, "CONFIGURE A URL DO SCRIPT");
-                return;
-            }
+        // Requisição JSONP dinamica
+        function carregarDadosJSONP() {
+            const scriptId = 'apps-script-jsonp';
+            const oldScript = document.getElementById(scriptId);
+            if (oldScript) oldScript.remove();
 
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = `${APPS_SCRIPT_URL}?callback=processarDadosRecebidos`;
+            
+            script.onerror = function() {
+                atualizarFarol(false, "ERRO DE COMUNICAÇÃO");
+            };
+
+            document.body.appendChild(script);
+        }
+
+        window.processarDadosRecebidos = function(dados) {
             try {
-                const res = await fetch(APPS_SCRIPT_URL, { redirect: 'follow' });
-                ticketsCache = await res.json();
-
+                ticketsCache = dados || [];
                 atualizarFarol(true);
 
                 const datalist = document.getElementById('idList');
@@ -175,10 +184,10 @@
                     if (recarregado) renderizarTicket(recarregado);
                 }
             } catch (err) {
-                console.error("Erro ao buscar dados:", err);
-                atualizarFarol(false, "ERRO DE COMUNICAÇÃO");
+                console.error("Erro no processamento:", err);
+                atualizarFarol(false, "ERRO AO PROCESSAR DADOS");
             }
-        }
+        };
 
         function atualizarFarol(online, msg) {
             document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
@@ -243,8 +252,8 @@
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
-        carregarDados();
-        setInterval(carregarDados, 3000);
+        carregarDadosJSONP();
+        setInterval(carregarDadosJSONP, 3000);
     </script>
 </body>
 </html>
