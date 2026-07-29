@@ -11,6 +11,9 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
+    <!-- Biblioteca para geração de PDF nativa no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         
@@ -89,6 +92,33 @@
             border-radius: 4px;
             overflow: hidden;
         }
+
+        /* Botões de Ação do Ticket */
+        .ticket-actions {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background-color: #f1f5f9;
+            border-top: 1px solid #000;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .btn-action:hover { opacity: 0.9; }
+        .btn-wsp { background-color: #25d366; }
+        .btn-pdf { background-color: #ef4444; }
 
         .dashboard-card {
             flex: 1.3;
@@ -198,55 +228,63 @@
     </div>
 
     <div class="main-layout">
-        <!-- TICKET BALANÇA -->
-        <div class="ticket-card" id="ticket">
-            <div class="logo-container">
-                <img id="companyLogo" 
-                     src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
-                     alt="Logo Frimesa FIDF"
-                     onerror="tratarErroLogo(this)">
+        <!-- CONTAINER DO TICKET COM AÇÕES -->
+        <div style="flex:1; min-width:320px; max-width:440px;">
+            <div class="ticket-card" id="ticket">
+                <div class="logo-container">
+                    <img id="companyLogo" 
+                         src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
+                         alt="Logo Frimesa FIDF"
+                         onerror="tratarErroLogo(this)">
+                </div>
+
+                <div class="header-title">Frimesa Filial FIDF</div>
+                <div class="header-subtitle">TICKET BALANÇA</div>
+                <div class="header-date" id="dataEmissao">---</div>
+
+                <table>
+                    <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+                    <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+                    <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
+                    <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
+                    <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+                    <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+                    <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+                    <tr class="spacer-row"><td colspan="2"></td></tr>
+                    <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+                    <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+                    <tr class="spacer-row"><td colspan="2"></td></tr>
+                    <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+                    <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+                    <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+                    <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+                    <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+                    <tr>
+                        <td class="label">
+                            <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
+                                <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
+                                <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
+                                <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
+                                <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
+                                <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
+                                <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
+                                <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
+                                <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
+                            </select>
+                        </td>
+                        <td class="value" id="toleranciaValor">---</td>
+                    </tr>
+                    <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+                    <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+                    <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
+                </table>
             </div>
 
-            <div class="header-title">Frimesa Filial FIDF</div>
-            <div class="header-subtitle">TICKET BALANÇA</div>
-            <div class="header-date" id="dataEmissao">---</div>
-
-            <table>
-                <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
-                <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
-                <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
-                <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
-                <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
-                <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
-                <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
-                <tr class="spacer-row"><td colspan="2"></td></tr>
-                <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
-                <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
-                <tr class="spacer-row"><td colspan="2"></td></tr>
-                <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
-                <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
-                <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
-                <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
-                <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
-                <tr>
-                    <td class="label">
-                        <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
-                            <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
-                            <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
-                            <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
-                            <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
-                            <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
-                            <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
-                            <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
-                            <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
-                        </select>
-                    </td>
-                    <td class="value" id="toleranciaValor">---</td>
-                </tr>
-                <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
-                <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
-                <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
-            </table>
+            <!-- Botões de Ação para Envio e Impressão -->
+            <div class="ticket-actions">
+                <button class="btn-action btn-wsp" onclick="enviarWhatsApp()">💬 Enviar WhatsApp</button>
+                <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 Baixar PDF</button>
+            </div>
         </div>
 
         <!-- PAINEL DE ESTATÍSTICAS / DASHBOARD -->
@@ -457,12 +495,10 @@
             const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dataFiltroFormatada || t.dataEntradaRaw.includes(dataFiltroFormatada));
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
-            
-            // Soma do Volume = Peso NF
+
             const totalVolumeNf = filtrados.reduce((sum, item) => sum + item.pesoNf, 0);
             document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVolumeNf) + " KG";
 
-            // Agrupamentos
             const cargasMap = {};
             const movimentoMap = {};
 
@@ -486,7 +522,6 @@
                 movimentoMap[m].pesoVazio += t.pesoVazio;
             });
 
-            // Tabela Tipo de Carga
             const tbodyCarga = document.getElementById('dashTableCarga');
             tbodyCarga.innerHTML = "";
             const cargasKeys = Object.keys(cargasMap);
@@ -506,7 +541,6 @@
                 });
             }
 
-            // Tabela Movimento
             const tbodyMov = document.getElementById('dashTableMovimento');
             tbodyMov.innerHTML = "";
             const movKeys = Object.keys(movimentoMap);
@@ -603,6 +637,67 @@
             const statusEl = document.getElementById('status');
             statusEl.innerText = status;
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
+        }
+
+        // --- ENVIAR TICKET FORMATADO VIA WHATSAPP ---
+        function enviarWhatsApp() {
+            if (!ticketAtual) {
+                alert("Por favor, pesquise e selecione um Ticket primeiro.");
+                return;
+            }
+
+            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const resultado = document.getElementById('resultado').innerText;
+            const status = document.getElementById('status').innerText;
+
+            const mensagem = 
+`*FRIMESA FILIAL FIDF*
+*TICKET BALANÇA*
+📅 Emissão: ${new Date().toLocaleString('pt-BR')}
+
+📌 *ID:* ${ticketAtual.id}
+🚛 *PLACA:* ${ticketAtual.placa}
+🚚 *VEÍCULO:* ${ticketAtual.veiculoModelo}
+👤 *MOTORISTA:* ${ticketAtual.motorista}
+📥 *ENTRADA:* ${ticketAtual.dataEntradaTexto}
+📤 *SAÍDA:* ${ticketAtual.dataSaidaTexto}
+🔒 *LACRE(S):* ${ticketAtual.lacres}
+
+📦 *QT. PALLETS:* ${ticketAtual.quantPallets}
+⚖️ *PESO PALLETS:* ${formatarNumero(ticketAtual.pesoPallets)} KG
+
+🚛 *PESO CHEIO:* ${formatarNumero(ticketAtual.pesoCheio)} KG
+🚛 *PESO VAZIO / TARA:* ${formatarNumero(ticketAtual.pesoVazio)} KG
+⚖️ *PESO LÍQUIDO:* ${formatarNumero(ticketAtual.pesoLiquido)} KG
+📄 *PESO NF:* ${formatarNumero(ticketAtual.pesoNf)} KG
+📊 *DIVERGÊNCIA:* ${formatarNumero(ticketAtual.divergencia)} KG
+
+📐 *REGRA:* ${tipoSel}
+🚨 *RESULTADO:* ${resultado}
+✅ *STATUS:* ${status}
+👷 *CONFERENTE:* ${ticketAtual.conferente}`;
+
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- BAIXAR TICKET EM PDF ---
+        function baixarPDF() {
+            if (!ticketAtual) {
+                alert("Por favor, pesquise e selecione um Ticket primeiro.");
+                return;
+            }
+
+            const element = document.getElementById('ticket');
+            const opt = {
+                margin:       0.2,
+                filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
         }
 
         carregarDadosPlanilha();
