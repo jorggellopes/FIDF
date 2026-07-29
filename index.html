@@ -5,33 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket Balança - Frimesa Filial FIDF</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body { background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .search-container { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
-        .search-container select { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; font-family: inherit; }
-        .ticket-card { width: 450px; background-color: #fff; border: 1px solid #000; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
-        .header-title { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 0; border-bottom: 1px solid #000; }
-        .header-subtitle { text-align: center; font-size: 13px; padding: 2px 0 6px 0; }
-        .header-date { background-color: #b0b0b0; text-align: center; padding: 6px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; }
-        table { width: 100%; border-collapse: collapse; }
-        td { border: 1px solid #000; padding: 4px 8px; font-size: 13px; }
-        .label { font-weight: bold; text-transform: uppercase; width: 50%; }
-        .value { text-align: left; }
-        .value-highlight { background-color: #ffff00; font-weight: bold; }
-        .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
-        .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
-        .spacer-row td { border: none; height: 12px; }
-        select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; }
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0202c 0%, #80001a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+
+        .search-container {
+            background-color: #ffffff;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .search-container label {
+            font-weight: bold;
+            color: #80001a;
+            font-size: 14px;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 15px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .search-container input:focus {
+            border-color: #e0202c;
+        }
+
+        .ticket-card {
+            width: 100%;
+            max-width: 450px;
+            background-color: #fff;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 15px 10px 5px 10px;
+            background-color: #fff;
+        }
+
+        .logo-container img {
+            max-width: 180px;
+            height: auto;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 6px 0;
+            border-bottom: 1px solid #000;
+            text-transform: uppercase;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            font-size: 13px;
+            padding: 4px 0;
+            font-weight: bold;
+        }
+
+        .header-date {
+            background-color: #d9d9d9;
+            text-align: center;
+            padding: 6px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .label {
+            font-weight: bold;
+            text-transform: uppercase;
+            width: 50%;
+        }
+
+        .value {
+            text-align: left;
+        }
+
+        .value-highlight {
+            background-color: #ffff00;
+            font-weight: bold;
+        }
+
+        .status-falta {
+            background-color: #ffff00;
+            color: #d00000;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background-color: #a8f0a8;
+            color: #006000;
+            font-weight: bold;
+        }
+
+        .spacer-row td {
+            border: none;
+            height: 10px;
+        }
+
+        select.table-select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
     <div class="search-container">
-        <label for="selectTicket"><b>SELECIONAR ID:</b></label>
-        <select id="selectTicket" onchange="carregarTicket(this.value)"></select>
+        <label for="inputId">PESQUISAR ID:</label>
+        <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." oninput="filtrarTicket(this.value)">
+        <datalist id="idList"></datalist>
     </div>
 
     <div class="ticket-card" id="ticket">
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/ thumb/8/82/Logo_Frimesa.png/640px-Logo_Frimesa.png" 
+                 onerror="this.src='https://www.frimesa.com.br/images/logo.png'" 
+                 alt="Frimesa Logo">
+        </div>
+
         <div class="header-title">Frimesa Filial FIDF</div>
         <div class="header-subtitle">TICKET BALANÇA</div>
         <div class="header-date" id="dataEmissao">---</div>
@@ -42,10 +180,14 @@
             <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
             <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
             <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+
             <tr class="spacer-row"><td colspan="2"></td></tr>
+
             <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
             <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+
             <tr class="spacer-row"><td colspan="2"></td></tr>
+
             <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
             <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
             <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
@@ -73,33 +215,41 @@
 
     <script>
         let ticketsCache = [];
-        // Altere este URL quando publicar o backend no Render/Railway
-       const API_URL = "https://fidf-api.onrender.com/api/tickets";
+        const API_URL = "https://fidf-api.onrender.com/api/tickets";
 
         async function sincronizarDados() {
             try {
                 const res = await fetch(API_URL);
                 ticketsCache = await res.json();
                 
-                const select = document.getElementById('selectTicket');
-                const selectedVal = select.value;
-                select.innerHTML = "";
+                const datalist = document.getElementById('idList');
+                datalist.innerHTML = "";
 
                 ticketsCache.forEach(t => {
                     const opt = document.createElement('option');
                     opt.value = t.id;
-                    opt.textContent = `${t.id} - ${t.placa}`;
-                    select.appendChild(opt);
+                    opt.label = `${t.id} - ${t.placa}`;
+                    datalist.appendChild(opt);
                 });
 
-                if (selectedVal && ticketsCache.some(x => x.id === selectedVal)) {
-                    select.value = selectedVal;
-                    carregarTicket(selectedVal);
+                const inputVal = document.getElementById('inputId').value.trim();
+                if (inputVal) {
+                    filtrarTicket(inputVal);
                 } else if (ticketsCache.length > 0) {
                     carregarTicket(ticketsCache[0].id);
                 }
             } catch (err) {
                 console.error("Erro ao sincronizar:", err);
+            }
+        }
+
+        function filtrarTicket(termo) {
+            const termoLimpo = termo.trim().toLowerCase();
+            if (!termoLimpo) return;
+
+            const encontrado = ticketsCache.find(x => x.id.toLowerCase() === termoLimpo);
+            if (encontrado) {
+                carregarTicket(encontrado.id);
             }
         }
 
