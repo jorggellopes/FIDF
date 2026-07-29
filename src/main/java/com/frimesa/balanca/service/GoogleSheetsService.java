@@ -7,8 +7,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -39,27 +37,27 @@ public class GoogleSheetsService {
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
                     
-                    // Pula cabeçalho inicial
+                    // Pula apenas o cabeçalho
                     if (primeiraLinha) { 
                         primeiraLinha = false; 
                         continue; 
                     }
 
-                    // Trata separador de vírgula ou ponto e vírgula
-                    String separador = linha.contains(";") ? ";" : ",";
-                    String[] col = linha.split(separador, -1);
+                    // Trata aspas ou separadores comuns (, ou ;)
+                    String[] col = linha.split("(?!\"[^\"]*),(?![^\"]*\")|;", -1);
 
-                    // Garante que exista ao menos 2 colunas e que a primeira não seja vazia
-                    if (col.length < 2) continue;
-                    String idExtraido = limparTexto(col[0]);
-                    if (idExtraido.isEmpty() || idExtraido.equalsIgnoreCase("ID")) continue;
+                    if (col.length < 1) continue;
+
+                    String idVal = limparTexto(col[0]);
+                    if (idVal.isEmpty() || idVal.equalsIgnoreCase("ID")) continue;
 
                     TicketDTO ticket = new TicketDTO();
-                    ticket.setId(idExtraido);
+                    ticket.setId(idVal);
                     ticket.setPlaca(col.length > 1 ? limparTexto(col[1]) : "");
 
-                    ticket.setDataEntrada(col.length > 2 ? converterData(col[2]) : LocalDateTime.now());
-                    ticket.setDataSaida(col.length > 3 ? converterData(col[3]) : LocalDateTime.now());
+                    // Salva as datas exatamente como texto para não quebrar a parsing
+                    ticket.setDataEntradaTexto(col.length > 2 ? limparTexto(col[2]) : "");
+                    ticket.setDataSaidaTexto(col.length > 3 ? limparTexto(col[3]) : "");
 
                     ticket.setLacres(col.length > 4 ? limparTexto(col[4]) : "");
                     ticket.setQuantPallets(col.length > 5 ? converterInteiro(col[5]) : 0);
@@ -122,17 +120,6 @@ public class GoogleSheetsService {
             return Integer.parseInt(limpo);
         } catch (Exception e) {
             return 0;
-        }
-    }
-
-    private LocalDateTime converterData(String valor) {
-        try {
-            String valLimpo = limparTexto(valor);
-            if (valLimpo.isEmpty()) return LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-            return LocalDateTime.parse(valLimpo, formatter);
-        } catch (Exception e) {
-            return LocalDateTime.now();
         }
     }
 }
