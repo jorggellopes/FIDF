@@ -38,20 +38,28 @@ public class GoogleSheetsService {
 
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
-                    if (primeiraLinha) { primeiraLinha = false; continue; } // Pula cabeçalho
+                    
+                    // Pula cabeçalho inicial
+                    if (primeiraLinha) { 
+                        primeiraLinha = false; 
+                        continue; 
+                    }
 
-                    // Detecta se a planilha usa vírgula ou ponto e vírgula
+                    // Trata separador de vírgula ou ponto e vírgula
                     String separador = linha.contains(";") ? ";" : ",";
                     String[] col = linha.split(separador, -1);
 
-                    if (col.length < 5 || col[0].trim().isEmpty()) continue;
+                    // Garante que exista ao menos 2 colunas e que a primeira não seja vazia
+                    if (col.length < 2) continue;
+                    String idExtraido = limparTexto(col[0]);
+                    if (idExtraido.isEmpty() || idExtraido.equalsIgnoreCase("ID")) continue;
 
                     TicketDTO ticket = new TicketDTO();
-                    ticket.setId(limparTexto(col[0]));
-                    ticket.setPlaca(limparTexto(col[1]));
+                    ticket.setId(idExtraido);
+                    ticket.setPlaca(col.length > 1 ? limparTexto(col[1]) : "");
 
-                    ticket.setDataEntrada(converterData(limparTexto(col[2])));
-                    ticket.setDataSaida(converterData(limparTexto(col[3])));
+                    ticket.setDataEntrada(col.length > 2 ? converterData(col[2]) : LocalDateTime.now());
+                    ticket.setDataSaida(col.length > 3 ? converterData(col[3]) : LocalDateTime.now());
 
                     ticket.setLacres(col.length > 4 ? limparTexto(col[4]) : "");
                     ticket.setQuantPallets(col.length > 5 ? converterInteiro(col[5]) : 0);
@@ -93,7 +101,8 @@ public class GoogleSheetsService {
     }
 
     private String limparTexto(String valor) {
-        return valor == null ? "" : valor.replace("\"", "").trim();
+        if (valor == null) return "";
+        return valor.replace("\"", "").replaceAll("[\\r\\n]", "").trim();
     }
 
     private Double converterDouble(String valor) {
@@ -118,9 +127,10 @@ public class GoogleSheetsService {
 
     private LocalDateTime converterData(String valor) {
         try {
-            if (valor == null || valor.trim().isEmpty()) return LocalDateTime.now();
+            String valLimpo = limparTexto(valor);
+            if (valLimpo.isEmpty()) return LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-            return LocalDateTime.parse(valor.trim(), formatter);
+            return LocalDateTime.parse(valLimpo, formatter);
         } catch (Exception e) {
             return LocalDateTime.now();
         }
