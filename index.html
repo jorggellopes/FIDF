@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Balança - Frimesa Filial FIDF</title>
+    <title>Sistema Balança - Frimesa Filial FIDF</title>
     
     <meta name="theme-color" content="#8a2be2">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Ticket Balança">
+    <meta name="apple-mobile-web-app-title" content="Sistema Balança">
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
@@ -23,10 +23,41 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 15px;
+            padding: 15px;
             margin: 0;
         }
 
+        /* --- NAVEGAÇÃO ENTRE AS 3 ABAS --- */
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 1080px;
+            margin-bottom: 12px;
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .nav-btn:hover { background-color: rgba(255, 255, 255, 0.35); }
+        .nav-btn.active {
+            background-color: #ffffff;
+            color: #511d9b;
+            border-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* --- BARRA DE STATUS --- */
         .status-bar {
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
@@ -49,10 +80,21 @@
         .status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
         .status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
 
+        .btn-install {
+            display: none; background-color: #22c55e; color: white; border: none;
+            padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;
+            cursor: pointer; margin-left: 10px;
+        }
+
+        /* --- CONTAINER DE CONTEÚDO DAS ABAS --- */
+        .tab-content { display: none; width: 100%; max-width: 1080px; }
+        .tab-content.active { display: block; }
+
+        /* --- ABA TICKET --- */
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px; width: 100%; max-width: 1080px;
+            display: flex; align-items: center; gap: 10px; width: 100%;
         }
         .search-container label { font-weight: bold; color: #511d9b; font-size: 13px; white-space: nowrap; }
         .search-container input {
@@ -66,58 +108,30 @@
             border-radius: 4px; cursor: pointer; font-size: 16px;
         }
 
-        .btn-install {
-            display: none; background-color: #22c55e; color: white; border: none;
-            padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;
-            cursor: pointer; margin-left: 10px;
-        }
-
         .main-layout {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             width: 100%;
-            max-width: 1080px;
             align-items: flex-start;
             justify-content: center;
         }
 
         .ticket-card {
-            flex: 1;
-            min-width: 320px;
-            max-width: 440px;
-            background-color: #fff;
-            border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-radius: 4px;
-            overflow: visible;
+            flex: 1; min-width: 320px; max-width: 440px;
+            background-color: #fff; border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; overflow: visible;
         }
 
-        /* Botões de Ação Reduzidos e Organizados em Grid 2x2 */
         .ticket-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            padding: 8px;
-            background-color: #f1f5f9;
-            border-top: 1px solid #000;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+            padding: 8px; background-color: #f1f5f9; border-top: 1px solid #000;
         }
         .btn-action {
-            padding: 6px 8px;
-            border: none;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            color: white !important;
-            text-decoration: none !important;
-            transition: opacity 0.2s;
-            text-align: center;
-            height: 32px;
+            padding: 6px 8px; border: none; border-radius: 4px; font-size: 11px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 4px; color: white !important;
+            text-decoration: none !important; transition: opacity 0.2s; height: 32px;
         }
         .btn-action:hover { opacity: 0.85; }
         .btn-wsp { background-color: #25d366; }
@@ -126,66 +140,32 @@
         .btn-print { background-color: #475569; }
 
         .dashboard-card {
-            flex: 1.3;
-            min-width: 340px;
-            max-width: 620px;
-            background-color: #ffffff;
-            border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-radius: 4px;
-            padding: 15px;
+            flex: 1.3; min-width: 340px; max-width: 620px;
+            background-color: #ffffff; border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; padding: 15px;
         }
 
         .dashboard-header {
-            background-color: #511d9b;
-            color: white;
-            padding: 8px 12px;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
+            background-color: #511d9b; color: white; padding: 8px 12px;
+            font-weight: bold; font-size: 14px; text-align: center;
+            border-radius: 4px; margin-bottom: 15px; text-transform: uppercase;
         }
 
         .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            background-color: #f3e8ff;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #d8b4fe;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+            background-color: #f3e8ff; padding: 10px; border-radius: 4px; border: 1px solid #d8b4fe;
         }
         .filter-group label { font-size: 12px; font-weight: bold; color: #511d9b; }
         .filter-group input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; flex: 1; }
 
-        .stat-box-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .stat-box {
-            background-color: #faf5ff;
-            border: 1px solid #c084fc;
-            border-radius: 4px;
-            padding: 10px;
-            text-align: center;
-        }
+        .stat-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background-color: #faf5ff; border: 1px solid #c084fc; border-radius: 4px; padding: 10px; text-align: center; }
         .stat-box .number { font-size: 18px; font-weight: bold; color: #511d9b; }
         .stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
 
         .dash-section-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: #511d9b;
-            border-bottom: 2px solid #511d9b;
-            padding-bottom: 3px;
-            margin: 12px 0 6px 0;
-            text-transform: uppercase;
+            font-size: 11px; font-weight: bold; color: #511d9b;
+            border-bottom: 2px solid #511d9b; padding-bottom: 3px; margin: 12px 0 6px 0; text-transform: uppercase;
         }
 
         .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
@@ -201,8 +181,8 @@
         .header-subtitle { text-align: center; font-size: 12px; padding: 4px 0; font-weight: bold; }
         .header-date { background-color: #d9d9d9; text-align: center; padding: 4px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 12px; }
 
-        table { width: 100%; border-collapse: collapse; }
-        td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
+        table.ticket-tbl { width: 100%; border-collapse: collapse; }
+        table.ticket-tbl td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
         .label { font-weight: bold; text-transform: uppercase; width: 50%; }
         .value { text-align: left; }
         .value-highlight { background-color: #ffff00; font-weight: bold; }
@@ -211,33 +191,93 @@
         .spacer-row td { border: none; height: 6px; }
         select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: bold; cursor: pointer; }
 
-        /* Rodapé de Autenticação com QR Code Integrado */
         .qr-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 8px;
-            border-top: 1px solid #000;
-            background-color: #fafafa;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 8px; border-top: 1px solid #000; background-color: #fafafa;
         }
-        .qr-info {
-            font-size: 8px;
-            color: #333;
-            line-height: 1.2;
-        }
+        .qr-info { font-size: 8px; color: #333; line-height: 1.2; }
         .qr-info strong { display: block; color: #000; font-size: 9px; margin-bottom: 2px; }
         .qr-img { width: 60px; height: 60px; object-fit: contain; }
 
-        /* Oculta elementos desnecessários durante a impressão direta */
+        /* --- ABA ESPELHO --- */
+        .espelho-card, .lancamento-card {
+            background-color: #ffffff;
+            border: 2px solid #000;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .espelho-filters {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 12px;
+            border-radius: 6px; border: 1px solid #d8b4fe;
+        }
+        .espelho-filters label { display: block; font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; }
+        .espelho-filters input, .espelho-filters select {
+            width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
+        }
+        
+        .espelho-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-export {
+            background-color: #16a34a; color: white; border: none; padding: 8px 12px;
+            border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
+        }
+        
+        .table-responsive { width: 100%; overflow-x: auto; }
+        .espelho-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        .espelho-table th { background-color: #511d9b; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #3b1473; }
+        .espelho-table td { padding: 6px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
+        .espelho-table tr:nth-child(even) { background-color: #f8fafc; }
+        .espelho-table tr:hover { background-color: #f1f5f9; }
+        
+        .btn-view-ticket {
+            background-color: #511d9b; color: white; border: none; padding: 3px 8px;
+            border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;
+        }
+
+        .pagination-container {
+            display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px;
+        }
+        .pagination-btns button {
+            background-color: #511d9b; color: white; border: none; padding: 6px 12px;
+            border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: 5px;
+        }
+        .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* --- ABA LANÇAMENTOS (FORMULÁRIO) --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; text-transform: uppercase; }
+        .form-group input, .form-group select {
+            padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #7c3aed; }
+        .btn-save-form {
+            background-color: #511d9b; color: white; border: none; padding: 12px 20px;
+            border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; width: 100%;
+        }
+
         @media print {
             body { background: none; padding: 0; }
-            .status-bar, .search-container, .dashboard-card, .ticket-actions { display: none !important; }
+            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .lancamento-card { display: none !important; }
             .main-layout { display: block; }
             .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
         }
     </style>
 </head>
 <body>
+
+    <!-- MENU DE NAVEGAÇÃO SUPERIOR COM AS 3 ABAS -->
+    <div class="nav-menu">
+        <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
+        <button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
+        <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos</button>
+    </div>
 
     <div class="status-bar">
         <div class="status-indicator">
@@ -250,136 +290,281 @@
         </div>
     </div>
 
-    <div class="search-container">
-        <label for="inputId">PESQUISAR ID:</label>
-        <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
-        <button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
-        <datalist id="idList"></datalist>
-    </div>
-
-    <div class="main-layout">
-        <!-- CONTAINER DO TICKET COM AÇÕES -->
-        <div style="flex:1; min-width:320px; max-width:440px;">
-            <div class="ticket-card" id="ticket">
-                <div class="logo-container">
-                    <img id="companyLogo" 
-                         src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
-                         alt="Logo Frimesa FIDF"
-                         onerror="tratarErroLogo(this)">
-                </div>
-
-                <div class="header-title">Frimesa Filial FIDF</div>
-                <div class="header-subtitle">TICKET BALANÇA</div>
-                <div class="header-date" id="dataEmissao">---</div>
-
-                <table>
-                    <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
-                    <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
-                    <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
-                    <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
-                    <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
-                    <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
-                    <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
-                    <tr class="spacer-row"><td colspan="2"></td></tr>
-                    <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
-                    <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
-                    <tr class="spacer-row"><td colspan="2"></td></tr>
-                    <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
-                    <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
-                    <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
-                    <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
-                    <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
-                    <tr>
-                        <td class="label">
-                            <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
-                                <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
-                                <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
-                                <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
-                                <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
-                                <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
-                                <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
-                                <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
-                                <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
-                            </select>
-                        </td>
-                        <td class="value" id="toleranciaValor">---</td>
-                    </tr>
-                    <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
-                    <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
-                    <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
-                </table>
-
-                <!-- Rodapé de Autenticação Digital com QR Code -->
-                <div class="qr-footer">
-                    <div class="qr-info">
-                        <strong>DOCUMENTO AUTENTICADO DIGITALMENTE</strong>
-                        <span>Frimesa Cooperativa Central - Filial FIDF</span><br>
-                        <span>Autenticação: <span id="authHash">---</span></span>
-                    </div>
-                    <img id="qrCodeImg" class="qr-img" src="" alt="QR Code Autenticação">
-                </div>
-            </div>
-
-            <!-- Botões de Ação Organizados -->
-            <div class="ticket-actions">
-                <a href="https://wa.me" target="_blank" class="btn-action btn-wsp">💬 WhatsApp</a>
-                <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 PDF</button>
-                <button class="btn-action btn-email" onclick="enviarEmail()">✉️ E-mail</button>
-                <button class="btn-action btn-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
-            </div>
+    <!-- ==================== ABA 1: TICKET ==================== -->
+    <div id="ticketTab" class="tab-content active">
+        <div class="search-container">
+            <label for="inputId">PESQUISAR ID:</label>
+            <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
+            <button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
+            <datalist id="idList"></datalist>
         </div>
 
-        <!-- PAINEL DE ESTATÍSTICAS / DASHBOARD -->
-        <div class="dashboard-card">
-            <div class="dashboard-header">Resumo Diário da Operação</div>
+        <div class="main-layout">
+            <!-- CONTAINER DO TICKET COM AÇÕES -->
+            <div style="flex:1; min-width:320px; max-width:440px;">
+                <div class="ticket-card" id="ticket">
+                    <div class="logo-container">
+                        <img id="companyLogo" 
+                             src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
+                             alt="Logo Frimesa FIDF"
+                             onerror="tratarErroLogo(this)">
+                    </div>
 
-            <div class="filter-group">
-                <label for="filterDate">FILTRAR DATA:</label>
-                <input type="date" id="filterDate" onchange="atualizarDashboard()">
+                    <div class="header-title">Frimesa Filial FIDF</div>
+                    <div class="header-subtitle">TICKET BALANÇA</div>
+                    <div class="header-date" id="dataEmissao">---</div>
+
+                    <table class="ticket-tbl">
+                        <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+                        <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+                        <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
+                        <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
+                        <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+                        <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+                        <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+                        <tr class="spacer-row"><td colspan="2"></td></tr>
+                        <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+                        <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+                        <tr class="spacer-row"><td colspan="2"></td></tr>
+                        <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+                        <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+                        <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+                        <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+                        <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+                        <tr>
+                            <td class="label">
+                                <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
+                                    <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
+                                    <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
+                                    <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
+                                    <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
+                                    <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
+                                    <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
+                                    <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
+                                    <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
+                                </select>
+                            </td>
+                            <td class="value" id="toleranciaValor">---</td>
+                        </tr>
+                        <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+                        <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+                        <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
+                    </table>
+
+                    <div class="qr-footer">
+                        <div class="qr-info">
+                            <strong>DOCUMENTO AUTENTICADO DIGITALMENTE</strong>
+                            <span>Frimesa Cooperativa Central - Filial FIDF</span><br>
+                            <span>Autenticação: <span id="authHash">---</span></span>
+                        </div>
+                        <img id="qrCodeImg" class="qr-img" src="" alt="QR Code Autenticação">
+                    </div>
+                </div>
+
+                <div class="ticket-actions">
+                    <a href="https://wa.me" target="_blank" class="btn-action btn-wsp">💬 WhatsApp</a>
+                    <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 PDF</button>
+                    <button class="btn-action btn-email" onclick="enviarEmail()">✉️ E-mail</button>
+                    <button class="btn-action btn-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
+                </div>
             </div>
 
-            <div class="stat-box-container">
-                <div class="stat-box">
-                    <div class="number" id="dashTotalVeiculos">0</div>
-                    <div class="label">Total Veículos</div>
+            <!-- PAINEL DE ESTATÍSTICAS / DASHBOARD -->
+            <div class="dashboard-card">
+                <div class="dashboard-header">Resumo Diário da Operação</div>
+
+                <div class="filter-group">
+                    <label for="filterDate">FILTRAR DATA:</label>
+                    <input type="date" id="filterDate" onchange="atualizarDashboard()">
                 </div>
-                <div class="stat-box">
-                    <div class="number" id="dashTotalVolumeNf">0,00 KG</div>
-                    <div class="label">Volume (Peso NF)</div>
+
+                <div class="stat-box-container">
+                    <div class="stat-box">
+                        <div class="number" id="dashTotalVeiculos">0</div>
+                        <div class="label">Total Veículos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="dashTotalVolumeNf">0,00 KG</div>
+                        <div class="label">Volume (Peso NF)</div>
+                    </div>
+                </div>
+
+                <div class="dash-section-title">Por Tipo de Carga</div>
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Tipo Carga</th>
+                            <th>Qt Veíc.</th>
+                            <th>Qt Pallet</th>
+                            <th>Peso NF (KG)</th>
+                            <th>Peso Vazio (KG)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashTableCarga">
+                        <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="dash-section-title">Por Movimento</div>
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">Movimento</th>
+                            <th>Qt Veíc.</th>
+                            <th>Qt Pallet</th>
+                            <th>Peso NF (KG)</th>
+                            <th>Peso Vazio (KG)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashTableMovimento">
+                        <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ABA 2: ESPELHO DA PLANILHA ==================== -->
+    <div id="espelhoTab" class="tab-content">
+        <div class="espelho-card">
+            
+            <div class="espelho-filters">
+                <div>
+                    <label for="espFiltroBusca">PESQUISA (ID / Placa / Motorista):</label>
+                    <input type="text" id="espFiltroBusca" placeholder="Digite para filtrar..." oninput="filtrarEspelho()">
+                </div>
+                <div>
+                    <label for="espDataInicio">DATA INICIAL:</label>
+                    <input type="date" id="espDataInicio" onchange="filtrarEspelho()">
+                </div>
+                <div>
+                    <label for="espDataFim">DATA FINAL:</label>
+                    <input type="date" id="espDataFim" onchange="filtrarEspelho()">
+                </div>
+                <div>
+                    <label for="espFiltroStatus">STATUS:</label>
+                    <select id="espFiltroStatus" onchange="filtrarEspelho()">
+                        <option value="TODOS">TODOS OS STATUS</option>
+                        <option value="OK">OK</option>
+                        <option value="FALTA">FALTA</option>
+                        <option value="SOBRA">SOBRA</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="dash-section-title">Por Tipo de Carga</div>
-            <table class="dash-table">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;">Tipo Carga</th>
-                        <th>Qt Veíc.</th>
-                        <th>Qt Pallet</th>
-                        <th>Peso NF (KG)</th>
-                        <th>Peso Vazio (KG)</th>
-                    </tr>
-                </thead>
-                <tbody id="dashTableCarga">
-                    <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
-                </tbody>
-            </table>
+            <div class="espelho-tools">
+                <span id="espTotalRegistros" style="font-size:12px; font-weight:bold; color:#511d9b;">Listando 0 registros</span>
+                <button class="btn-export" onclick="exportarExcel()">🟢 Exportar Excel / CSV</button>
+            </div>
 
-            <div class="dash-section-title">Por Movimento</div>
-            <table class="dash-table">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;">Movimento</th>
-                        <th>Qt Veíc.</th>
-                        <th>Qt Pallet</th>
-                        <th>Peso NF (KG)</th>
-                        <th>Peso Vazio (KG)</th>
-                    </tr>
-                </thead>
-                <tbody id="dashTableMovimento">
-                    <tr><td colspan="5" style="text-align:center;">Sem dados para a data selecionada</td></tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="espelho-table">
+                    <thead>
+                        <tr>
+                            <th>Ação</th>
+                            <th>ID</th>
+                            <th>Placa</th>
+                            <th>Veículo</th>
+                            <th>Motorista</th>
+                            <th>Entrada</th>
+                            <th>Saída</th>
+                            <th>Peso Cheio</th>
+                            <th>Peso Vazio</th>
+                            <th>Peso NF</th>
+                            <th>Divergência</th>
+                            <th>Status</th>
+                            <th>Conferente</th>
+                        </tr>
+                    </thead>
+                    <tbody id="espelhoTableBody">
+                        <tr><td colspan="13" style="text-align:center; padding: 20px;">Carregando registros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-container">
+                <div>
+                    Página <span id="currentPageNum">1</span> de <span id="totalPagesNum">1</span>
+                </div>
+                <div class="pagination-btns">
+                    <button id="btnPrevPage" onclick="mudarPagina(-1)">Anterior</button>
+                    <button id="btnNextPage" onclick="mudarPagina(1)">Próxima</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== ABA 3: LANÇAMENTOS (FORMULÁRIO) ==================== -->
+    <div id="lancamentoTab" class="tab-content">
+        <div class="lancamento-card">
+            <div class="dashboard-header" style="margin-bottom:20px;">Novo Lançamento de Pesagem</div>
+            
+            <form id="formLancamento" onsubmit="salvarNovoLancamento(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="formPlaca">Placa *</label>
+                        <input type="text" id="formPlaca" placeholder="Ex: ABC1D23" required style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="formVeiculo">Veículo / Modelo *</label>
+                        <input type="text" id="formVeiculo" placeholder="Ex: CARRETA 28 PT" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formMotorista">Motorista *</label>
+                        <input type="text" id="formMotorista" placeholder="Nome do Motorista" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formDoca">Nº da Doca</label>
+                        <input type="text" id="formDoca" placeholder="Ex: DOCA 01">
+                    </div>
+                    <div class="form-group">
+                        <label for="formMovimento">Movimento *</label>
+                        <select id="formMovimento" required>
+                            <option value="ENTRADA">ENTRADA</option>
+                            <option value="SAIDA">SAÍDA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="formTipoCarga">Tipo de Carga *</label>
+                        <input type="text" id="formTipoCarga" placeholder="Ex: TRANSFERÊNCIA" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formNf">Nº NF-e</label>
+                        <input type="text" id="formNf" placeholder="Ex: 3660462">
+                    </div>
+                    <div class="form-group">
+                        <label for="formLacres">Lacre(s) Saída</label>
+                        <input type="text" id="formLacres" placeholder="Ex: 180124">
+                    </div>
+                    <div class="form-group">
+                        <label for="formPallets">Total de Pallets</label>
+                        <input type="number" id="formPallets" placeholder="Ex: 28" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="formPesoPallets">Peso Pallets (KG)</label>
+                        <input type="number" step="0.01" id="formPesoPallets" placeholder="Ex: 756.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="formPesoCheio">Peso Cheio (KG) *</label>
+                        <input type="number" step="0.01" id="formPesoCheio" placeholder="Ex: 48280.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formPesoVazio">Peso Vazio / Tara (KG) *</label>
+                        <input type="number" step="0.01" id="formPesoVazio" placeholder="Ex: 15400.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formPesoNf">Peso NF (KG) *</label>
+                        <input type="number" step="0.01" id="formPesoNf" placeholder="Ex: 32880.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="formConferente">Conferente *</label>
+                        <input type="text" id="formConferente" placeholder="Nome do Conferente" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save-form">💾 Gravar Lançamento na Planilha</button>
+            </form>
         </div>
     </div>
 
@@ -387,15 +572,32 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdD2cAUPKXWhbK6cTtPmtTYT1vvhly2Q0ZgiNbmTnVP2yLIiyOAUrp66vSeuf1MYgDVbmyJw9hsHVr/pub?output=csv";
 
         let ticketsCache = [];
+        let filtradosEspelho = [];
         let ticketAtual = null;
         let deferredPrompt;
         let logoTentativa = 1;
+
+        let paginaAtual = 1;
+        const itensPorPagina = 15;
 
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
             "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
+
+        // --- NAVEGAÇÃO DE ABAS ---
+        function trocarAba(abaId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(abaId).classList.add('active');
+            btnElement.classList.add('active');
+
+            if (abaId === 'espelhoTab') {
+                filtrarEspelho();
+            }
+        }
 
         function tratarErroLogo(img) {
             if (logoTentativa === 1) {
@@ -475,10 +677,15 @@
                     const pesoLiquido = pesoCheio - pesoVazio;
                     const divergencia = pesoLiquido - pesoNf;
 
+                    const veiculo = limpar(col[2]) || '---';
+                    const tolTipo = identificarToleranciaPorVeiculo(veiculo);
+                    const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
+                    const stCalculado = Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
+
                     ticketsCache.push({
                         id: idVal,
                         placa: limpar(col[1]),
-                        veiculoModelo: limpar(col[2]) || '---',
+                        veiculoModelo: veiculo,
                         motorista: limpar(col[3]) || '---',
                         movimento: limpar(col[5]) || 'N/A',
                         tipoCarga: limpar(col[6]) || 'N/A',
@@ -494,7 +701,8 @@
                         pesoNf: pesoNf,
                         divergencia: divergencia,
                         conferente: limpar(col[22]) || '---',
-                        toleranciaTipo: limpar(col[22]) || "TOLERÂNCIA TRUCK"
+                        toleranciaTipo: tolTipo,
+                        statusCalculado: stCalculado
                     });
                 }
 
@@ -507,6 +715,7 @@
                 }
 
                 atualizarDashboard();
+                filtrarEspelho();
 
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
@@ -525,6 +734,129 @@
                 console.error("Erro ao carregar CSV público:", err);
                 atualizarFarol(false, "FALHA DE COMUNICAÇÃO");
             }
+        }
+
+        // --- LÓGICA DA TELA ESPELHO ---
+        function filtrarEspelho() {
+            const busca = (document.getElementById('espFiltroBusca').value || '').trim().toUpperCase();
+            const dtInicio = document.getElementById('espDataInicio').value;
+            const dtFim = document.getElementById('espDataFim').value;
+            const stFiltro = document.getElementById('espFiltroStatus').value;
+
+            filtradosEspelho = ticketsCache.filter(t => {
+                const matchTexto = !busca || 
+                    t.id.toUpperCase().includes(busca) || 
+                    t.placa.toUpperCase().includes(busca) || 
+                    t.motorista.toUpperCase().includes(busca) ||
+                    t.conferente.toUpperCase().includes(busca);
+
+                const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
+
+                let matchData = true;
+                if (t.dataEntradaRaw) {
+                    const p = t.dataEntradaRaw.split('/');
+                    if (p.length === 3) {
+                        const isoData = `${p[2]}-${p[1]}-${p[0]}`;
+                        if (dtInicio && isoData < dtInicio) matchData = false;
+                        if (dtFim && isoData > dtFim) matchData = false;
+                    }
+                }
+
+                return matchTexto && matchStatus && matchData;
+            });
+
+            paginaAtual = 1;
+            renderizarTabelaEspelho();
+        }
+
+        function renderizarTabelaEspelho() {
+            const tbody = document.getElementById('espelhoTableBody');
+            tbody.innerHTML = "";
+
+            document.getElementById('espTotalRegistros').innerText = `Listando ${filtradosEspelho.length} registro(s)`;
+
+            if (filtradosEspelho.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:20px;">Nenhum registro encontrado com os filtros aplicados.</td></tr>`;
+                document.getElementById('currentPageNum').innerText = "0";
+                document.getElementById('totalPagesNum').innerText = "0";
+                document.getElementById('btnPrevPage').disabled = true;
+                document.getElementById('btnNextPage').disabled = true;
+                return;
+            }
+
+            const totalPaginas = Math.ceil(filtradosEspelho.length / itensPorPagina);
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const paginaItens = filtradosEspelho.slice(inicio, fim);
+
+            paginaItens.forEach(t => {
+                const stClass = t.statusCalculado === 'OK' ? 'status-ok' : 'status-falta';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:center;">
+                            <button class="btn-view-ticket" onclick="abrirTicketPorId('${t.id}')">🎫 Ver</button>
+                        </td>
+                        <td style="font-weight:bold; background-color:#ffffcc;">${t.id}</td>
+                        <td style="font-weight:bold;">${t.placa}</td>
+                        <td>${t.veiculoModelo}</td>
+                        <td>${t.motorista}</td>
+                        <td>${t.dataEntradaTexto}</td>
+                        <td>${t.dataSaidaTexto}</td>
+                        <td>${formatarNumero(t.pesoCheio)}</td>
+                        <td>${formatarNumero(t.pesoVazio)}</td>
+                        <td>${formatarNumero(t.pesoNf)}</td>
+                        <td style="font-weight:bold;">${formatarNumero(t.divergencia)}</td>
+                        <td class="${stClass}" style="text-align:center;">${t.statusCalculado}</td>
+                        <td>${t.conferente}</td>
+                    </tr>`;
+            });
+
+            document.getElementById('currentPageNum').innerText = paginaAtual;
+            document.getElementById('totalPagesNum').innerText = totalPaginas;
+            document.getElementById('btnPrevPage').disabled = (paginaAtual <= 1);
+            document.getElementById('btnNextPage').disabled = (paginaAtual >= totalPaginas);
+        }
+
+        function mudarPagina(delta) {
+            paginaAtual += delta;
+            renderizarTabelaEspelho();
+        }
+
+        function abrirTicketPorId(id) {
+            const enc = ticketsCache.find(x => x.id === id);
+            if (enc) {
+                renderizarTicket(enc);
+                trocarAba('ticketTab', document.querySelectorAll('.nav-btn')[0]);
+            }
+        }
+
+        function exportarExcel() {
+            if (filtradosEspelho.length === 0) {
+                alert("Nenhum dado disponível para exportar!");
+                return;
+            }
+
+            let csvStr = "ID;Placa;Veiculo;Motorista;DataEntrada;DataSaida;PesoCheio;PesoVazio;PesoNF;Divergencia;Status;Conferente\n";
+            filtradosEspelho.forEach(t => {
+                csvStr += `"${t.id}";"${t.placa}";"${t.veiculoModelo}";"${t.motorista}";"${t.dataEntradaTexto}";"${t.dataSaidaTexto}";"${t.pesoCheio}";"${t.pesoVazio}";"${t.pesoNf}";"${t.divergencia}";"${t.statusCalculado}";"${t.conferente}"\n`;
+            });
+
+            const blob = new Blob(["\ufeff" + csvStr], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Espelho_Balanca_Frimesa_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- LÓGICA DE SALVAMENTO DE LANÇAMENTOS (PREPARADA PARA ETAPA 3) ---
+        function salvarNovoLancamento(e) {
+            e.preventDefault();
+            alert("Aba de Lançamentos pronta no layout! Quando configurarmos a conexão de gravação no Apps Script (Etapa 3), este formulário inserirá a nova linha automaticamente na planilha.");
         }
 
         function atualizarDashboard() {
@@ -603,10 +935,7 @@
             }
         }
 
-        function limpar(val) {
-            return val ? val.replace(/^"|"$/g, '').replace(/\r/g, '').trim() : '';
-        }
-
+        function limpar(val) { return val ? val.replace(/^"|"$/g, '').replace(/\r/g, '').trim() : ''; }
         function parseNum(val) {
             if (!val) return 0;
             const limpo = val.replace(/^"|"$/g, '').replace(/\./g, '').replace(',', '.').trim();
@@ -709,7 +1038,6 @@
             document.getElementById('qrCodeImg').src = qrUrl;
         }
 
-        // --- BAIXAR TICKET EM PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -735,7 +1063,6 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        // --- ENVIAR RESUMO POR E-MAIL ---
         function enviarEmail() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -781,7 +1108,6 @@ AUTENTICAÇÃO: ${hash}
             window.location.href = `mailto:?subject=${assunto}&body=${corpo}`;
         }
 
-        // --- IMPRIMIR TICKET DIRETO ---
         function imprimirTicket() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
