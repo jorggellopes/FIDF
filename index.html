@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket Balança - Frimesa Filial FIDF</title>
     
-    <!-- Configurações para Atalho de Área de Trabalho / PWA -->
     <meta name="theme-color" content="#8a2be2">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Ticket Balança">
@@ -15,7 +14,6 @@
     <style>
         * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         
-        /* Fundo Roxo Claro Solicitado */
         body {
             background: linear-gradient(135deg, #a259ff 0%, #6c2bd9 100%);
             min-height: 100vh;
@@ -76,7 +74,6 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;
         }
         
-        /* Conteiner e Logo Proporcional */
         .logo-container { 
             text-align: center; 
             padding: 15px 10px 10px 10px; 
@@ -127,7 +124,6 @@
 
     <div class="ticket-card" id="ticket">
         <div class="logo-container">
-            <!-- Link direto e proporcional para a imagem do Google Drive -->
             <img src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
                  alt="Logo Frimesa FIDF"
                  onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/82/Logo_Frimesa.png'">
@@ -185,7 +181,6 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        // Captura o evento de instalação de atalho para a área de trabalho
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -244,26 +239,44 @@
                     const idVal = limpar(col[0]);
                     if (!idVal || idVal.toUpperCase() === 'ID') continue;
 
-                    const pesoCheio = parseNum(col[7]);
-                    const pesoVazio = parseNum(col[8]);
-                    const pesoNf = parseNum(col[9]);
+                    // MAPEAMENTO EXATO DE COLUNAS DA PLANILHA REAL:
+                    // Coluna A (0)  = ID
+                    // Coluna B (1)  = Placa
+                    // Coluna I (8)  = Data Entrada
+                    // Coluna J (9)  = Hora Entrada
+                    // Coluna K (10) = Data Saida
+                    // Coluna L (11) = Hora Saida
+                    // Coluna M (12) = Lacre Saida
+                    // Coluna P (15) = Total Pallets
+                    // Coluna Q (16) = Peso Pallets
+                    // Coluna R (17) = Peso Cheio
+                    // Coluna S (18) = Peso Vazio
+                    // Coluna U (20) = Peso NF
+                    // Coluna W (22) = Tolerância Tipo
+
+                    const dataEntradaStr = (limpar(col[8]) + ' ' + limpar(col[9])).trim();
+                    const dataSaidaStr = (limpar(col[10]) + ' ' + limpar(col[11])).trim();
+
+                    const pesoCheio = parseNum(col[17]);
+                    const pesoVazio = parseNum(col[18]);
+                    const pesoNf = parseNum(col[20]);
                     const pesoLiquido = pesoCheio - pesoVazio;
                     const divergencia = pesoLiquido - pesoNf;
 
                     ticketsCache.push({
                         id: idVal,
                         placa: limpar(col[1]),
-                        dataEntradaTexto: limpar(col[2]),
-                        dataSaidaTexto: limpar(col[3]),
-                        lacres: limpar(col[4]),
-                        quantPallets: parseNum(col[5]),
-                        pesoPallets: parseNum(col[6]),
+                        dataEntradaTexto: dataEntradaStr || '---',
+                        dataSaidaTexto: dataSaidaStr || '---',
+                        lacres: limpar(col[12]) || '---',
+                        quantPallets: parseNum(col[15]),
+                        pesoPallets: parseNum(col[16]),
                         pesoCheio: pesoCheio,
                         pesoVazio: pesoVazio,
                         pesoLiquido: pesoLiquido,
                         pesoNf: pesoNf,
                         divergencia: divergencia,
-                        toleranciaTipo: limpar(col[10]) || "TOLERÂNCIA TRUCK"
+                        toleranciaTipo: limpar(col[22]) || "TOLERÂNCIA TRUCK"
                     });
                 }
 
@@ -332,8 +345,8 @@
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
             document.getElementById('id').innerText = t.id;
             document.getElementById('placa').innerText = t.placa;
-            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---';
-            document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
+            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto;
+            document.getElementById('dataSaida').innerText = t.dataSaidaTexto;
             document.getElementById('lacres').innerText = t.lacres;
             document.getElementById('quantPallets').innerText = t.quantPallets;
             document.getElementById('pesoPallets').innerText = formatarNumero(t.pesoPallets);
