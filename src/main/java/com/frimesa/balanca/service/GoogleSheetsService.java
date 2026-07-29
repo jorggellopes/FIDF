@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -28,33 +29,36 @@ public class GoogleSheetsService {
 
     public List<TicketDTO> buscarDadosPlanilha() {
         List<TicketDTO> lista = new ArrayList<>();
-
+        
         try {
             URL url = new URL(CSV_URL);
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                 String linha;
                 boolean primeiraLinha = true;
 
                 while ((linha = reader.readLine()) != null) {
-                    if (primeiraLinha) { primeiraLinha = false; continue; }
+                    if (linha.trim().isEmpty()) continue;
+                    if (primeiraLinha) { primeiraLinha = false; continue; } // Pula cabeçalho
 
-                    String[] col = linha.split(",", -1);
-                    if (col.length < 10 || col[0].trim().isEmpty()) continue;
+                    // Detecta se a planilha usa vírgula ou ponto e vírgula
+                    String separador = linha.contains(";") ? ";" : ",";
+                    String[] col = linha.split(separador, -1);
+
+                    if (col.length < 5 || col[0].trim().isEmpty()) continue;
 
                     TicketDTO ticket = new TicketDTO();
-                    ticket.setId(col[0].trim());
-                    ticket.setPlaca(col[1].trim());
+                    ticket.setId(limparTexto(col[0]));
+                    ticket.setPlaca(limparTexto(col[1]));
 
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-                    ticket.setDataEntrada(LocalDateTime.parse(col[2].trim(), formatter));
-                    ticket.setDataSaida(LocalDateTime.parse(col[3].trim(), formatter));
+                    ticket.setDataEntrada(converterData(limparTexto(col[2])));
+                    ticket.setDataSaida(converterData(limparTexto(col[3])));
 
-                    ticket.setLacres(col[4].trim());
-                    ticket.setQuantPallets(Integer.parseInt(col[5].trim()));
-                    ticket.setPesoPallets(Double.parseDouble(col[6].trim().replace(",", ".")));
-                    ticket.setPesoCheio(Double.parseDouble(col[7].trim().replace(",", ".")));
-                    ticket.setPesoVazio(Double.parseDouble(col[8].trim().replace(",", ".")));
-                    ticket.setPesoNf(Double.parseDouble(col[9].trim().replace(",", ".")));
+                    ticket.setLacres(col.length > 4 ? limparTexto(col[4]) : "");
+                    ticket.setQuantPallets(col.length > 5 ? converterInteiro(col[5]) : 0);
+                    ticket.setPesoPallets(col.length > 6 ? converterDouble(col[6]) : 0.0);
+                    ticket.setPesoCheio(col.length > 7 ? converterDouble(col[7]) : 0.0);
+                    ticket.setPesoVazio(col.length > 8 ? converterDouble(col[8]) : 0.0);
+                    ticket.setPesoNf(col.length > 9 ? converterDouble(col[9]) : 0.0);
 
                     double pesoLiquido = ticket.getPesoCheio() - ticket.getPesoVazio();
                     double divergencia = pesoLiquido - ticket.getPesoNf();
@@ -62,10 +66,10 @@ public class GoogleSheetsService {
                     ticket.setPesoLiquido(pesoLiquido);
                     ticket.setDivergencia(divergencia);
 
-                    String tolTipo = (col.length > 10 && !col[10].trim().isEmpty()) ? col[10].trim() : "TOLERÂNCIA TRUCK";
+                    String tolTipo = (col.length > 10 && !col[10].trim().isEmpty()) ? limparTexto(col[10]) : "TOLERÂNCIA TRUCK";
                     ticket.setToleranciaTipo(tolTipo);
 
-                    double limiteKg = TOLERANCIAS.getOrDefault(tolTipo, 24.0);
+                    double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
                     ticket.setLimiteToleranciaKg(limiteKg);
 
                     if (Math.abs(divergencia) <= limiteKg) {
@@ -86,5 +90,39 @@ public class GoogleSheetsService {
             e.printStackTrace();
         }
         return lista;
+    }
+
+    private String limparTexto(String valor) {
+        return valor == null ? "" : valor.replace("\"", "").trim();
+    }
+
+    private Double converterDouble(String valor) {
+        try {
+            if (valor == null || valor.trim().isEmpty()) return 0.0;
+            String limpo = valor.replace("\"", "").replace(".", "").replace(",", ".").trim();
+            return Double.parseDouble(limpo);
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private Integer converterInteiro(String valor) {
+        try {
+            if (valor == null || valor.trim().isEmpty()) return 0;
+            String limpo = valor.replace("\"", "").replaceAll("[^0-9]", "").trim();
+            return Integer.parseInt(limpo);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private LocalDateTime converterData(String valor) {
+        try {
+            if (valor == null || valor.trim().isEmpty()) return LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            return LocalDateTime.parse(valor.trim(), formatter);
+        } catch (Exception e) {
+            return LocalDateTime.now();
+        }
     }
 }
