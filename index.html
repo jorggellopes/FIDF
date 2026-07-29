@@ -28,7 +28,7 @@
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
             width: 100%;
-            max-width: 480px;
+            max-width: 980px;
             padding: 8px 15px;
             border-radius: 6px;
             margin-bottom: 12px;
@@ -49,7 +49,7 @@
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px; width: 100%; max-width: 480px;
+            display: flex; align-items: center; gap: 10px; width: 100%; max-width: 980px;
         }
         .search-container label { font-weight: bold; color: #511d9b; font-size: 13px; white-space: nowrap; }
         .search-container input {
@@ -69,23 +69,99 @@
             cursor: pointer; margin-left: 10px;
         }
 
+        /* Layout Grid Principal (Ticket + Dashboard Lado a Lado) */
+        .main-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 980px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
         .ticket-card {
-            width: 100%; max-width: 480px; background-color: #fff; border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;
+            flex: 1;
+            min-width: 320px;
+            max-width: 480px;
+            background-color: #fff;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            overflow: hidden;
         }
-        
-        .logo-container { 
-            text-align: center; 
-            padding: 15px 10px 10px 10px; 
-            background-color: #fff; 
+
+        /* Painel de Estatísticas ao Lado */
+        .dashboard-card {
+            flex: 1;
+            min-width: 320px;
+            max-width: 480px;
+            background-color: #ffffff;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            padding: 15px;
         }
-        .logo-container img { 
-            max-width: 220px; 
-            max-height: 90px;
-            width: auto;
-            height: auto;
-            object-fit: contain;
+
+        .dashboard-header {
+            background-color: #511d9b;
+            color: white;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
         }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background-color: #f3e8ff;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #d8b4fe;
+        }
+        .filter-group label { font-size: 12px; font-weight: bold; color: #511d9b; }
+        .filter-group input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; flex: 1; }
+
+        .stat-box-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background-color: #faf5ff;
+            border: 1px solid #c084fc;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-box .number { font-size: 20px; font-weight: bold; color: #511d9b; }
+        .stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
+
+        .dash-section-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #511d9b;
+            border-bottom: 2px solid #511d9b;
+            padding-bottom: 3px;
+            margin: 12px 0 6px 0;
+            text-transform: uppercase;
+        }
+
+        .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .dash-table td { border: 1px solid #ddd; padding: 4px 6px; font-size: 11px; }
+        .dash-table .title-col { font-weight: bold; background-color: #f8fafc; }
+        .dash-table .num-col { text-align: right; font-weight: bold; }
+
+        .logo-container { text-align: center; padding: 15px 10px 10px 10px; background-color: #fff; }
+        .logo-container img { max-width: 220px; max-height: 90px; width: auto; height: auto; object-fit: contain; }
 
         .header-title { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
         .header-subtitle { text-align: center; font-size: 13px; padding: 4px 0; font-weight: bold; }
@@ -122,50 +198,93 @@
         <datalist id="idList"></datalist>
     </div>
 
-    <div class="ticket-card" id="ticket">
-        <div class="logo-container">
-            <img src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
-                 alt="Logo Frimesa FIDF"
-                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/8/82/Logo_Frimesa.png'">
+    <div class="main-layout">
+        <!-- TICKET BALANÇA -->
+        <div class="ticket-card" id="ticket">
+            <div class="logo-container">
+                <!-- Logotipo com Lógica de Fallback Automático entre links do Drive -->
+                <img id="companyLogo" 
+                     src="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA" 
+                     alt="Logo Frimesa FIDF"
+                     onerror="tratarErroLogo(this)">
+            </div>
+
+            <div class="header-title">Frimesa Filial FIDF</div>
+            <div class="header-subtitle">TICKET BALANÇA</div>
+            <div class="header-date" id="dataEmissao">---</div>
+
+            <table>
+                <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+                <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+                <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
+                <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
+                <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+                <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+                <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+                <tr class="spacer-row"><td colspan="2"></td></tr>
+                <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+                <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+                <tr class="spacer-row"><td colspan="2"></td></tr>
+                <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+                <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+                <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+                <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+                <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+                <tr>
+                    <td class="label">
+                        <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
+                            <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
+                            <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
+                            <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
+                            <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
+                            <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
+                            <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
+                            <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
+                            <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
+                        </select>
+                    </td>
+                    <td class="value" id="toleranciaValor">---</td>
+                </tr>
+                <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+                <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+                <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
+            </table>
         </div>
 
-        <div class="header-title">Frimesa Filial FIDF</div>
-        <div class="header-subtitle">TICKET BALANÇA</div>
-        <div class="header-date" id="dataEmissao">---</div>
+        <!-- PAINEL DE ESTATÍSTICAS / DASHBOARD -->
+        <div class="dashboard-card">
+            <div class="dashboard-header">Resumo Diário da Operação</div>
 
-        <table>
-            <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
-            <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
-            <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
-            <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
-            <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
-            <tr class="spacer-row"><td colspan="2"></td></tr>
-            <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
-            <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
-            <tr class="spacer-row"><td colspan="2"></td></tr>
-            <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
-            <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
-            <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
-            <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
-            <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
-            <tr>
-                <td class="label">
-                    <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
-                        <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
-                        <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
-                        <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
-                        <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
-                        <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
-                        <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
-                        <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
-                        <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
-                    </select>
-                </td>
-                <td class="value" id="toleranciaValor">---</td>
-            </tr>
-            <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
-            <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
-        </table>
+            <div class="filter-group">
+                <label for="filterDate">FILTRAR DATA:</label>
+                <input type="date" id="filterDate" onchange="atualizarDashboard()">
+            </div>
+
+            <div class="stat-box-container">
+                <div class="stat-box">
+                    <div class="number" id="dashTotalVeiculos">0</div>
+                    <div class="label">Total Veículos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="dashTotalPallets">0</div>
+                    <div class="label">Volume (Pallets)</div>
+                </div>
+            </div>
+
+            <div class="dash-section-title">Por Tipo de Carga</div>
+            <table class="dash-table">
+                <tbody id="dashTableCarga">
+                    <tr><td colspan="2" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                </tbody>
+            </table>
+
+            <div class="dash-section-title">Por Movimento</div>
+            <table class="dash-table">
+                <tbody id="dashTableMovimento">
+                    <tr><td colspan="2" style="text-align:center;">Sem dados para a data selecionada</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -174,12 +293,24 @@
         let ticketsCache = [];
         let ticketAtual = null;
         let deferredPrompt;
+        let logoTentativa = 1;
 
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
             "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
+
+        // Trata erro de carregamento de imagem com links de contingência do Drive
+        function tratarErroLogo(img) {
+            if (logoTentativa === 1) {
+                logoTentativa = 2;
+                img.src = "https://lh3.googleusercontent.com/d/18BAd4-2Xq1TIGcOlN_dVuaC7ow_mWqCA";
+            } else if (logoTentativa === 2) {
+                logoTentativa = 3;
+                img.src = "https://upload.wikimedia.org/wikipedia/commons/8/82/Logo_Frimesa.png";
+            }
+        }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -239,9 +370,13 @@
                     const idVal = limpar(col[0]);
                     if (!idVal || idVal.toUpperCase() === 'ID') continue;
 
-                    // MAPEAMENTO EXATO DE COLUNAS DA PLANILHA REAL:
+                    // Mapeamento Atualizado:
                     // Coluna A (0)  = ID
                     // Coluna B (1)  = Placa
+                    // Coluna C (2)  = Veículo / Modelo
+                    // Coluna D (3)  = Motorista
+                    // Coluna F (5)  = Movimento (Entrada/Saída)
+                    // Coluna G (6)  = Tipo de Carga
                     // Coluna I (8)  = Data Entrada
                     // Coluna J (9)  = Hora Entrada
                     // Coluna K (10) = Data Saida
@@ -252,9 +387,10 @@
                     // Coluna R (17) = Peso Cheio
                     // Coluna S (18) = Peso Vazio
                     // Coluna U (20) = Peso NF
-                    // Coluna W (22) = Tolerância Tipo
+                    // Coluna W (22) = Conferente / Tolerância Tipo
 
-                    const dataEntradaStr = (limpar(col[8]) + ' ' + limpar(col[9])).trim();
+                    const dataEntradaRaw = limpar(col[8]);
+                    const dataEntradaStr = (dataEntradaRaw + ' ' + limpar(col[9])).trim();
                     const dataSaidaStr = (limpar(col[10]) + ' ' + limpar(col[11])).trim();
 
                     const pesoCheio = parseNum(col[17]);
@@ -266,6 +402,11 @@
                     ticketsCache.push({
                         id: idVal,
                         placa: limpar(col[1]),
+                        veiculoModelo: limpar(col[2]) || '---',
+                        motorista: limpar(col[3]) || '---',
+                        movimento: limpar(col[5]) || 'N/A',
+                        tipoCarga: limpar(col[6]) || 'N/A',
+                        dataEntradaRaw: dataEntradaRaw,
                         dataEntradaTexto: dataEntradaStr || '---',
                         dataSaidaTexto: dataSaidaStr || '---',
                         lacres: limpar(col[12]) || '---',
@@ -276,11 +417,21 @@
                         pesoLiquido: pesoLiquido,
                         pesoNf: pesoNf,
                         divergencia: divergencia,
+                        conferente: limpar(col[22]) || '---',
                         toleranciaTipo: limpar(col[22]) || "TOLERÂNCIA TRUCK"
                     });
                 }
 
                 atualizarFarol(true);
+
+                // Define data padrão de hoje no filtro caso esteja vazio
+                const filterInput = document.getElementById('filterDate');
+                if (!filterInput.value) {
+                    const hoje = new Date().toISOString().split('T')[0];
+                    filterInput.value = hoje;
+                }
+
+                atualizarDashboard();
 
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
@@ -298,6 +449,60 @@
             } catch (err) {
                 console.error("Erro ao carregar CSV público:", err);
                 atualizarFarol(false, "FALHA DE COMUNICAÇÃO");
+            }
+        }
+
+        function atualizarDashboard() {
+            const filterValue = document.getElementById('filterDate').value;
+            if (!filterValue) return;
+
+            // Converte formato YYYY-MM-DD para DD/MM/YYYY
+            const partes = filterValue.split('-');
+            const dataFiltroFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+            // Filtra tickets pela data de entrada
+            const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dataFiltroFormatada || t.dataEntradaRaw.includes(dataFiltroFormatada));
+
+            document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
+            
+            const totalPallets = filtrados.reduce((sum, item) => sum + item.quantPallets, 0);
+            document.getElementById('dashTotalPallets').innerText = totalPallets;
+
+            // Agrupa por Tipo de Carga
+            const cargasMap = {};
+            // Agrupa por Movimento
+            const movimentoMap = {};
+
+            filtrados.forEach(t => {
+                const c = t.tipoCarga.toUpperCase() || 'NÃO ESPECIFICADO';
+                cargasMap[c] = (cargasMap[c] || 0) + 1;
+
+                const m = t.movimento.toUpperCase() || 'NÃO ESPECIFICADO';
+                movimentoMap[m] = (movimentoMap[m] || 0) + 1;
+            });
+
+            // Monta tabela Tipo de Carga
+            const tbodyCarga = document.getElementById('dashTableCarga');
+            tbodyCarga.innerHTML = "";
+            const cargasKeys = Object.keys(cargasMap);
+            if (cargasKeys.length === 0) {
+                tbodyCarga.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhum registro nesta data</td></tr>';
+            } else {
+                cargasKeys.forEach(key => {
+                    tbodyCarga.innerHTML += `<tr><td class="title-col">${key}</td><td class="num-col">${cargasMap[key]} veíc.</td></tr>`;
+                });
+            }
+
+            // Monta tabela Movimento
+            const tbodyMov = document.getElementById('dashTableMovimento');
+            tbodyMov.innerHTML = "";
+            const movKeys = Object.keys(movimentoMap);
+            if (movKeys.length === 0) {
+                tbodyMov.innerHTML = '<tr><td colspan="2" style="text-align:center;">Nenhum registro nesta data</td></tr>';
+            } else {
+                movKeys.forEach(key => {
+                    tbodyMov.innerHTML += `<tr><td class="title-col">${key}</td><td class="num-col">${movimentoMap[key]} veíc.</td></tr>`;
+                });
             }
         }
 
@@ -345,6 +550,8 @@
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
             document.getElementById('id').innerText = t.id;
             document.getElementById('placa').innerText = t.placa;
+            document.getElementById('veiculoModelo').innerText = t.veiculoModelo;
+            document.getElementById('motorista').innerText = t.motorista;
             document.getElementById('dataEntrada').innerText = t.dataEntradaTexto;
             document.getElementById('dataSaida').innerText = t.dataSaidaTexto;
             document.getElementById('lacres').innerText = t.lacres;
@@ -355,6 +562,8 @@
             document.getElementById('pesoLiquido').innerText = formatarNumero(t.pesoLiquido);
             document.getElementById('pesoNf').innerText = formatarNumero(t.pesoNf);
             document.getElementById('divergencia').innerText = formatarNumero(t.divergencia);
+            document.getElementById('conferente').innerText = t.conferente;
+
             document.getElementById('toleranciaSelect').value = t.toleranciaTipo || 'TOLERÂNCIA TRUCK';
             recalcularToleranciaManual();
         }
