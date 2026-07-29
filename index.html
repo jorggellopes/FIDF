@@ -22,27 +22,28 @@
 
         .search-container {
             background-color: #ffffff;
-            padding: 15px 25px;
+            padding: 12px 20px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
         }
 
         .search-container label {
             font-weight: bold;
             color: #80001a;
-            font-size: 14px;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
         .search-container input {
             flex: 1;
             padding: 10px;
-            font-size: 15px;
+            font-size: 14px;
             border: 2px solid #ddd;
             border-radius: 4px;
             font-family: inherit;
@@ -54,9 +55,27 @@
             border-color: #e0202c;
         }
 
+        .btn-search {
+            background-color: #80001a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-search:hover {
+            background-color: #e0202c;
+        }
+
         .ticket-card {
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             background-color: #fff;
             border: 2px solid #000;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -66,12 +85,12 @@
 
         .logo-container {
             text-align: center;
-            padding: 15px 10px 5px 10px;
+            padding: 12px 10px 5px 10px;
             background-color: #fff;
         }
 
         .logo-container img {
-            max-width: 180px;
+            max-width: 170px;
             height: auto;
         }
 
@@ -159,13 +178,14 @@
 
     <div class="search-container">
         <label for="inputId">PESQUISAR ID:</label>
-        <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." oninput="filtrarTicket(this.value)">
+        <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
+        <button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
         <datalist id="idList"></datalist>
     </div>
 
     <div class="ticket-card" id="ticket">
         <div class="logo-container">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/ thumb/8/82/Logo_Frimesa.png/640px-Logo_Frimesa.png" 
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Logo_Frimesa.png" 
                  onerror="this.src='https://www.frimesa.com.br/images/logo.png'" 
                  alt="Frimesa Logo">
         </div>
@@ -195,7 +215,7 @@
             <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
             <tr>
                 <td class="label">
-                    <select id="toleranciaSelect" class="table-select">
+                    <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
                         <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
                         <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
                         <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
@@ -215,7 +235,20 @@
 
     <script>
         let ticketsCache = [];
+        let ticketAtual = null;
         const API_URL = "https://fidf-api.onrender.com/api/tickets";
+
+        // Tabela de limites em KG
+        const TABELA_TOLERANCIAS = {
+            "TOLERÂNCIA UTILITARIO": 1.5,
+            "TOLERÂNCIA VAN": 3.0,
+            "TOLERÂNCIA VUC": 5.0,
+            "TOLERÂNCIA 34": 8.0,
+            "TOLERÂNCIA TOCO": 12.0,
+            "TOLERÂNCIA TRUCK": 24.0,
+            "TOLERÂNCIA BITRUCK": 32.0,
+            "TOLERÂNCIA CARRETA": 56.0
+        };
 
         async function sincronizarDados() {
             try {
@@ -232,9 +265,9 @@
                     datalist.appendChild(opt);
                 });
 
-                const inputVal = document.getElementById('inputId').value.trim();
-                if (inputVal) {
-                    filtrarTicket(inputVal);
+                if (ticketAtual) {
+                    const atualizado = ticketsCache.find(x => x.id === ticketAtual.id);
+                    if (atualizado) carregarTicket(atualizado.id);
                 } else if (ticketsCache.length > 0) {
                     carregarTicket(ticketsCache[0].id);
                 }
@@ -243,13 +276,32 @@
             }
         }
 
-        function filtrarTicket(termo) {
-            const termoLimpo = termo.trim().toLowerCase();
-            if (!termoLimpo) return;
+        function tratarKeyPress(e) {
+            if (e.key === 'Enter') {
+                executarBusca();
+            }
+        }
 
-            const encontrado = ticketsCache.find(x => x.id.toLowerCase() === termoLimpo);
+        function extrairPrimeiroID(texto) {
+            if (!texto) return "";
+            // Pega tudo antes de vírgula/espaço/ponto e vírgula caso cole uma linha inteira
+            let limpo = texto.trim().split(/[\s,;]+/)[0];
+            return limpo.toUpperCase();
+        }
+
+        function executarBusca() {
+            const rawVal = document.getElementById('inputId').value;
+            const idBuscado = extrairPrimeiroID(rawVal);
+            
+            if (!idBuscado) return;
+
+            document.getElementById('inputId').value = idBuscado;
+
+            const encontrado = ticketsCache.find(x => x.id.toUpperCase() === idBuscado);
             if (encontrado) {
                 carregarTicket(encontrado.id);
+            } else {
+                alert("ID não encontrado na base de dados!");
             }
         }
 
@@ -261,6 +313,8 @@
         function carregarTicket(id) {
             const t = ticketsCache.find(x => x.id === id);
             if (!t) return;
+
+            ticketAtual = t;
 
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
             document.getElementById('id').innerText = t.id;
@@ -276,13 +330,39 @@
             document.getElementById('pesoNf').innerText = formatarNumero(t.pesoNf);
             document.getElementById('divergencia').innerText = formatarNumero(t.divergencia);
 
+            // Define o tipo e dispara o cálculo visual
             document.getElementById('toleranciaSelect').value = t.toleranciaTipo || 'TOLERÂNCIA TRUCK';
-            document.getElementById('toleranciaValor').innerText = formatarNumero(t.limiteToleranciaKg) + " KG";
-            document.getElementById('resultado').innerText = t.resultado;
+            recalcularToleranciaManual();
+        }
 
+        function recalcularToleranciaManual() {
+            if (!ticketAtual) return;
+
+            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0;
+            const divergencia = ticketAtual.divergencia || 0.0;
+
+            document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
+
+            let resultado = "";
+            let status = "";
+
+            if (Math.abs(divergencia) <= limiteKg) {
+                resultado = "DENTRO DA TOLERÂNCIA";
+                status = "OK";
+            } else if (divergencia < 0) {
+                resultado = "FORA DA TOLERÂNCIA";
+                status = "FALTA";
+            } else {
+                resultado = "FORA DA TOLERÂNCIA";
+                status = "SOBRA";
+            }
+
+            document.getElementById('resultado').innerText = resultado;
+            
             const statusEl = document.getElementById('status');
-            statusEl.innerText = t.status;
-            statusEl.className = t.status === 'OK' ? 'value status-ok' : 'value status-falta';
+            statusEl.innerText = status;
+            statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
         sincronizarDados();
