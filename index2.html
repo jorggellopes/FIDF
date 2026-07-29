@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Balança (Direto) - Frimesa Filial FIDF</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0202c 0%, #80001a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 15px;
+            margin: 0;
+        }
+
+        .search-container {
+            background-color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .search-container label {
+            font-weight: bold;
+            color: #80001a;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .search-container input {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        .search-container input:focus {
+            border-color: #e0202c;
+        }
+
+        .btn-search {
+            background-color: #80001a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ticket-card {
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            text-align: center;
+            padding: 12px 10px 5px 10px;
+            background-color: #fff;
+        }
+
+        .logo-container img {
+            max-width: 170px;
+            height: auto;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 6px 0;
+            border-bottom: 1px solid #000;
+            text-transform: uppercase;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            font-size: 13px;
+            padding: 4px 0;
+            font-weight: bold;
+        }
+
+        .header-date {
+            background-color: #d9d9d9;
+            text-align: center;
+            padding: 6px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-size: 13px;
+        }
+
+        .label {
+            font-weight: bold;
+            text-transform: uppercase;
+            width: 50%;
+        }
+
+        .value {
+            text-align: left;
+        }
+
+        .value-highlight {
+            background-color: #ffff00;
+            font-weight: bold;
+        }
+
+        .status-falta {
+            background-color: #ffff00;
+            color: #d00000;
+            font-weight: bold;
+        }
+
+        .status-ok {
+            background-color: #a8f0a8;
+            color: #006000;
+            font-weight: bold;
+        }
+
+        .spacer-row td {
+            border: none;
+            height: 10px;
+        }
+
+        select.table-select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <label for="inputId">PESQUISAR ID:</label>
+        <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
+        <button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
+        <datalist id="idList"></datalist>
+    </div>
+
+    <div class="ticket-card" id="ticket">
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Logo_Frimesa.png" 
+                 onerror="this.src='https://www.frimesa.com.br/images/logo.png'" alt="Frimesa Logo">
+        </div>
+
+        <div class="header-title">Frimesa Filial FIDF</div>
+        <div class="header-subtitle">TICKET BALANÇA (MODO DIRETO)</div>
+        <div class="header-date" id="dataEmissao">---</div>
+
+        <table>
+            <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+            <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+            <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+            <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+            <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+            <tr class="spacer-row"><td colspan="2"></td></tr>
+            <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+            <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+            <tr class="spacer-row"><td colspan="2"></td></tr>
+            <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+            <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+            <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+            <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+            <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+            <tr>
+                <td class="label">
+                    <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
+                        <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
+                        <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
+                        <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
+                        <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
+                        <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
+                        <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
+                        <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
+                        <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
+                    </select>
+                </td>
+                <td class="value" id="toleranciaValor">---</td>
+            </tr>
+            <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+            <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+        </table>
+    </div>
+
+    <script>
+        // URL da planilha do Google publicada
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7xkoiMc8GHf7ExRRvhBtQqkvEYuFbspMIxuu-1eHZ-LJd0IwfpBBxWAKXHVnGAg/pub?gid=2099001465&single=true&output=csv";
+
+        let ticketsCache = [];
+        let ticketAtual = null;
+
+        const TABELA_TOLERANCIAS = {
+            "TOLERÂNCIA UTILITARIO": 1.5,
+            "TOLERÂNCIA VAN": 3.0,
+            "TOLERÂNCIA VUC": 5.0,
+            "TOLERÂNCIA 34": 8.0,
+            "TOLERÂNCIA TOCO": 12.0,
+            "TOLERÂNCIA TRUCK": 24.0,
+            "TOLERÂNCIA BITRUCK": 32.0,
+            "TOLERÂNCIA CARRETA": 56.0
+        };
+
+        // Lê e processa o CSV diretamente sem precisar de Java
+        async function carregarDadosPlanilha() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvText = await response.text();
+                
+                const linhas = csvText.split('\n');
+                ticketsCache = [];
+
+                for (let i = 1; i < linhas.length; i++) {
+                    const linha = linhas[i].trim();
+                    if (!linha) continue;
+
+                    // Divide respeitando aspas e separadores comuns
+                    const col = linha.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+                    if (col.length < 2) continue;
+
+                    const idVal = limpar(col[0]);
+                    if (!idVal || idVal.toUpperCase() === 'ID') continue;
+
+                    const pesoCheio = parseNum(col[7]);
+                    const pesoVazio = parseNum(col[8]);
+                    const pesoNf = parseNum(col[9]);
+                    const pesoLiquido = pesoCheio - pesoVazio;
+                    const divergencia = pesoLiquido - pesoNf;
+
+                    ticketsCache.push({
+                        id: idVal,
+                        placa: limpar(col[1]),
+                        dataEntradaTexto: limpar(col[2]),
+                        dataSaidaTexto: limpar(col[3]),
+                        lacres: limpar(col[4]),
+                        quantPallets: parseNum(col[5]),
+                        pesoPallets: parseNum(col[6]),
+                        pesoCheio: pesoCheio,
+                        pesoVazio: pesoVazio,
+                        pesoLiquido: pesoLiquido,
+                        pesoNf: pesoNf,
+                        divergencia: divergencia,
+                        toleranciaTipo: limpar(col[10]) || "TOLERÂNCIA TRUCK"
+                    });
+                }
+
+                // Preenche o autocompletar
+                const datalist = document.getElementById('idList');
+                datalist.innerHTML = "";
+                ticketsCache.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.label = `${t.id} - ${t.placa}`;
+                    datalist.appendChild(opt);
+                });
+
+                if (ticketAtual) {
+                    const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
+                    if (recarregado) renderizarTicket(recarregado);
+                }
+            } catch (err) {
+                console.error("Erro ao ler planilha:", err);
+            }
+        }
+
+        function limpar(val) {
+            return val ? val.replace(/"/g, '').replace(/\r/g, '').trim() : '';
+        }
+
+        function parseNum(val) {
+            if (!val) return 0;
+            const limpo = val.replace(/"/g, '').replace(/\./g, '').replace(',', '.').trim();
+            const n = parseFloat(limpo);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function tratarKeyPress(e) {
+            if (e.key === 'Enter') executarBusca();
+        }
+
+        function executarBusca() {
+            const rawVal = document.getElementById('inputId').value;
+            if (!rawVal) return;
+
+            const idBuscado = rawVal.trim().split(/[\s,;]+/)[0].toUpperCase();
+            document.getElementById('inputId').value = idBuscado;
+
+            const encontrado = ticketsCache.find(x => x.id.toUpperCase() === idBuscado);
+            if (encontrado) {
+                renderizarTicket(encontrado);
+            } else {
+                alert("ID " + idBuscado + " não encontrado na planilha!");
+            }
+        }
+
+        function formatarNumero(num) {
+            if (num === null || num === undefined) return "---";
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderizarTicket(t) {
+            ticketAtual = t;
+
+            document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('id').innerText = t.id;
+            document.getElementById('placa').innerText = t.placa;
+            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---';
+            document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
+            document.getElementById('lacres').innerText = t.lacres;
+            document.getElementById('quantPallets').innerText = t.quantPallets;
+            document.getElementById('pesoPallets').innerText = formatarNumero(t.pesoPallets);
+            document.getElementById('pesoCheio').innerText = formatarNumero(t.pesoCheio);
+            document.getElementById('pesoVazio').innerText = formatarNumero(t.pesoVazio);
+            document.getElementById('pesoLiquido').innerText = formatarNumero(t.pesoLiquido);
+            document.getElementById('pesoNf').innerText = formatarNumero(t.pesoNf);
+            document.getElementById('divergencia').innerText = formatarNumero(t.divergencia);
+
+            document.getElementById('toleranciaSelect').value = t.toleranciaTipo || 'TOLERÂNCIA TRUCK';
+            recalcularToleranciaManual();
+        }
+
+        function recalcularToleranciaManual() {
+            if (!ticketAtual) return;
+
+            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0;
+            const divergencia = ticketAtual.divergencia || 0.0;
+
+            document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
+
+            let resultado = "";
+            let status = "";
+
+            if (Math.abs(divergencia) <= limiteKg) {
+                resultado = "DENTRO DA TOLERÂNCIA";
+                status = "OK";
+            } else if (divergencia < 0) {
+                resultado = "FORA DA TOLERÂNCIA";
+                status = "FALTA";
+            } else {
+                resultado = "FORA DA TOLERÂNCIA";
+                status = "SOBRA";
+            }
+
+            document.getElementById('resultado').innerText = resultado;
+            
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = status;
+            statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
+        }
+
+        // Atualização em tempo real (a cada 3 segundos) direto da planilha do Google
+        carregarDadosPlanilha();
+        setInterval(carregarDadosPlanilha, 3000);
+    </script>
+</body>
+</html>
