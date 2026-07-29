@@ -137,7 +137,8 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbzL5dkaPY41u5aGVpojnN7AtpCWEUC4I7MxO2J0w3SCGC5x2xB23BH_ImYf6sazMHeMnuA/exec";
+        // ID extraído do seu novo link publicado
+        const PUBLISHED_KEY = "2PACX-1vTdD2cAUPKXWhbK6cTtPmtTYT1vvhly2Q0ZgiNbmTnVP2yLIiyOAUrp66vSeuf1MYgDVbmyJw9hsHVr";
 
         let ticketsCache = [];
         let ticketAtual = null;
@@ -148,26 +149,57 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        // Requisição JSONP dinamica
-        function carregarDadosJSONP() {
-            const scriptId = 'apps-script-jsonp';
+        function carregarDadosGviz() {
+            const scriptId = 'google-gviz-script';
             const oldScript = document.getElementById(scriptId);
             if (oldScript) oldScript.remove();
 
             const script = document.createElement('script');
             script.id = scriptId;
-            script.src = `${APPS_SCRIPT_URL}?callback=processarDadosRecebidos`;
+            script.src = `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_KEY}/gviz/tq?tqx=responseHandler:processarGvizData`;
             
             script.onerror = function() {
-                atualizarFarol(false, "ERRO DE COMUNICAÇÃO");
+                atualizarFarol(false, "FALHA DE COMUNICAÇÃO");
             };
 
             document.body.appendChild(script);
         }
 
-        window.processarDadosRecebidos = function(dados) {
+        window.processarGvizData = function(data) {
             try {
-                ticketsCache = dados || [];
+                ticketsCache = [];
+                const rows = data.table.rows;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const c = rows[i].c;
+                    if (!c || !c[0] || c[0].v === null) continue;
+
+                    const idVal = limpar(c[0].v);
+                    if (idVal.toUpperCase() === 'ID') continue;
+
+                    const pesoCheio = parseNum(c[7] ? c[7].v : 0);
+                    const pesoVazio = parseNum(c[8] ? c[8].v : 0);
+                    const pesoNf = parseNum(c[9] ? c[9].v : 0);
+                    const pesoLiquido = pesoCheio - pesoVazio;
+                    const divergencia = pesoLiquido - pesoNf;
+
+                    ticketsCache.push({
+                        id: idVal,
+                        placa: limpar(c[1] ? c[1].v : ''),
+                        dataEntradaTexto: formatarDataCell(c[2]),
+                        dataSaidaTexto: formatarDataCell(c[3]),
+                        lacres: limpar(c[4] ? c[4].v : ''),
+                        quantPallets: parseNum(c[5] ? c[5].v : 0),
+                        pesoPallets: parseNum(c[6] ? c[6].v : 0),
+                        pesoCheio: pesoCheio,
+                        pesoVazio: pesoVazio,
+                        pesoLiquido: pesoLiquido,
+                        pesoNf: pesoNf,
+                        divergencia: divergencia,
+                        toleranciaTipo: limpar(c[10] ? c[10].v : '') || "TOLERÂNCIA TRUCK"
+                    });
+                }
+
                 atualizarFarol(true);
 
                 const datalist = document.getElementById('idList');
@@ -193,6 +225,25 @@
             document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
             document.getElementById('statusText').innerText = online ? `PLANILHA ONLINE (${ticketsCache.length} REGISTROS)` : (msg || 'FALHA DE COMUNICAÇÃO');
             if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
+        }
+
+        function limpar(val) {
+            return val !== null && val !== undefined ? val.toString().replace(/"/g, '').trim() : '';
+        }
+
+        function parseNum(val) {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            const limpo = val.toString().replace(/"/g, '').replace(/\./g, '').replace(',', '.').trim();
+            const n = parseFloat(limpo);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function formatarDataCell(cell) {
+            if (!cell) return '';
+            if (cell.f) return cell.f;
+            if (cell.v) return cell.v.toString();
+            return '';
         }
 
         function tratarKeyPress(e) { if (e.key === 'Enter') executarBusca(); }
@@ -252,8 +303,8 @@
             statusEl.className = status === 'OK' ? 'value status-ok' : 'value status-falta';
         }
 
-        carregarDadosJSONP();
-        setInterval(carregarDadosJSONP, 3000);
+        carregarDadosGviz();
+        setInterval(carregarDadosGviz, 3000);
     </script>
 </body>
 </html>
