@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Balança - Frimesa Filial FIDF</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        body { background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .search-container { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+        .search-container select { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; font-family: inherit; }
+        .ticket-card { width: 450px; background-color: #fff; border: 1px solid #000; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
+        .header-title { text-align: center; font-weight: bold; font-size: 18px; padding: 6px 0; border-bottom: 1px solid #000; }
+        .header-subtitle { text-align: center; font-size: 13px; padding: 2px 0 6px 0; }
+        .header-date { background-color: #b0b0b0; text-align: center; padding: 6px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+        table { width: 100%; border-collapse: collapse; }
+        td { border: 1px solid #000; padding: 4px 8px; font-size: 13px; }
+        .label { font-weight: bold; text-transform: uppercase; width: 50%; }
+        .value { text-align: left; }
+        .value-highlight { background-color: #ffff00; font-weight: bold; }
+        .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
+        .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
+        .spacer-row td { border: none; height: 12px; }
+        select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <label for="selectTicket"><b>SELECIONAR ID:</b></label>
+        <select id="selectTicket" onchange="carregarTicket(this.value)"></select>
+    </div>
+
+    <div class="ticket-card" id="ticket">
+        <div class="header-title">Frimesa Filial FIDF</div>
+        <div class="header-subtitle">TICKET BALANÇA</div>
+        <div class="header-date" id="dataEmissao">---</div>
+
+        <table>
+            <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+            <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+            <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+            <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+            <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+            <tr class="spacer-row"><td colspan="2"></td></tr>
+            <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+            <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+            <tr class="spacer-row"><td colspan="2"></td></tr>
+            <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+            <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+            <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+            <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+            <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+            <tr>
+                <td class="label">
+                    <select id="toleranciaSelect" class="table-select">
+                        <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
+                        <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
+                        <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
+                        <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
+                        <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
+                        <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
+                        <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
+                        <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
+                    </select>
+                </td>
+                <td class="value" id="toleranciaValor">---</td>
+            </tr>
+            <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+            <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+        </table>
+    </div>
+
+    <script>
+        let ticketsCache = [];
+        // Altere este URL quando publicar o backend no Render/Railway
+        const API_URL = "http://localhost:8080/api/tickets";
+
+        async function sincronizarDados() {
+            try {
+                const res = await fetch(API_URL);
+                ticketsCache = await res.json();
+                
+                const select = document.getElementById('selectTicket');
+                const selectedVal = select.value;
+                select.innerHTML = "";
+
+                ticketsCache.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.id} - ${t.placa}`;
+                    select.appendChild(opt);
+                });
+
+                if (selectedVal && ticketsCache.some(x => x.id === selectedVal)) {
+                    select.value = selectedVal;
+                    carregarTicket(selectedVal);
+                } else if (ticketsCache.length > 0) {
+                    carregarTicket(ticketsCache[0].id);
+                }
+            } catch (err) {
+                console.error("Erro ao sincronizar:", err);
+            }
+        }
+
+        function formatarNumero(num) {
+            if (num === null || num === undefined) return "---";
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function carregarTicket(id) {
+            const t = ticketsCache.find(x => x.id === id);
+            if (!t) return;
+
+            document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('id').innerText = t.id;
+            document.getElementById('placa').innerText = t.placa;
+            document.getElementById('dataEntrada').innerText = t.dataEntrada ? t.dataEntrada.replace('T', ' ') : '---';
+            document.getElementById('dataSaida').innerText = t.dataSaida ? t.dataSaida.replace('T', ' ') : '---';
+            document.getElementById('lacres').innerText = t.lacres;
+            document.getElementById('quantPallets').innerText = t.quantPallets;
+            document.getElementById('pesoPallets').innerText = formatarNumero(t.pesoPallets);
+            document.getElementById('pesoCheio').innerText = formatarNumero(t.pesoCheio);
+            document.getElementById('pesoVazio').innerText = formatarNumero(t.pesoVazio);
+            document.getElementById('pesoLiquido').innerText = formatarNumero(t.pesoLiquido);
+            document.getElementById('pesoNf').innerText = formatarNumero(t.pesoNf);
+            document.getElementById('divergencia').innerText = formatarNumero(t.divergencia);
+
+            document.getElementById('toleranciaSelect').value = t.toleranciaTipo || 'TOLERÂNCIA TRUCK';
+            document.getElementById('toleranciaValor').innerText = formatarNumero(t.limiteToleranciaKg) + " KG";
+            document.getElementById('resultado').innerText = t.resultado;
+
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = t.status;
+            statusEl.className = t.status === 'OK' ? 'value status-ok' : 'value status-falta';
+        }
+
+        sincronizarDados();
+        setInterval(sincronizarDados, 5000);
+    </script>
+</body>
+</html>
