@@ -223,14 +223,23 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         .espelho-filters {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
-            border-radius: 6px; border: 1px solid #d8b4fe;
+            border-radius: 6px; border: 1px solid #d8b4fe; align-items: end;
         }
         .espelho-filters label { display: block; font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; }
         .espelho-filters input, .espelho-filters select {
             width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
         }
+
+        /* Botão Borracha para Limpar Filtros */
+        .btn-clear-filters {
+            background-color: #ef4444; color: white; border: none; padding: 7px 12px;
+            border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
+            height: 31px; display: flex; align-items: center; justify-content: center; gap: 4px;
+            transition: background-color 0.2s;
+        }
+        .btn-clear-filters:hover { background-color: #dc2626; }
 
         .status-summary-grid {
             display: grid;
@@ -346,7 +355,6 @@
             <span id="statusText">CONECTANDO PLANILHA...</span>
         </div>
         
-        <!-- MOSTRADOR DE USUÁRIOS ONLINE -->
         <div class="online-counter">
             👥 ONLINE: <span id="activeUsersCount">1</span>
         </div>
@@ -518,6 +526,12 @@
                         <option value="FALTA">FALTA (Amarelo)</option>
                         <option value="SOBRA">SOBRA (Amarelo)</option>
                     </select>
+                </div>
+                <!-- BOTÃO BORRACHA PARA LIMPAR FILTROS -->
+                <div>
+                    <button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
+                        🧹 Limpar Filtros
+                    </button>
                 </div>
             </div>
 
@@ -989,10 +1003,18 @@
                     if (!linha) continue;
                     const col = parseCSVLine(linha);
                     if (col.length < 2) continue;
+
                     const idVal = limpar(col[0]);
                     if (!idVal || idVal.toUpperCase() === 'ID') continue;
 
                     const placa = limpar(col[1]).toUpperCase();
+                    const dataEntradaRaw = limpar(col[8]);
+
+                    // Desconsidera linhas pré-geradas vazias
+                    if (!dataEntradaRaw || dataEntradaRaw === '---' || !placa) {
+                        continue;
+                    }
+
                     const veiculo = limpar(col[2]) || '---';
                     const motorista = formatarNomeProprio(col[3]);
                     const doca = limpar(col[4]).toUpperCase();
@@ -1012,7 +1034,6 @@
                     if (tipoCarga) opcoesForm.tiposCarga.add(tipoCarga);
                     if (conferente) opcoesForm.conferentes.add(conferente);
 
-                    const dataEntradaRaw = limpar(col[8]);
                     const pesoCheio = parseNum(col[17]);
                     const pesoVazio = parseNum(col[18]);
                     const pesoNf = parseNum(col[20]);
@@ -1065,6 +1086,15 @@
             } catch (err) { console.error("Erro ao carregar CSV:", err); atualizarFarol(false, "FALHA DE COMUNICAÇÃO"); }
         }
 
+        // --- FUNÇÃO DA BORRACHA / LIMPAR FILTROS ---
+        function limparFiltrosEspelho() {
+            document.getElementById('espFiltroBusca').value = '';
+            document.getElementById('espDataInicio').value = '';
+            document.getElementById('espDataFim').value = '';
+            document.getElementById('espFiltroStatus').value = 'TODOS';
+            filtrarEspelho();
+        }
+
         function filtrarEspelho() {
             const busca = (document.getElementById('espFiltroBusca').value || '').trim().toUpperCase();
             const dtInicio = document.getElementById('espDataInicio').value;
@@ -1091,11 +1121,9 @@
             renderizarTabelaEspelho();
         }
 
-        // --- CÁLCULO E RENDERIZAÇÃO DOS CARDS DE RESUMO POR STATUS (IDS ÚNICOS) ---
         function atualizarCardsResumoEspelho() {
             const totalVol = filtradosEspelho.reduce((sum, item) => sum + item.pesoNf, 0);
 
-            // Conjuntos para contagem estrita de IDs ÚNICOS
             const idsUnicosPorStatus = {
                 TOTAL: new Set(),
                 VAZIO: new Set(),
@@ -1107,7 +1135,7 @@
             const stVolMap = { VAZIO: 0, OK: 0, FALTA: 0, SOBRA: 0 };
 
             filtradosEspelho.forEach(t => {
-                if (t.id) {
+                if (t.id && t.dataEntradaRaw) {
                     idsUnicosPorStatus.TOTAL.add(t.id);
                     const st = t.statusCalculado;
                     if (idsUnicosPorStatus[st]) {
@@ -1120,22 +1148,18 @@
             const totalVeicUnicos = idsUnicosPorStatus.TOTAL.size;
             const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
 
-            // Atualiza Card VAZIO
             const qVazio = idsUnicosPorStatus.VAZIO.size;
             document.getElementById('stValVazio').innerText = `${qVazio} veíc. (${calcPct(qVazio, totalVeicUnicos)}%)`;
             document.getElementById('stVolVazio').innerText = `${formatarNumero(stVolMap.VAZIO)} KG (${calcPct(stVolMap.VAZIO, totalVol)}%)`;
 
-            // Atualiza Card OK
             const qOk = idsUnicosPorStatus.OK.size;
             document.getElementById('stValOk').innerText = `${qOk} veíc. (${calcPct(qOk, totalVeicUnicos)}%)`;
             document.getElementById('stVolOk').innerText = `${formatarNumero(stVolMap.OK)} KG (${calcPct(stVolMap.OK, totalVol)}%)`;
 
-            // Atualiza Card FALTA
             const qFalta = idsUnicosPorStatus.FALTA.size;
             document.getElementById('stValFalta').innerText = `${qFalta} veíc. (${calcPct(qFalta, totalVeicUnicos)}%)`;
             document.getElementById('stVolFalta').innerText = `${formatarNumero(stVolMap.FALTA)} KG (${calcPct(stVolMap.FALTA, totalVol)}%)`;
 
-            // Atualiza Card SOBRA
             const qSobra = idsUnicosPorStatus.SOBRA.size;
             document.getElementById('stValSobra').innerText = `${qSobra} veíc. (${calcPct(qSobra, totalVeicUnicos)}%)`;
             document.getElementById('stVolSobra').innerText = `${formatarNumero(stVolMap.SOBRA)} KG (${calcPct(stVolMap.SOBRA, totalVol)}%)`;
@@ -1191,7 +1215,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SALVAMENTO COM CAPTURA DE IP E AUDITORIA DE SEGURANÇA ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1211,7 +1234,6 @@
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
 
-            // CAPTURA DE IP PÚBLICO E HORÁRIO PARA AUDITORIA DE SEGURANÇA
             let clientIp = "Indisponível";
             try {
                 const ipRes = await fetch("https://api.ipify.org?format=json");
@@ -1249,15 +1271,6 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
-                const dadosPayload = {
-                    id: idEditando,
-                    placa, veiculo, motorista, tipoCarga, conferente, dtEntrada, dtSaida, pesoCheio, pesoVazio, pesoNf,
-                    auditoria: {
-                        dataHora: dataHoraEdicao,
-                        ip: clientIp
-                    }
-                };
-
                 alert("Dados confirmados com auditoria gravada! Na Etapa 3, o Apps Script registrará este IP e horário na planilha.");
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
