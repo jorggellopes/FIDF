@@ -57,7 +57,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* --- BARRA DE STATUS --- */
+        /* --- BARRA DE STATUS E MOSTRADOR ONLINE --- */
         .status-bar {
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
@@ -70,6 +70,8 @@
             justify-content: space-between;
             align-items: center;
             font-size: 11px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .status-indicator { display: flex; align-items: center; gap: 6px; }
         .status-dot {
@@ -79,6 +81,18 @@
         }
         .status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
         .status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
+
+        .online-counter {
+            background-color: #0284c7;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+        }
 
         .btn-install {
             display: none; background-color: #22c55e; color: white; border: none;
@@ -210,14 +224,35 @@
         }
         .espelho-filters {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 12px;
+            gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
             border-radius: 6px; border: 1px solid #d8b4fe;
         }
         .espelho-filters label { display: block; font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; }
         .espelho-filters input, .espelho-filters select {
             width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
         }
-        
+
+        .status-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .status-summary-card {
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        .summary-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
+        .summary-val { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+        .summary-sub { font-size: 10px; opacity: 0.9; }
+
+        .card-st-vazio { background-color: #e0f2fe; border-color: #0284c7; color: #0369a1; }
+        .card-st-ok { background-color: #dcfce7; border-color: #16a34a; color: #15803d; }
+        .card-st-falta { background-color: #fef9c3; border-color: #ca8a04; color: #854d0e; }
+        .card-st-sobra { background-color: #fef3c7; border-color: #d97706; color: #92400e; }
+
         .espelho-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .btn-export {
             background-color: #16a34a; color: white; border: none; padding: 8px 12px;
@@ -245,7 +280,23 @@
         }
         .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        /* --- ESTILOS DO FORMULÁRIO DE LANÇAMENTOS --- */
+        /* --- MÓDULO DE LANÇAMENTO / EDIÇÃO --- */
+        .mode-selector {
+            display: flex; gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 10px; border-radius: 6px; border: 1px solid #d8b4fe;
+        }
+        .mode-btn {
+            flex: 1; padding: 8px; border: 1px solid #511d9b; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; background: #fff; color: #511d9b; text-align: center;
+        }
+        .mode-btn.active { background-color: #511d9b; color: #fff; }
+
+        .search-edit-box {
+            display: none; background-color: #fffbe3; border: 1px solid #ffe58f; padding: 12px; border-radius: 6px; margin-bottom: 15px;
+        }
+        .search-edit-box label { font-size: 11px; font-weight: bold; color: #854d0e; display: block; margin-bottom: 4px; }
+        .search-edit-inputs { display: flex; gap: 8px; }
+        .search-edit-inputs input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; text-transform: uppercase; }
+        .btn-load-edit { background-color: #d97706; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+
         .form-section-title {
             font-size: 12px; font-weight: bold; color: #511d9b; background-color: #f3e8ff;
             padding: 8px 12px; border-radius: 4px; margin: 15px 0 10px 0; text-transform: uppercase; border: 1px solid #d8b4fe;
@@ -262,6 +313,7 @@
             padding: 9px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; width: 100%;
         }
         .form-group input:focus, .form-group select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
+        .form-group input[readonly] { background-color: #f1f5f9; color: #475569; cursor: not-allowed; }
         
         .input-outro { margin-top: 5px; display: none; border-color: #a259ff; }
         
@@ -293,6 +345,12 @@
             <span class="status-dot" id="statusDot"></span>
             <span id="statusText">CONECTANDO PLANILHA...</span>
         </div>
+        
+        <!-- MOSTRADOR DE USUÁRIOS ONLINE -->
+        <div class="online-counter">
+            👥 ONLINE: <span id="activeUsersCount">1</span>
+        </div>
+
         <div>
             ÚLTIMA SYNC: <span id="lastSyncTime">--:--:--</span>
             <button id="btnInstall" class="btn-install" onclick="instalarAtalho()">📲 Criar Atalho</button>
@@ -419,10 +477,15 @@
                 <div class="dash-section-title">Produtividade por Conferente</div>
                 <table class="dash-table">
                     <thead>
-                        <tr><th style="text-align:left;">Conferente</th><th>Qt Veíc.</th><th>Volume (KG)</th></tr>
+                        <tr>
+                            <th style="text-align:left;">Conferente</th>
+                            <th>Qt Veíc.</th>
+                            <th>Volume (KG)</th>
+                            <th>% Vol.</th>
+                        </tr>
                     </thead>
                     <tbody id="dashTableConferente">
-                        <tr><td colspan="3" style="text-align:center;">Sem dados para a data</td></tr>
+                        <tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -455,6 +518,29 @@
                         <option value="FALTA">FALTA (Amarelo)</option>
                         <option value="SOBRA">SOBRA (Amarelo)</option>
                     </select>
+                </div>
+            </div>
+
+            <div class="status-summary-grid">
+                <div class="status-summary-card card-st-vazio">
+                    <div class="summary-title">🟦 Vazio</div>
+                    <div class="summary-val" id="stValVazio">0 veíc. (0%)</div>
+                    <div class="summary-sub" id="stVolVazio">0,00 KG (0%)</div>
+                </div>
+                <div class="status-summary-card card-st-ok">
+                    <div class="summary-title">🟩 OK</div>
+                    <div class="summary-val" id="stValOk">0 veíc. (0%)</div>
+                    <div class="summary-sub" id="stVolOk">0,00 KG (0%)</div>
+                </div>
+                <div class="status-summary-card card-st-falta">
+                    <div class="summary-title">🟨 Falta</div>
+                    <div class="summary-val" id="stValFalta">0 veíc. (0%)</div>
+                    <div class="summary-sub" id="stVolFalta">0,00 KG (0%)</div>
+                </div>
+                <div class="status-summary-card card-st-sobra">
+                    <div class="summary-title">🟧 Sobra</div>
+                    <div class="summary-val" id="stValSobra">0 veíc. (0%)</div>
+                    <div class="summary-sub" id="stVolSobra">0,00 KG (0%)</div>
                 </div>
             </div>
 
@@ -491,7 +577,21 @@
     <!-- ==================== ABA 3: LANÇAMENTOS ==================== -->
     <div id="lancamentoTab" class="tab-content">
         <div class="lancamento-card">
-            <div class="dashboard-header" style="margin-bottom:20px;">Novo Lançamento de Pesagem</div>
+            
+            <div class="mode-selector">
+                <div id="btnModeNovo" class="mode-btn active" onclick="setModoLancamento('NOVO')">➕ Novo Lançamento</div>
+                <div id="btnModeEditar" class="mode-btn" onclick="setModoLancamento('EDITAR')">✏️ Editar Lançamento Existente</div>
+            </div>
+
+            <div id="boxBuscaEdit" class="search-edit-box">
+                <label for="inputEditId">DIGITE O ID DO TICKET QUE DESEJA EDITAR:</label>
+                <div class="search-edit-inputs">
+                    <input type="text" id="inputEditId" placeholder="Ex: A0001" list="idList">
+                    <button type="button" class="btn-load-edit" onclick="carregarLancamentoParaEdicao()">🔍 Carregar Dados</button>
+                </div>
+            </div>
+
+            <div class="dashboard-header" id="formHeaderTitle" style="margin-bottom:20px;">NOVO LANÇAMENTO DE PESAGEM</div>
             
             <form id="formLancamento" onsubmit="salvarNovoLancamento(event)">
                 
@@ -524,7 +624,6 @@
                         <label for="formMotorista">Motorista *</label>
                         <select id="formMotorista" required onchange="verificarOutro(this, 'formMotoristaOutro')">
                             <option value="" disabled selected>Selecione...</option>
-                            <!-- Opções limpas e sem duplicatas carregadas dinamicamente -->
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formMotoristaOutro" class="input-outro" placeholder="Nome Completo">
@@ -532,9 +631,7 @@
                     <div class="form-group">
                         <label for="formTipoCarga">Tipo de Carga *</label>
                         <select id="formTipoCarga" required onchange="verificarOutro(this, 'formTipoCargaOutro')">
-                            <option value="" disabled selected>Selecione...</option>
-                            <option value="VEICULO VAZIO - PATIO">VEICULO VAZIO - PATIO</option>
-                            <!-- Outras opções limpas da planilha -->
+                            <option value="VEICULO VAZIO - PATIO" selected>VEICULO VAZIO - PATIO</option>
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formTipoCargaOutro" class="input-outro" placeholder="Ex: TRANSFERÊNCIA">
@@ -547,10 +644,9 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="formConferente">Conferente *</label>
-                        <select id="formConferente" required onchange="verificarOutro(this, 'formConferenteOutro')">
-                            <option value="" disabled selected>Selecione...</option>
-                            <!-- Opções limpas e sem duplicatas carregadas dinamicamente -->
+                        <label for="formConferente">Conferente</label>
+                        <select id="formConferente" onchange="verificarOutro(this, 'formConferenteOutro')">
+                            <option value="" selected>Não definido / Pátio</option>
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formConferenteOutro" class="input-outro" placeholder="Nome do Conferente">
@@ -559,7 +655,6 @@
                         <label for="formDoca">Nº da Doca</label>
                         <select id="formDoca" onchange="verificarOutro(this, 'formDocaOutro')">
                             <option value="" selected>Nenhuma / Pátio</option>
-                            <!-- Opções carregadas dinamicamente -->
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formDocaOutro" class="input-outro" placeholder="Ex: DOCA 15">
@@ -574,40 +669,40 @@
                     </div>
                 </div>
 
-                <div class="form-section-title">Tempos e Pesos</div>
+                <div class="form-section-title">Tempos e Pesos (Campos Opcionais no Lançamento Inicial)</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="formDtEntrada">Data/Hora de Entrada *</label>
                         <input type="datetime-local" id="formDtEntrada" required>
                     </div>
                     <div class="form-group">
-                        <label for="formDtSaida">Data/Hora de Saída *</label>
-                        <input type="datetime-local" id="formDtSaida" required>
+                        <label for="formDtSaida">Data/Hora de Saída</label>
+                        <input type="datetime-local" id="formDtSaida">
                     </div>
                     
                     <div class="form-group">
-                        <label for="formPesoCheio">Peso Cheio (KG) *</label>
-                        <input type="number" step="1" id="formPesoCheio" placeholder="Ex: 48280" required min="0">
+                        <label for="formPesoCheio">Peso Cheio (KG)</label>
+                        <input type="number" step="1" id="formPesoCheio" placeholder="Ex: 48280" min="0">
                     </div>
                     <div class="form-group">
-                        <label for="formPesoVazio">Peso Vazio / Tara (KG) *</label>
-                        <input type="number" step="1" id="formPesoVazio" placeholder="Ex: 15400" required min="0">
+                        <label for="formPesoVazio">Peso Vazio / Tara (KG)</label>
+                        <input type="number" step="1" id="formPesoVazio" placeholder="Ex: 15400" min="0">
                     </div>
                     <div class="form-group">
-                        <label for="formPesoNf">Peso NF (KG) *</label>
-                        <input type="number" step="1" id="formPesoNf" placeholder="Ex: 32880 (0 p/ Vazio)" required min="0">
+                        <label for="formPesoNf">Peso NF (KG)</label>
+                        <input type="number" step="1" id="formPesoNf" placeholder="Ex: 32880 (0 p/ Vazio)" min="0">
                     </div>
                     <div class="form-group">
                         <label for="formPallets">Total de Pallets</label>
-                        <input type="number" id="formPallets" placeholder="Ex: 28" min="0">
+                        <input type="number" id="formPallets" placeholder="Ex: 28" min="0" oninput="calcularPesoPalletsAutomatico()">
                     </div>
                     <div class="form-group">
-                        <label for="formPesoPallets">Peso Pallets (KG)</label>
-                        <input type="number" step="1" id="formPesoPallets" placeholder="Ex: 756" min="0">
+                        <label for="formPesoPallets">Peso Pallets (KG) [Autocalculado]</label>
+                        <input type="number" step="1" id="formPesoPallets" placeholder="26 KG x Qt. Pallets" readonly>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-save-form">💾 Gravar Lançamento na Planilha</button>
+                <button type="submit" class="btn-save-form" id="btnSubmitForm">💾 Gravar Lançamento na Planilha</button>
             </form>
         </div>
     </div>
@@ -618,13 +713,14 @@
         let ticketsCache = [];
         let filtradosEspelho = [];
         let ticketAtual = null;
+        let modoFormulario = 'NOVO';
+        let idEditando = null;
         let deferredPrompt;
         let logoTentativa = 1;
 
         let paginaAtual = 1;
         const itensPorPagina = 15;
 
-        // Armazenamento estruturado de opções para evitar duplicidades de caixa/espaço
         let opcoesForm = {
             placas: new Set(),
             motoristas: new Set(),
@@ -638,6 +734,45 @@
             "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
+
+        // --- RASTREADOR REALTIME DE USUÁRIOS ONLINE ---
+        const mySessionId = 'sess_' + Math.random().toString(36).substring(2, 9);
+        const activeSessions = new Map();
+
+        if ('BroadcastChannel' in window) {
+            const onlineChannel = new BroadcastChannel('balanca_online_presence');
+            
+            onlineChannel.onmessage = (event) => {
+                if (event.data && event.data.type === 'ping') {
+                    activeSessions.set(event.data.id, Date.now());
+                    atualizarContadorOnline();
+                } else if (event.data && event.data.type === 'query') {
+                    onlineChannel.postMessage({ type: 'ping', id: mySessionId });
+                }
+            };
+
+            // Notifica presença e limpa desconectados
+            setInterval(() => {
+                onlineChannel.postMessage({ type: 'ping', id: mySessionId });
+                activeSessions.set(mySessionId, Date.now());
+                
+                // Remove sessões inativas há mais de 6 segundos
+                const now = Date.now();
+                activeSessions.forEach((lastSeen, id) => {
+                    if (now - lastSeen > 6000) activeSessions.delete(id);
+                });
+                atualizarContadorOnline();
+            }, 2500);
+
+            onlineChannel.postMessage({ type: 'query' });
+            activeSessions.set(mySessionId, Date.now());
+        }
+
+        function atualizarContadorOnline() {
+            const count = Math.max(1, activeSessions.size);
+            const el = document.getElementById('activeUsersCount');
+            if (el) el.innerText = count;
+        }
 
         function trocarAba(abaId, btnElement) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -679,52 +814,44 @@
             r.push(p); return r;
         }
 
-        // --- REGRA DE NEGÓCIO DE STATUS INTELIGENTE ---
         function calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg) {
             const cargaUpper = (tipoCarga || '').toUpperCase();
-            
-            if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) {
-                return 'VAZIO';
-            }
-            
-            if (pesoNf === 0) {
-                return 'OK';
-            }
-
+            if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) return 'VAZIO';
+            if (pesoNf === 0) return 'OK';
             return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
-        // --- HIGIENIZADOR E PADRONIZADOR DE NOMES PRÓPRIOS E STRINGS ---
         function formatarNomeProprio(str) {
             if (!str) return '';
             const limpo = str.trim();
             if (!limpo || limpo === '---' || limpo === 'N/A' || limpo.length < 2) return '';
-            
-            // Capitaliza cada palavra
             return limpo.toLowerCase().split(/\s+/).map(word => {
                 if (['de', 'da', 'do', 'dos', 'das', 'e'].includes(word)) return word;
                 return word.charAt(0).toUpperCase() + word.slice(1);
             }).join(' ');
         }
 
-        function popularSelectForm(selectId, setOpcoes) {
+        function popularSelectForm(selectId, setOpcoes, manterValorPadrao) {
             const select = document.getElementById(selectId);
             const erroOpt = select.options[0];
             const outroOpt = select.options[select.options.length - 1];
             
-            select.innerHTML = '';
-            select.appendChild(erroOpt);
+            let htmlInner = '';
             
             Array.from(setOpcoes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })).forEach(opcao => {
-                if(opcao) {
-                    const opt = document.createElement('option');
-                    opt.value = opcao;
-                    opt.textContent = opcao;
-                    select.appendChild(opt);
+                if(opcao && opcao !== 'VEICULO VAZIO - PATIO') {
+                    htmlInner += `<option value="${opcao}">${opcao}</option>`;
                 }
             });
-            
-            select.appendChild(outroOpt);
+
+            if (manterValorPadrao) {
+                select.innerHTML = `<option value="VEICULO VAZIO - PATIO" selected>VEICULO VAZIO - PATIO</option>` + htmlInner + `<option value="OUTRO">>> Outro (Digitar) <<</option>`;
+            } else {
+                select.innerHTML = '';
+                select.appendChild(erroOpt);
+                select.insertAdjacentHTML('beforeend', htmlInner);
+                select.appendChild(outroOpt);
+            }
         }
 
         function popularDatalist(listId, setOpcoes) {
@@ -750,6 +877,101 @@
                 outroInput.required = false;
                 outroInput.value = '';
             }
+        }
+
+        function calcularPesoPalletsAutomatico() {
+            const qtPallets = parseInt(document.getElementById('formPallets').value) || 0;
+            const pesoTotalPallets = qtPallets * 26;
+            document.getElementById('formPesoPallets').value = pesoTotalPallets > 0 ? pesoTotalPallets : '';
+        }
+
+        function setModoLancamento(modo) {
+            modoFormulario = modo;
+            document.getElementById('btnModeNovo').className = modo === 'NOVO' ? 'mode-btn active' : 'mode-btn';
+            document.getElementById('btnModeEditar').className = modo === 'EDITAR' ? 'mode-btn active' : 'mode-btn';
+
+            const boxEdit = document.getElementById('boxBuscaEdit');
+            const titleHeader = document.getElementById('formHeaderTitle');
+            const btnSubmit = document.getElementById('btnSubmitForm');
+
+            if (modo === 'EDITAR') {
+                boxEdit.style.display = 'block';
+                titleHeader.innerText = 'EDITAR LANÇAMENTO EXISTENTE';
+                btnSubmit.innerText = '💾 Atualizar Lançamento na Planilha';
+            } else {
+                boxEdit.style.display = 'none';
+                titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
+                btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
+                idEditando = null;
+                document.getElementById('formLancamento').reset();
+                document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
+            }
+        }
+
+        function carregarLancamentoParaEdicao() {
+            const idBusca = document.getElementById('inputEditId').value.trim().toUpperCase();
+            if (!idBusca) {
+                alert("Por favor, digite o ID do ticket que deseja editar.");
+                return;
+            }
+
+            const encontrado = ticketsCache.find(t => t.id.toUpperCase() === idBusca);
+            if (!encontrado) {
+                alert(`Nenhum lançamento localizado com o ID: ${idBusca}`);
+                return;
+            }
+
+            idEditando = encontrado.id;
+
+            document.getElementById('formPlaca').value = encontrado.placa;
+            
+            const selVeiculo = document.getElementById('formVeiculo');
+            if (Array.from(selVeiculo.options).some(o => o.value === encontrado.veiculoModelo)) {
+                selVeiculo.value = encontrado.veiculoModelo;
+            } else {
+                selVeiculo.value = 'OUTRO';
+                document.getElementById('formVeiculoOutro').style.display = 'block';
+                document.getElementById('formVeiculoOutro').value = encontrado.veiculoModelo;
+            }
+
+            const selMotorista = document.getElementById('formMotorista');
+            if (Array.from(selMotorista.options).some(o => o.value === encontrado.motorista)) {
+                selMotorista.value = encontrado.motorista;
+            } else if (encontrado.motorista && encontrado.motorista !== '---') {
+                selMotorista.value = 'OUTRO';
+                document.getElementById('formMotoristaOutro').style.display = 'block';
+                document.getElementById('formMotoristaOutro').value = encontrado.motorista;
+            }
+
+            const selCarga = document.getElementById('formTipoCarga');
+            if (Array.from(selCarga.options).some(o => o.value === encontrado.tipoCarga)) {
+                selCarga.value = encontrado.tipoCarga;
+            } else {
+                selCarga.value = 'OUTRO';
+                document.getElementById('formTipoCargaOutro').style.display = 'block';
+                document.getElementById('formTipoCargaOutro').value = encontrado.tipoCarga;
+            }
+
+            document.getElementById('formMovimento').value = encontrado.movimento || 'ENTRADA';
+
+            const selConf = document.getElementById('formConferente');
+            if (Array.from(selConf.options).some(o => o.value === encontrado.conferente)) {
+                selConf.value = encontrado.conferente;
+            } else if (encontrado.conferente && encontrado.conferente !== '---') {
+                selConf.value = 'OUTRO';
+                document.getElementById('formConferenteOutro').style.display = 'block';
+                document.getElementById('formConferenteOutro').value = encontrado.conferente;
+            }
+
+            document.getElementById('formLacres').value = encontrado.lacres !== '---' ? encontrado.lacres : '';
+            document.getElementById('formPallets').value = encontrado.quantPallets > 0 ? encontrado.quantPallets : '';
+            calcularPesoPalletsAutomatico();
+
+            document.getElementById('formPesoCheio').value = encontrado.pesoCheio > 0 ? encontrado.pesoCheio : '';
+            document.getElementById('formPesoVazio').value = encontrado.pesoVazio > 0 ? encontrado.pesoVazio : '';
+            document.getElementById('formPesoNf').value = encontrado.pesoNf > 0 ? encontrado.pesoNf : '';
+
+            alert(`Dados do Ticket ${encontrado.id} (${encontrado.placa}) carregados! Faça as alterações necessárias e clique em Atualizar.`);
         }
 
         async function carregarDadosPlanilha() {
@@ -778,7 +1000,6 @@
                     const doca = limpar(col[4]).toUpperCase();
                     const movimento = limpar(col[5]) || 'N/A';
                     
-                    // Trata tipo de carga unificando "Veiculo Vazio - Patio"
                     let tipoCargaRaw = limpar(col[6]);
                     let tipoCarga = tipoCargaRaw.toUpperCase();
                     if (tipoCarga.includes('VAZIO') || tipoCarga.includes('PATIO')) {
@@ -790,18 +1011,18 @@
                     if (placa) opcoesForm.placas.add(placa);
                     if (motorista) opcoesForm.motoristas.add(motorista);
                     if (doca && doca !== '---') opcoesForm.docas.add(doca);
-                    if (tipoCarga && tipoCarga !== 'VEICULO VAZIO - PATIO') opcoesForm.tiposCarga.add(tipoCarga);
+                    if (tipoCarga) opcoesForm.tiposCarga.add(tipoCarga);
                     if (conferente) opcoesForm.conferentes.add(conferente);
 
                     const dataEntradaRaw = limpar(col[8]);
                     const pesoCheio = parseNum(col[17]);
                     const pesoVazio = parseNum(col[18]);
                     const pesoNf = parseNum(col[20]);
+                    const quantPallets = parseNum(col[15]);
                     const divergencia = (pesoCheio - pesoVazio) - pesoNf;
 
                     const tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
-                    
                     const stCalculado = calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg);
 
                     ticketsCache.push({
@@ -809,15 +1030,20 @@
                         dataEntradaRaw: dataEntradaRaw,
                         dataEntradaTexto: (dataEntradaRaw + ' ' + limpar(col[9])).trim() || '---',
                         dataSaidaTexto: (limpar(col[10]) + ' ' + limpar(col[11])).trim() || '---',
+                        lacres: limpar(col[12]) || '---',
+                        quantPallets: quantPallets,
+                        pesoPallets: parseNum(col[16]),
+                        pesoCheio: pesoCheio,
+                        pesoVazio: pesoVazio,
                         pesoNf: pesoNf, divergencia: divergencia, conferente: conferente || '---', statusCalculado: stCalculado
                     });
                 }
 
                 popularDatalist('listPlacas', opcoesForm.placas);
-                popularSelectForm('formMotorista', opcoesForm.motoristas);
-                popularSelectForm('formTipoCarga', opcoesForm.tiposCarga);
-                popularSelectForm('formConferente', opcoesForm.conferentes);
-                popularSelectForm('formDoca', opcoesForm.docas);
+                popularSelectForm('formMotorista', opcoesForm.motoristas, false);
+                popularSelectForm('formTipoCarga', opcoesForm.tiposCarga, true); // Mantém opção de Veículo Vazio padrão
+                popularSelectForm('formConferente', opcoesForm.conferentes, false);
+                popularSelectForm('formDoca', opcoesForm.docas, false);
 
                 atualizarFarol(true);
                 const filterInput = document.getElementById('filterDate');
@@ -861,7 +1087,36 @@
                 }
                 return matchTexto && matchStatus && matchData;
             });
-            paginaAtual = 1; renderizarTabelaEspelho();
+
+            atualizarCardsResumoEspelho();
+            paginaAtual = 1; 
+            renderizarTabelaEspelho();
+        }
+
+        function atualizarCardsResumoEspelho() {
+            const totalVeic = filtradosEspelho.length;
+            const totalVol = filtradosEspelho.reduce((sum, item) => sum + item.pesoNf, 0);
+
+            const stMap = { VAZIO: { v: 0, p: 0 }, OK: { v: 0, p: 0 }, FALTA: { v: 0, p: 0 }, SOBRA: { v: 0, p: 0 } };
+
+            filtradosEspelho.forEach(t => {
+                const st = t.statusCalculado;
+                if (stMap[st]) { stMap[st].v += 1; stMap[st].p += t.pesoNf; }
+            });
+
+            const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
+
+            document.getElementById('stValVazio').innerText = `${stMap.VAZIO.v} veíc. (${calcPct(stMap.VAZIO.v, totalVeic)}%)`;
+            document.getElementById('stVolVazio').innerText = `${formatarNumero(stMap.VAZIO.p)} KG (${calcPct(stMap.VAZIO.p, totalVol)}%)`;
+
+            document.getElementById('stValOk').innerText = `${stMap.OK.v} veíc. (${calcPct(stMap.OK.v, totalVeic)}%)`;
+            document.getElementById('stVolOk').innerText = `${formatarNumero(stMap.OK.p)} KG (${calcPct(stMap.OK.p, totalVol)}%)`;
+
+            document.getElementById('stValFalta').innerText = `${stMap.FALTA.v} veíc. (${calcPct(stMap.FALTA.v, totalVeic)}%)`;
+            document.getElementById('stVolFalta').innerText = `${formatarNumero(stMap.FALTA.p)} KG (${calcPct(stMap.FALTA.p, totalVol)}%)`;
+
+            document.getElementById('stValSobra').innerText = `${stMap.SOBRA.v} veíc. (${calcPct(stMap.SOBRA.v, totalVeic)}%)`;
+            document.getElementById('stVolSobra').innerText = `${formatarNumero(stMap.SOBRA.p)} KG (${calcPct(stMap.SOBRA.p, totalVol)}%)`;
         }
 
         function renderizarTabelaEspelho() {
@@ -914,7 +1169,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- CONFIRMAÇÃO DE SALVAMENTO DE LANÇAMENTO ---
         function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -930,20 +1184,22 @@
             const conferente = obterValor('formConferente', 'formConferenteOutro');
             const dtEntrada = document.getElementById('formDtEntrada').value;
             const dtSaida = document.getElementById('formDtSaida').value;
-            const pesoCheio = document.getElementById('formPesoCheio').value;
-            const pesoVazio = document.getElementById('formPesoVazio').value;
-            const pesoNf = document.getElementById('formPesoNf').value;
+            const pesoCheio = document.getElementById('formPesoCheio').value || '0';
+            const pesoVazio = document.getElementById('formPesoVazio').value || '0';
+            const pesoNf = document.getElementById('formPesoNf').value || '0';
+
+            const acaoTexto = modoFormulario === 'EDITAR' ? `ATUALIZAÇÃO DO TICKET ${idEditando}` : 'NOVO LANÇAMENTO';
 
             const resumoMsg = 
-`CONFIRMAÇÃO DE LANÇAMENTO:
+`CONFIRMAÇÃO: (${acaoTexto})
 
 • Placa: ${placa}
 • Veículo: ${veiculo}
 • Motorista: ${motorista}
 • Tipo Carga: ${tipoCarga}
-• Conferente: ${conferente}
+• Conferente: ${conferente || 'Não definido'}
 • Entrada: ${dtEntrada.replace('T', ' ')}
-• Saída: ${dtSaida.replace('T', ' ')}
+• Saída: ${dtSaida ? dtSaida.replace('T', ' ') : 'Pendente'}
 • Peso Cheio: ${pesoCheio} KG
 • Peso Vazio: ${pesoVazio} KG
 • Peso NF: ${pesoNf} KG
@@ -953,10 +1209,10 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
-                alert("Dados confirmados com sucesso! Na Etapa 3, o Apps Script receberá estes dados e salvará na planilha.");
-                // Limpa formulário após confirmar
+                alert("Dados confirmados! Na Etapa 3, o Apps Script receberá estes dados e atualizará a planilha.");
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
+                if (modoFormulario === 'EDITAR') setModoLancamento('NOVO');
             }
         }
 
@@ -999,7 +1255,26 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
 
             renderT('dashTableCarga', cargasM);
             renderT('dashTableMovimento', movM);
-            renderT('dashTableConferente', confM);
+
+            const tbodyConf = document.getElementById('dashTableConferente');
+            tbodyConf.innerHTML = "";
+            const confKeys = Object.keys(confM);
+
+            if (confKeys.length === 0) {
+                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>';
+            } else {
+                confKeys.sort().forEach(k => {
+                    const volConf = confM[k].p;
+                    const pctVol = totalVol > 0 ? ((volConf / totalVol) * 100).toFixed(1) : "0.0";
+                    tbodyConf.innerHTML += `
+                        <tr>
+                            <td>${k}</td>
+                            <td class="num-col">${confM[k].v}</td>
+                            <td class="num-col">${formatarNumero(volConf)}</td>
+                            <td class="num-col" style="color:#511d9b;">${pctVol}%</td>
+                        </tr>`;
+                });
+            }
         }
 
         function limpar(val) { return val ? val.replace(/^"|"$/g, '').replace(/\r/g, '').trim() : ''; }
