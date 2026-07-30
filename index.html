@@ -27,7 +27,6 @@
             margin: 0;
         }
 
-        /* --- NAVEGAÇÃO ENTRE AS ABAS --- */
         .nav-menu {
             display: flex;
             gap: 10px;
@@ -57,7 +56,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* --- BARRA DE STATUS E MOSTRADOR ONLINE --- */
         .status-bar {
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
@@ -100,11 +98,9 @@
             cursor: pointer; margin-left: 10px;
         }
 
-        /* --- CONTAINER DE CONTEÚDO DAS ABAS --- */
         .tab-content { display: none; width: 100%; max-width: 1080px; }
         .tab-content.active { display: block; }
 
-        /* --- ABA TICKET --- */
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
@@ -288,7 +284,6 @@
         }
         .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        /* --- MÓDULO DE LANÇAMENTO / EDIÇÃO --- */
         .mode-selector {
             display: flex; gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 10px; border-radius: 6px; border: 1px solid #d8b4fe;
         }
@@ -415,7 +410,6 @@
                         <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
                         <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
                         <tr>
-                            <!-- TEXTO DE TOLERÂNCIA FIXO (SEM MUDANÇA PELO USUÁRIO) -->
                             <td class="label" id="toleranciaRotuloText">TOLERÂNCIA TRUCK</td>
                             <td class="value" id="toleranciaValor">---</td>
                         </tr>
@@ -741,7 +735,11 @@
     </div>
 
     <script>
+        // CSV público para leitura
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdD2cAUPKXWhbK6cTtPmtTYT1vvhly2Q0ZgiNbmTnVP2yLIiyOAUrp66vSeuf1MYgDVbmyJw9hsHVr/pub?output=csv";
+        
+        // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT PUBLICADO COMO WEB APP (Passo 2)
+        const SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/SUA_URL_DO_APPS_SCRIPT_AQUI/exec";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -845,7 +843,6 @@
             r.push(p); return r;
         }
 
-        // --- REGRA DE NEGÓCIO DE STATUS COM CLASSIFICAÇÃO S/D (SEM DADOS) ---
         function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
             if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') {
                 return 'S/D';
@@ -939,15 +936,13 @@
             }
         }
 
-        // --- GERADOR AUTOMÁTICO DO PRÓXIMO ID SEQUENCIAL (EX: A0381) ---
         function gerarProximoIdSequencial() {
-            let maiorNum = 380; // Ponto de partida mínimo (A0380)
+            let maiorNum = 380;
 
             ticketsCache.forEach(t => {
                 if (t.id && t.id.startsWith('A')) {
                     const numPart = parseInt(t.id.replace('A', ''));
                     if (!isNaN(numPart) && numPart > maiorNum) {
-                        // Se o ID já tiver dados reais, ele é considerado para a sequência
                         if (t.statusCalculado !== 'S/D') {
                             maiorNum = numPart;
                         }
@@ -956,8 +951,7 @@
             });
 
             const proximoNum = maiorNum + 1;
-            const proximoIdStr = 'A' + proximoNum.toString().padStart(4, '0');
-            return proximoIdStr;
+            return 'A' + proximoNum.toString().padStart(4, '0');
         }
 
         function setModoLancamento(modo) {
@@ -979,7 +973,6 @@
                 titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
                 btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
                 
-                // Gera e insere automaticamente o próximo ID sequencial
                 const proximoId = gerarProximoIdSequencial();
                 inputIdReg.value = proximoId;
                 idEditando = proximoId;
@@ -1140,7 +1133,6 @@
                 atualizarDashboard();
                 filtrarEspelho();
 
-                // Atualiza o ID do modo novo
                 if (modoFormulario === 'NOVO') {
                     const nextId = gerarProximoIdSequencial();
                     document.getElementById('formIdReg').value = nextId;
@@ -1297,6 +1289,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
+        // --- SALVAMENTO E ENVIO REAL PARA O GOOGLE APPS SCRIPT ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1305,18 +1298,23 @@
                 return select.value === 'OUTRO' ? document.getElementById(outroInputId).value.trim() : select.value;
             };
 
+            const idFinalTarget = idEditando || gerarProximoIdSequencial();
             const placa = document.getElementById('formPlaca').value.trim().toUpperCase();
             const veiculo = obterValor('formVeiculo', 'formVeiculoOutro');
             const motorista = obterValor('formMotorista', 'formMotoristaOutro');
             const tipoCarga = obterValor('formTipoCarga', 'formTipoCargaOutro');
+            const movimento = document.getElementById('formMovimento').value;
             const conferente = obterValor('formConferente', 'formConferenteOutro');
+            const doca = obterValor('formDoca', 'formDocaOutro');
+            const nf = document.getElementById('formNf').value.trim();
+            const lacres = document.getElementById('formLacres').value.trim();
             const dtEntrada = document.getElementById('formDtEntrada').value;
             const dtSaida = document.getElementById('formDtSaida').value;
+            const quantPallets = document.getElementById('formPallets').value || '0';
+            const pesoPallets = document.getElementById('formPesoPallets').value || '0';
             const pesoCheio = document.getElementById('formPesoCheio').value || '0';
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
-
-            let idFinalTarget = idEditando || gerarProximoIdSequencial();
 
             let clientIp = "Indisponível";
             try {
@@ -1356,10 +1354,57 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
-                alert(`Lançamento confirmado para a linha do ID ${idFinalTarget}! O registro será salvo na planilha.`);
-                document.getElementById('formLancamento').reset();
-                document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
-                setModoLancamento('NOVO');
+                const btnSubmit = document.getElementById('btnSubmitForm');
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = "⏳ SALVANDO NA PLANILHA GOOGLE...";
+
+                const payload = {
+                    id: idFinalTarget,
+                    placa: placa,
+                    veiculo: veiculo,
+                    motorista: motorista,
+                    doca: doca,
+                    movimento: movimento,
+                    tipoCarga: tipoCarga,
+                    dtEntrada: dtEntrada.replace('T', ' '),
+                    dtSaida: dtSaida ? dtSaida.replace('T', ' ') : '',
+                    lacres: lacres,
+                    quantPallets: quantPallets,
+                    pesoPallets: pesoPallets,
+                    pesoCheio: pesoCheio,
+                    pesoVazio: pesoVazio,
+                    pesoNf: pesoNf,
+                    conferente: conferente,
+                    auditoria: {
+                        dataHora: dataHoraEdicao,
+                        ip: clientIp
+                    }
+                };
+
+                try {
+                    // Envia para o Apps Script
+                    await fetch(SCRIPT_WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    alert(`✅ Lançamento gravado com sucesso no ID ${idFinalTarget} da planilha!`);
+                    document.getElementById('formLancamento').reset();
+                    document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
+                    setModoLancamento('NOVO');
+                    
+                    // Recarrega os dados em 3 segundos para sincronizar
+                    setTimeout(carregarDadosPlanilha, 3000);
+
+                } catch (error) {
+                    console.error("Erro ao enviar para o Apps Script:", error);
+                    alert("⚠️ Não foi possível comunicar com a planilha. Verifique a URL do Apps Script.");
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
+                }
             }
         }
 
@@ -1452,7 +1497,6 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
             return 'TOLERÂNCIA TRUCK';
         }
 
-        // --- RENDERIZAÇÃO DO TICKET COMPLETO ---
         function renderizarTicket(t) {
             ticketAtual = t; 
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
@@ -1478,7 +1522,6 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
             document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
             document.getElementById('conferente').innerText = t.conferente || '---';
 
-            // Atualiza o rótulo fixo de tolerância sem caixa de seleção
             const tolNome = identificarToleranciaPorVeiculo(t.veiculoModelo);
             document.getElementById('toleranciaRotuloText').innerText = tolNome;
 
@@ -1516,6 +1559,7 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
+        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
