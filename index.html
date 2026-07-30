@@ -27,7 +27,7 @@
             margin: 0;
         }
 
-        /* --- NAVEGAÇÃO ENTRE AS 3 ABAS --- */
+        /* --- NAVEGAÇÃO ENTRE AS ABAS --- */
         .nav-menu {
             display: flex;
             gap: 10px;
@@ -171,7 +171,6 @@
         .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .dash-table th { background-color: #f3e8ff; color: #511d9b; font-size: 10px; text-transform: uppercase; padding: 5px; border: 1px solid #d8b4fe; }
         .dash-table td { border: 1px solid #ddd; padding: 4px 6px; font-size: 11px; }
-        .dash-table .title-col { font-weight: bold; background-color: #f8fafc; }
         .dash-table .num-col { text-align: right; font-weight: bold; }
 
         .logo-container { text-align: center; padding: 12px 10px 8px 10px; background-color: #fff; }
@@ -187,7 +186,6 @@
         .value { text-align: left; }
         .value-highlight { background-color: #ffff00; font-weight: bold; }
         
-        /* Estilos de Status Atualizados */
         .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
         .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
         .status-vazio { background-color: #0284c7; color: #ffffff; font-weight: bold; text-transform: uppercase; }
@@ -265,7 +263,6 @@
         }
         .form-group input:focus, .form-group select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
         
-        /* Campo "Outro" oculto por padrão */
         .input-outro { margin-top: 5px; display: none; border-color: #a259ff; }
         
         .btn-save-form {
@@ -419,7 +416,6 @@
                     </tbody>
                 </table>
                 
-                <!-- NOVO PAINEL: PRODUTIVIDADE POR CONFERENTE -->
                 <div class="dash-section-title">Produtividade por Conferente</div>
                 <table class="dash-table">
                     <thead>
@@ -492,7 +488,7 @@
         </div>
     </div>
 
-    <!-- ==================== ABA 3: LANÇAMENTOS (MELHORADA) ==================== -->
+    <!-- ==================== ABA 3: LANÇAMENTOS ==================== -->
     <div id="lancamentoTab" class="tab-content">
         <div class="lancamento-card">
             <div class="dashboard-header" style="margin-bottom:20px;">Novo Lançamento de Pesagem</div>
@@ -510,21 +506,35 @@
                         <label for="formVeiculo">Veículo / Modelo *</label>
                         <select id="formVeiculo" required onchange="verificarOutro(this, 'formVeiculoOutro')">
                             <option value="" disabled selected>Selecione...</option>
-                            <!-- Opções carregadas dinamicamente -->
+                            <option value="Particular">Particular</option>
+                            <option value="Utilitario">Utilitario</option>
+                            <option value="VAN">VAN</option>
+                            <option value="VUC">VUC</option>
+                            <option value="3QT">3QT</option>
+                            <option value="TOCO">TOCO</option>
+                            <option value="TRUCK">TRUCK</option>
+                            <option value="BITRUCK">BITRUCK</option>
+                            <option value="CARRETA">CARRETA</option>
+                            <option value="BITREM">BITREM</option>
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formVeiculoOutro" class="input-outro" placeholder="Digite o modelo...">
                     </div>
                     <div class="form-group">
                         <label for="formMotorista">Motorista *</label>
-                        <input type="text" id="formMotorista" list="listMotoristas" placeholder="Nome Completo" required>
-                        <datalist id="listMotoristas"></datalist>
+                        <select id="formMotorista" required onchange="verificarOutro(this, 'formMotoristaOutro')">
+                            <option value="" disabled selected>Selecione...</option>
+                            <!-- Opções limpas e sem duplicatas carregadas dinamicamente -->
+                            <option value="OUTRO">>> Outro (Digitar) <<</option>
+                        </select>
+                        <input type="text" id="formMotoristaOutro" class="input-outro" placeholder="Nome Completo">
                     </div>
                     <div class="form-group">
                         <label for="formTipoCarga">Tipo de Carga *</label>
                         <select id="formTipoCarga" required onchange="verificarOutro(this, 'formTipoCargaOutro')">
                             <option value="" disabled selected>Selecione...</option>
-                            <!-- Opções carregadas dinamicamente -->
+                            <option value="VEICULO VAZIO - PATIO">VEICULO VAZIO - PATIO</option>
+                            <!-- Outras opções limpas da planilha -->
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formTipoCargaOutro" class="input-outro" placeholder="Ex: TRANSFERÊNCIA">
@@ -540,7 +550,7 @@
                         <label for="formConferente">Conferente *</label>
                         <select id="formConferente" required onchange="verificarOutro(this, 'formConferenteOutro')">
                             <option value="" disabled selected>Selecione...</option>
-                            <!-- Opções carregadas dinamicamente -->
+                            <!-- Opções limpas e sem duplicatas carregadas dinamicamente -->
                             <option value="OUTRO">>> Outro (Digitar) <<</option>
                         </select>
                         <input type="text" id="formConferenteOutro" class="input-outro" placeholder="Nome do Conferente">
@@ -566,7 +576,6 @@
 
                 <div class="form-section-title">Tempos e Pesos</div>
                 <div class="form-grid">
-                    <!-- NOVOS CAMPOS DE DATA E HORA -->
                     <div class="form-group">
                         <label for="formDtEntrada">Data/Hora de Entrada *</label>
                         <input type="datetime-local" id="formDtEntrada" required>
@@ -615,10 +624,9 @@
         let paginaAtual = 1;
         const itensPorPagina = 15;
 
-        // Conjuntos para armazenar opções únicas para os campos do formulário
+        // Armazenamento estruturado de opções para evitar duplicidades de caixa/espaço
         let opcoesForm = {
             placas: new Set(),
-            veiculos: new Set(),
             motoristas: new Set(),
             tiposCarga: new Set(),
             conferentes: new Set(),
@@ -671,37 +679,44 @@
             r.push(p); return r;
         }
 
-        // --- REGRA DE NEGÓCIO DE STATUS INTELIGENTE (ATUALIZADA) ---
+        // --- REGRA DE NEGÓCIO DE STATUS INTELIGENTE ---
         function calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg) {
             const cargaUpper = (tipoCarga || '').toUpperCase();
             
-            // 1. Prioridade: Se for Veículo Vazio -> Status "VAZIO" (Azul)
             if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) {
                 return 'VAZIO';
             }
             
-            // 2. Se não houver Peso NF (e não caiu na regra de vazio acima) -> OK
             if (pesoNf === 0) {
                 return 'OK';
             }
 
-            // 3. Demais casos (Carregados) -> Avalia divergência com a tolerância
             return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
-        // --- FUNÇÃO PARA PREENCHER OS SELECTS DO FORMULÁRIO ---
+        // --- HIGIENIZADOR E PADRONIZADOR DE NOMES PRÓPRIOS E STRINGS ---
+        function formatarNomeProprio(str) {
+            if (!str) return '';
+            const limpo = str.trim();
+            if (!limpo || limpo === '---' || limpo === 'N/A' || limpo.length < 2) return '';
+            
+            // Capitaliza cada palavra
+            return limpo.toLowerCase().split(/\s+/).map(word => {
+                if (['de', 'da', 'do', 'dos', 'das', 'e'].includes(word)) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
         function popularSelectForm(selectId, setOpcoes) {
             const select = document.getElementById(selectId);
-            // Mantém a primeira opção (Selecione...) e a última (Outro)
             const erroOpt = select.options[0];
             const outroOpt = select.options[select.options.length - 1];
             
             select.innerHTML = '';
             select.appendChild(erroOpt);
             
-            // Converte Set para Array, ordena alfabeticamente e adiciona as opções
-            Array.from(setOpcoes).sort().forEach(opcao => {
-                if(opcao && opcao !== '---' && opcao !== 'N/A') {
+            Array.from(setOpcoes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })).forEach(opcao => {
+                if(opcao) {
                     const opt = document.createElement('option');
                     opt.value = opcao;
                     opt.textContent = opcao;
@@ -712,12 +727,11 @@
             select.appendChild(outroOpt);
         }
 
-        // --- FUNÇÃO PARA PREENCHER DATALISTS ---
         function popularDatalist(listId, setOpcoes) {
             const datalist = document.getElementById(listId);
             datalist.innerHTML = '';
             Array.from(setOpcoes).sort().forEach(opcao => {
-                if(opcao && opcao !== '---' && opcao !== 'N/A') {
+                if(opcao) {
                     const opt = document.createElement('option');
                     opt.value = opcao;
                     datalist.appendChild(opt);
@@ -725,7 +739,6 @@
             });
         }
 
-        // --- LÓGICA DO CAMPO "OUTRO" ---
         function verificarOutro(selectElement, outroInputId) {
             const outroInput = document.getElementById(outroInputId);
             if (selectElement.value === 'OUTRO') {
@@ -735,7 +748,7 @@
             } else {
                 outroInput.style.display = 'none';
                 outroInput.required = false;
-                outroInput.value = ''; // Limpa o campo
+                outroInput.value = '';
             }
         }
 
@@ -749,8 +762,7 @@
                 const linhas = csvText.split(/\r?\n/);
                 ticketsCache = [];
 
-                // Reseta os conjuntos de opções para o formulário
-                opcoesForm = { placas: new Set(), veiculos: new Set(), motoristas: new Set(), tiposCarga: new Set(), conferentes: new Set(), docas: new Set() };
+                opcoesForm = { placas: new Set(), motoristas: new Set(), tiposCarga: new Set(), conferentes: new Set(), docas: new Set() };
 
                 for (let i = 1; i < linhas.length; i++) {
                     const linha = linhas[i].trim();
@@ -760,21 +772,26 @@
                     const idVal = limpar(col[0]);
                     if (!idVal || idVal.toUpperCase() === 'ID') continue;
 
-                    const placa = limpar(col[1]);
+                    const placa = limpar(col[1]).toUpperCase();
                     const veiculo = limpar(col[2]) || '---';
-                    const motorista = limpar(col[3]) || '---';
-                    const doca = limpar(col[4]);
+                    const motorista = formatarNomeProprio(col[3]);
+                    const doca = limpar(col[4]).toUpperCase();
                     const movimento = limpar(col[5]) || 'N/A';
-                    const tipoCarga = limpar(col[6]) || 'N/A';
-                    const conferente = limpar(col[22]) || '---';
+                    
+                    // Trata tipo de carga unificando "Veiculo Vazio - Patio"
+                    let tipoCargaRaw = limpar(col[6]);
+                    let tipoCarga = tipoCargaRaw.toUpperCase();
+                    if (tipoCarga.includes('VAZIO') || tipoCarga.includes('PATIO')) {
+                        tipoCarga = 'VEICULO VAZIO - PATIO';
+                    }
 
-                    // Alimenta os conjuntos para o formulário
-                    opcoesForm.placas.add(placa);
-                    opcoesForm.veiculos.add(veiculo);
-                    opcoesForm.motoristas.add(motorista);
-                    if(doca) opcoesForm.docas.add(doca);
-                    opcoesForm.tiposCarga.add(tipoCarga);
-                    opcoesForm.conferentes.add(conferente);
+                    const conferente = formatarNomeProprio(col[22]);
+
+                    if (placa) opcoesForm.placas.add(placa);
+                    if (motorista) opcoesForm.motoristas.add(motorista);
+                    if (doca && doca !== '---') opcoesForm.docas.add(doca);
+                    if (tipoCarga && tipoCarga !== 'VEICULO VAZIO - PATIO') opcoesForm.tiposCarga.add(tipoCarga);
+                    if (conferente) opcoesForm.conferentes.add(conferente);
 
                     const dataEntradaRaw = limpar(col[8]);
                     const pesoCheio = parseNum(col[17]);
@@ -785,22 +802,19 @@
                     const tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
                     
-                    // Aplicação da Nova Regra de Status
                     const stCalculado = calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg);
 
                     ticketsCache.push({
-                        id: idVal, placa: placa, veiculoModelo: veiculo, motorista: motorista, movimento: movimento, tipoCarga: tipoCarga,
+                        id: idVal, placa: placa, veiculoModelo: veiculo, motorista: motorista || '---', movimento: movimento, tipoCarga: tipoCarga,
                         dataEntradaRaw: dataEntradaRaw,
                         dataEntradaTexto: (dataEntradaRaw + ' ' + limpar(col[9])).trim() || '---',
                         dataSaidaTexto: (limpar(col[10]) + ' ' + limpar(col[11])).trim() || '---',
-                        pesoNf: pesoNf, divergencia: divergencia, conferente: conferente, statusCalculado: stCalculado
+                        pesoNf: pesoNf, divergencia: divergencia, conferente: conferente || '---', statusCalculado: stCalculado
                     });
                 }
 
-                // Popula os campos do formulário na aba Lançamentos
                 popularDatalist('listPlacas', opcoesForm.placas);
-                popularSelectForm('formVeiculo', opcoesForm.veiculos);
-                popularDatalist('listMotoristas', opcoesForm.motoristas);
+                popularSelectForm('formMotorista', opcoesForm.motoristas);
                 popularSelectForm('formTipoCarga', opcoesForm.tiposCarga);
                 popularSelectForm('formConferente', opcoesForm.conferentes);
                 popularSelectForm('formDoca', opcoesForm.docas);
@@ -862,7 +876,6 @@
             const paginaItens = filtradosEspelho.slice(inicio, inicio + itensPorPagina);
 
             paginaItens.forEach(t => {
-                // Define classe CSS baseada no status atualizado
                 let stClass = 'status-ok';
                 if(t.statusCalculado === 'FALTA' || t.statusCalculado === 'SOBRA') stClass = 'status-falta';
                 else if(t.statusCalculado === 'VAZIO') stClass = 'status-vazio';
@@ -901,29 +914,50 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- LÓGICA DE SALVAMENTO (PREPARADA PARA ETAPA 3) ---
+        // --- CONFIRMAÇÃO DE SALVAMENTO DE LANÇAMENTO ---
         function salvarNovoLancamento(e) {
             e.preventDefault();
-            // Lógica para capturar valores (considerando campos "Outro")
+            
             const obterValor = (selectId, outroInputId) => {
                 const select = document.getElementById(selectId);
-                return select.value === 'OUTRO' ? document.getElementById(outroInputId).value.trim().toUpperCase() : select.value;
+                return select.value === 'OUTRO' ? document.getElementById(outroInputId).value.trim() : select.value;
             };
 
-            const dados = {
-                placa: document.getElementById('formPlaca').value.trim().toUpperCase(),
-                veiculo: obterValor('formVeiculo', 'formVeiculoOutro'),
-                motorista: document.getElementById('formMotorista').value.trim().toUpperCase(),
-                tipoCarga: obterValor('formTipoCarga', 'formTipoCargaOutro'),
-                conferente: obterValor('formConferente', 'formConferenteOutro'),
-                doca: obterValor('formDoca', 'formDocaOutro'),
-                dtEntrada: document.getElementById('formDtEntrada').value,
-                dtSaida: document.getElementById('formDtSaida').value
-                // ... pesos ...
-            };
+            const placa = document.getElementById('formPlaca').value.trim().toUpperCase();
+            const veiculo = obterValor('formVeiculo', 'formVeiculoOutro');
+            const motorista = obterValor('formMotorista', 'formMotoristaOutro');
+            const tipoCarga = obterValor('formTipoCarga', 'formTipoCargaOutro');
+            const conferente = obterValor('formConferente', 'formConferenteOutro');
+            const dtEntrada = document.getElementById('formDtEntrada').value;
+            const dtSaida = document.getElementById('formDtSaida').value;
+            const pesoCheio = document.getElementById('formPesoCheio').value;
+            const pesoVazio = document.getElementById('formPesoVazio').value;
+            const pesoNf = document.getElementById('formPesoNf').value;
 
-            console.log("Dados prontos para envio:", dados);
-            alert("Formulário validado com sucesso! Na Etapa 3, configuraremos o Apps Script para gravar estes dados na planilha.");
+            const resumoMsg = 
+`CONFIRMAÇÃO DE LANÇAMENTO:
+
+• Placa: ${placa}
+• Veículo: ${veiculo}
+• Motorista: ${motorista}
+• Tipo Carga: ${tipoCarga}
+• Conferente: ${conferente}
+• Entrada: ${dtEntrada.replace('T', ' ')}
+• Saída: ${dtSaida.replace('T', ' ')}
+• Peso Cheio: ${pesoCheio} KG
+• Peso Vazio: ${pesoVazio} KG
+• Peso NF: ${pesoNf} KG
+
+Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
+
+            const confirmado = confirm(resumoMsg);
+
+            if (confirmado) {
+                alert("Dados confirmados com sucesso! Na Etapa 3, o Apps Script receberá estes dados e salvará na planilha.");
+                // Limpa formulário após confirmar
+                document.getElementById('formLancamento').reset();
+                document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
+            }
         }
 
         function atualizarDashboard() {
@@ -936,29 +970,24 @@
             const totalVol = filtrados.reduce((sum, item) => sum + item.pesoNf, 0);
             document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
 
-            // Mapas para agrupamento
             const cargasM = {}; const movM = {}; const confM = {};
 
             filtrados.forEach(t => {
-                // Agrupamento por Carga
                 const c = t.tipoCarga.toUpperCase();
                 if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
                 cargasM[c].v++; cargasM[c].p += t.pesoNf;
 
-                // Agrupamento por Movimento
                 const m = t.movimento.toUpperCase();
                 if (!movM[m]) movM[m] = { v: 0, p: 0 };
                 movM[m].v++; movM[m].p += t.pesoNf;
                 
-                // NOVO: Agrupamento por Conferente (Produtividade)
-                const conf = t.conferente.toUpperCase();
+                const conf = t.conferente;
                 if(conf && conf !== '---') {
                     if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
                     confM[conf].v++; confM[conf].p += t.pesoNf;
                 }
             });
 
-            // Renderiza tabelas do Dash
             const renderT = (id, map) => {
                 const tbody = document.getElementById(id); tbody.innerHTML = "";
                 const keys = Object.keys(map);
@@ -970,7 +999,7 @@
 
             renderT('dashTableCarga', cargasM);
             renderT('dashTableMovimento', movM);
-            renderT('dashTableConferente', confM); // Renderiza produtividade
+            renderT('dashTableConferente', confM);
         }
 
         function limpar(val) { return val ? val.replace(/^"|"$/g, '').replace(/\r/g, '').trim() : ''; }
@@ -994,9 +1023,9 @@
         function identificarToleranciaPorVeiculo(veiculo) {
             if (!veiculo) return 'TOLERÂNCIA TRUCK'; const v = veiculo.toUpperCase();
             if (v.includes('VAN')) return 'TOLERÂNCIA VAN'; if (v.includes('VUC')) return 'TOLERÂNCIA VUC';
-            if (v.includes('3/4') || v.includes('34')) return 'TOLERÂNCIA 34'; if (v.includes('TOCO')) return 'TOLERÂNCIA TOCO';
+            if (v.includes('3/4') || v.includes('34') || v.includes('3QT')) return 'TOLERÂNCIA 34'; if (v.includes('TOCO')) return 'TOLERÂNCIA TOCO';
             if (v.includes('BITRUCK')) return 'TOLERÂNCIA BITRUCK'; if (v.includes('TRUCK')) return 'TOLERÂNCIA TRUCK';
-            if (v.includes('CARRETA')) return 'TOLERÂNCIA CARRETA'; if (v.includes('UTILITARIO')) return 'TOLERÂNCIA UTILITARIO';
+            if (v.includes('CARRETA') || v.includes('BITREM')) return 'TOLERÂNCIA CARRETA'; if (v.includes('UTILITARIO') || v.includes('PARTICULAR')) return 'TOLERÂNCIA UTILITARIO';
             return 'TOLERÂNCIA TRUCK';
         }
 
@@ -1006,7 +1035,6 @@
             document.getElementById('veiculoModelo').innerText = t.veiculoModelo; document.getElementById('motorista').innerText = t.motorista;
             document.getElementById('dataEntrada').innerText = t.dataEntradaTexto; document.getElementById('dataSaida').innerText = t.dataSaidaTexto;
             document.getElementById('toleranciaSelect').value = identificarToleranciaPorVeiculo(t.veiculoModelo);
-            // ... outros campos ...
             recalcularToleranciaManual(); gerarQRCodeNativo(t);
         }
 
@@ -1015,7 +1043,6 @@
             const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; const divergencia = ticketAtual.divergencia || 0.0;
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
-            // Aplica a regra de status também no Ticket individual (incluindo VAZIO)
             let status = calcularStatusInteligente(ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
             
             let resultado = "FORA DA TOLERÂNCIA";
@@ -1040,7 +1067,7 @@
         function enviarEmail() { /* ... lógica Email ... */ }
         function imprimirTicket() { if (!ticketAtual) return; window.print(); }
 
-        carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000); // Atualiza a cada 10s
+        carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
     </script>
 </body>
 </html>
