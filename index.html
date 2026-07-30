@@ -748,6 +748,9 @@
         const APPSHEET_ACCESS_KEY = "V2-g3rgp-fhgfG-QaR9k-nFlH1-JvMOD-H1ieY-NqBup-1afb7";
         const APPSHEET_TABLE_NAME = "Página1";
 
+        // GOOGLE APPS SCRIPT WEBAPP (BACKUP)
+        const SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyNPYtyP4gc-W9wBgr0hROtYeOxBn2wYCPBcBY1x2xtQD086Ginei7uAqpwH2SvE5bL/exec";
+
         let ticketsCache = [];
         let filtradosEspelho = [];
         let ticketAtual = null;
@@ -1296,7 +1299,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- ENVIADOR VIA APPSHEET REST API ---
+        // --- SALVAMENTO DE LANÇAMENTOS COM MENSAGEM DIFERENCIADA E GRAVAÇÃO VIA APPSCRIPT ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1346,12 +1349,16 @@
             }
 
             const dataHoraEdicao = new Date().toLocaleString('pt-BR');
-            const acaoTexto = modoFormulario === 'EDITAR' ? `ATUALIZAÇÃO DO TICKET ${idFinalTarget}` : `NOVO LANÇAMENTO NO ID ${idFinalTarget}`;
 
-            const resumoMsg = 
-`CONFIRMAÇÃO: (${acaoTexto})
+            // --- MENSAGENS DIFERENCIADAS CONFORME A AÇÃO ---
+            let resumoMsg = "";
 
-• ID Destino: ${idFinalTarget}
+            if (modoFormulario === 'NOVO') {
+                resumoMsg = `TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS? PODEMOS GERAR A GRAVAÇÃO DAS INFORMAÇÕES NA ID ${idFinalTarget}?`;
+            } else {
+                resumoMsg = 
+`CONFIRMAÇÃO DE EDIÇÃO (TICKET ${idFinalTarget}):
+
 • Placa: ${placa}
 • Veículo: ${veiculo}
 • Motorista: ${motorista}
@@ -1367,58 +1374,53 @@
 • Horário: ${dataHoraEdicao}
 • IP: ${clientIp}
 
-Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} da planilha?`;
+Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget} da planilha?`;
+            }
 
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
                 const btnSubmit = document.getElementById('btnSubmitForm');
                 btnSubmit.disabled = true;
-                btnSubmit.innerText = "⏳ GRAVANDO NA PLANILHA VIA APPSHEET...";
+                btnSubmit.innerText = "⏳ GRAVANDO NA PLANILHA...";
 
-                const appSheetUrl = `https://api.appsheet.com/api/v2/apps/${APPSHEET_APP_ID}/tables/${encodeURIComponent(APPSHEET_TABLE_NAME)}/Action`;
-                const appSheetBody = {
-                    "Action": modoFormulario === 'EDITAR' ? "Edit" : "Add",
-                    "Properties": { "Locale": "pt-BR", "Timezone": "E. South America Standard Time" },
-                    "Rows": [{
-                        "ID": idFinalTarget,
-                        "Placa": placa,
-                        "Veículo / Modelo": veiculo,
-                        "Motorista": motorista,
-                        "Nº da Doca": doca,
-                        "MOVIMENTO": movimento,
-                        "Tipo de Carga": tipoCarga,
-                        "Nº NF-e": nf,
-                        "Data de Entrada": dtEntrada.split(' ')[0] || "",
-                        "Hora Entrada": dtEntrada.split(' ')[1] || "",
-                        "Data de Saída": dtSaida.split(' ')[0] || "",
-                        "Hora Saída": dtSaida.split(' ')[1] || "",
-                        "Lacre(s)": lacres,
-                        "Qt Pallets": quantPallets,
-                        "Peso Pallets": pesoPallets,
-                        "Peso Cheio": pesoCheio,
-                        "Peso Vazio": pesoVazio,
-                        "Peso NF": pesoNf,
-                        "Conferente": conferente
-                    }]
+                const recordData = {
+                    id: idFinalTarget,
+                    placa: placa,
+                    veiculo: veiculo,
+                    motorista: motorista,
+                    doca: doca,
+                    movimento: movimento,
+                    tipoCarga: tipoCarga,
+                    nf: nf,
+                    dtEntrada: dtEntrada,
+                    dtSaida: dtSaida,
+                    lacres: lacres,
+                    quantPallets: quantPallets,
+                    pesoPallets: pesoPallets,
+                    pesoCheio: pesoCheio,
+                    pesoVazio: pesoVazio,
+                    pesoNf: pesoNf,
+                    conferente: conferente,
+                    auditoria: {
+                        dataHora: dataHoraEdicao,
+                        ip: clientIp
+                    }
                 };
 
                 try {
-                    const response = await fetch(appSheetUrl, {
+                    // Envio com formulário de codificação compatível com o Apps Script
+                    const formData = new URLSearchParams();
+                    formData.append('payload', JSON.stringify(recordData));
+
+                    await fetch(SCRIPT_WEBAPP_URL, {
                         method: 'POST',
-                        headers: {
-                            'ApplicationAccessKey': APPSHEET_ACCESS_KEY,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(appSheetBody)
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
                     });
 
-                    if (response.ok) {
-                        alert(`✅ Lançamento gravado com SUCESSO no ID ${idFinalTarget} através da API AppSheet!`);
-                    } else {
-                        alert(`⚠️ O AppSheet recusou a requisição. Verifique as permissões da API.`);
-                    }
-
+                    alert(`✅ Lançamento enviado com SUCESSO para o ID ${idFinalTarget}!`);
                     document.getElementById('formLancamento').reset();
                     document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                     setModoLancamento('NOVO');
@@ -1427,7 +1429,7 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
 
                 } catch (error) {
                     console.error("Erro no envio:", error);
-                    alert("⚠️ Erro ao comunicar com a API do AppSheet.");
+                    alert("⚠️ Erro ao comunicar com o servidor. Tente novamente.");
                 } finally {
                     btnSubmit.disabled = false;
                     btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
