@@ -27,6 +27,7 @@
             margin: 0;
         }
 
+        /* --- NAVEGAÇÃO ENTRE AS ABAS --- */
         .nav-menu {
             display: flex;
             gap: 10px;
@@ -56,6 +57,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
+        /* --- BARRA DE STATUS E MOSTRADOR ONLINE --- */
         .status-bar {
             background-color: rgba(0, 0, 0, 0.4);
             color: #ffffff;
@@ -98,9 +100,11 @@
             cursor: pointer; margin-left: 10px;
         }
 
+        /* --- CONTAINER DE CONTEÚDO DAS ABAS --- */
         .tab-content { display: none; width: 100%; max-width: 1080px; }
         .tab-content.active { display: block; }
 
+        /* --- ABA TICKET --- */
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
@@ -284,6 +288,7 @@
         }
         .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
 
+        /* --- MÓDULO DE LANÇAMENTO / EDIÇÃO --- */
         .mode-selector {
             display: flex; gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 10px; border-radius: 6px; border: 1px solid #d8b4fe;
         }
@@ -738,8 +743,8 @@
         // CSV público para leitura
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdD2cAUPKXWhbK6cTtPmtTYT1vvhly2Q0ZgiNbmTnVP2yLIiyOAUrp66vSeuf1MYgDVbmyJw9hsHVr/pub?output=csv";
         
-        // COLE AQUI A URL DO SEU GOOGLE APPS SCRIPT PUBLICADO COMO WEB APP (Passo 2)
-        const SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/SUA_URL_DO_APPS_SCRIPT_AQUI/exec";
+        // URL da implantação ativa do Google Apps Script
+        const SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyNPYtyP4gc-W9wBgr0hROtYeOxBn2wYCPBcBY1x2xtQD086Ginei7uAqpwH2SvE5bL/exec";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -1289,7 +1294,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SALVAMENTO E ENVIO REAL PARA O GOOGLE APPS SCRIPT ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1298,7 +1302,6 @@
                 return select.value === 'OUTRO' ? document.getElementById(outroInputId).value.trim() : select.value;
             };
 
-            const idFinalTarget = idEditando || gerarProximoIdSequencial();
             const placa = document.getElementById('formPlaca').value.trim().toUpperCase();
             const veiculo = obterValor('formVeiculo', 'formVeiculoOutro');
             const motorista = obterValor('formMotorista', 'formMotoristaOutro');
@@ -1308,13 +1311,25 @@
             const doca = obterValor('formDoca', 'formDocaOutro');
             const nf = document.getElementById('formNf').value.trim();
             const lacres = document.getElementById('formLacres').value.trim();
-            const dtEntrada = document.getElementById('formDtEntrada').value;
-            const dtSaida = document.getElementById('formDtSaida').value;
-            const quantPallets = document.getElementById('formPallets').value || '0';
-            const pesoPallets = document.getElementById('formPesoPallets').value || '0';
+            const dtEntradaRaw = document.getElementById('formDtEntrada').value;
+            const dtSaidaRaw = document.getElementById('formDtSaida').value;
             const pesoCheio = document.getElementById('formPesoCheio').value || '0';
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
+            const quantPallets = document.getElementById('formPallets').value || '0';
+            const pesoPallets = document.getElementById('formPesoPallets').value || '0';
+
+            const formatarDataParaPlanilha = (isoStr) => {
+                if (!isoStr) return "";
+                const parts = isoStr.split('T');
+                const d = parts[0].split('-');
+                return `${d[2]}/${d[1]}/${d[0]} ${parts[1] || ''}`.trim();
+            };
+
+            const dtEntrada = formatarDataParaPlanilha(dtEntradaRaw);
+            const dtSaida = formatarDataParaPlanilha(dtSaidaRaw);
+
+            const idFinalTarget = idEditando || gerarProximoIdSequencial();
 
             let clientIp = "Indisponível";
             try {
@@ -1339,8 +1354,8 @@
 • Motorista: ${motorista}
 • Tipo Carga: ${tipoCarga}
 • Conferente: ${conferente || 'Não definido'}
-• Entrada: ${dtEntrada.replace('T', ' ')}
-• Saída: ${dtSaida ? dtSaida.replace('T', ' ') : 'Pendente'}
+• Entrada: ${dtEntrada}
+• Saída: ${dtSaida || 'Pendente'}
 • Peso Cheio: ${pesoCheio} KG
 • Peso Vazio: ${pesoVazio} KG
 • Peso NF: ${pesoNf} KG
@@ -1349,14 +1364,14 @@
 • Horário: ${dataHoraEdicao}
 • IP: ${clientIp}
 
-Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} da planilha?`;
+Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget} da planilha?`;
 
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
                 const btnSubmit = document.getElementById('btnSubmitForm');
                 btnSubmit.disabled = true;
-                btnSubmit.innerText = "⏳ SALVANDO NA PLANILHA GOOGLE...";
+                btnSubmit.innerText = "⏳ GRAVANDO NA PLANILHA...";
 
                 const payload = {
                     id: idFinalTarget,
@@ -1366,8 +1381,9 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
                     doca: doca,
                     movimento: movimento,
                     tipoCarga: tipoCarga,
-                    dtEntrada: dtEntrada.replace('T', ' '),
-                    dtSaida: dtSaida ? dtSaida.replace('T', ' ') : '',
+                    nf: nf,
+                    dtEntrada: dtEntrada,
+                    dtSaida: dtSaida,
                     lacres: lacres,
                     quantPallets: quantPallets,
                     pesoPallets: pesoPallets,
@@ -1382,7 +1398,6 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
                 };
 
                 try {
-                    // Envia para o Apps Script
                     await fetch(SCRIPT_WEBAPP_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -1395,12 +1410,11 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
                     document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                     setModoLancamento('NOVO');
                     
-                    // Recarrega os dados em 3 segundos para sincronizar
-                    setTimeout(carregarDadosPlanilha, 3000);
+                    setTimeout(carregarDadosPlanilha, 2000);
 
                 } catch (error) {
                     console.error("Erro ao enviar para o Apps Script:", error);
-                    alert("⚠️ Não foi possível comunicar com a planilha. Verifique a URL do Apps Script.");
+                    alert("⚠️ Erro ao enviar os dados para o Apps Script.");
                 } finally {
                     btnSubmit.disabled = false;
                     btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
@@ -1559,7 +1573,6 @@ Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} d
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
-        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
