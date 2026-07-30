@@ -12,7 +12,8 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7xkoiMc8GHf7ExRRvhBtQqkvEYuFbspMIxuu-1eHZ-LJd0IwfpBBxWAKXHVnGAg/pub?gid=2099001465&single=true&output=csv";
+    // URL do CSV Publicado da Planilha V2
+    private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
 
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
@@ -29,7 +30,7 @@ public class GoogleSheetsService {
         List<TicketDTO> lista = new ArrayList<>();
         
         try {
-            URL url = new URL(CSV_URL);
+            URL url = new URL(CSV_URL + "&_t=" + System.currentTimeMillis());
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                 String linha;
                 boolean primeiraLinha = true;
@@ -37,13 +38,13 @@ public class GoogleSheetsService {
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
                     
-                    // Pula apenas o cabeçalho
+                    // Pula a linha do cabeçalho
                     if (primeiraLinha) { 
                         primeiraLinha = false; 
                         continue; 
                     }
 
-                    // Trata aspas ou separadores comuns (, ou ;)
+                    // Suporta separadores por vírgula ou ponto e vírgula respeitando aspas
                     String[] col = linha.split("(?!\"[^\"]*),(?![^\"]*\")|;", -1);
 
                     if (col.length < 1) continue;
@@ -53,40 +54,75 @@ public class GoogleSheetsService {
 
                     TicketDTO ticket = new TicketDTO();
                     ticket.setId(idVal);
-                    ticket.setPlaca(col.length > 1 ? limparTexto(col[1]) : "");
+                    
+                    String placa = col.length > 1 ? limparTexto(col[1]).toUpperCase() : "";
+                    ticket.setPlaca(placa);
 
-                    // Salva as datas exatamente como texto para não quebrar a parsing
-                    ticket.setDataEntradaTexto(col.length > 2 ? limparTexto(col[2]) : "");
-                    ticket.setDataSaidaTexto(col.length > 3 ? limparTexto(col[3]) : "");
+                    String veiculo = col.length > 2 ? limparTexto(col[2]) : "";
+                    ticket.setVeiculoModelo(veiculo);
 
-                    ticket.setLacres(col.length > 4 ? limparTexto(col[4]) : "");
-                    ticket.setQuantPallets(col.length > 5 ? converterInteiro(col[5]) : 0);
-                    ticket.setPesoPallets(col.length > 6 ? converterDouble(col[6]) : 0.0);
-                    ticket.setPesoCheio(col.length > 7 ? converterDouble(col[7]) : 0.0);
-                    ticket.setPesoVazio(col.length > 8 ? converterDouble(col[8]) : 0.0);
-                    ticket.setPesoNf(col.length > 9 ? converterDouble(col[9]) : 0.0);
+                    ticket.setMotorista(col.length > 3 ? formatarNomeProprio(col[3]) : "");
+                    ticket.setDoca(col.length > 4 ? limparTexto(col[4]).toUpperCase() : "");
+                    ticket.setMovimento(col.length > 5 ? limparTexto(col[5]).toUpperCase() : "");
+                    
+                    String tipoCarga = col.length > 6 ? limparTexto(col[6]).toUpperCase() : "";
+                    ticket.setTipoCarga(tipoCarga);
 
-                    double pesoLiquido = ticket.getPesoCheio() - ticket.getPesoVazio();
-                    double divergencia = pesoLiquido - ticket.getPesoNf();
+                    // Nova Coluna H (Nº CARGA)
+                    ticket.setNumCarga(col.length > 7 ? limparTexto(col[7]) : "");
+
+                    ticket.setNf(col.length > 8 ? limparTexto(col[8]) : "");
+
+                    // Datas completas com Hora
+                    String dtEntrada = col.length > 9 ? limparTexto(col[9]) : "";
+                    String dtSaida = col.length > 10 ? limparTexto(col[10]) : "";
+                    ticket.setDataEntradaTexto(dtEntrada);
+                    ticket.setDataSaidaTexto(dtSaida);
+
+                    ticket.setLacres(col.length > 11 ? limparTexto(col[11]) : "");
+                    ticket.setQuantPallets(col.length > 12 ? converterInteiro(col[12]) : 0);
+                    ticket.setPesoPallets(col.length > 13 ? converterDouble(col[13]) : 0.0);
+
+                    double pesoCheio = col.length > 14 ? converterDouble(col[14]) : 0.0;
+                    double pesoVazio = col.length > 15 ? converterDouble(col[15]) : 0.0;
+                    double pesoNf = col.length > 17 ? converterDouble(col[17]) : 0.0;
+
+                    ticket.setPesoCheio(pesoCheio);
+                    ticket.setPesoVazio(pesoVazio);
+                    ticket.setPesoNf(pesoNf);
+
+                    // Cálculo do Peso Líquido e Divergência
+                    double pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : (col.length > 16 ? converterDouble(col[16]) : 0.0);
+                    double divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNf) : (col.length > 18 ? converterDouble(col[18]) : 0.0);
 
                     ticket.setPesoLiquido(pesoLiquido);
                     ticket.setDivergencia(divergencia);
 
-                    String tolTipo = (col.length > 10 && !col[10].trim().isEmpty()) ? limparTexto(col[10]) : "TOLERÂNCIA TRUCK";
+                    ticket.setConferente(col.length > 19 ? formatarNomeProprio(col[19]) : "");
+
+                    // Identifica a tolerância recomendada pelo veículo
+                    String tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     ticket.setToleranciaTipo(tolTipo);
 
                     double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
                     ticket.setLimiteToleranciaKg(limiteKg);
 
-                    if (Math.abs(divergencia) <= limiteKg) {
-                        ticket.setResultado("DENTRO DA TOLERÂNCIA");
+                    // Regra de Status Inteligente (incluindo S/D para linhas sem Placa ou Entrada)
+                    if (placa.isEmpty() || placa.equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
+                        ticket.setStatus("S/D");
+                        ticket.setResultado("SEM DADOS REGISTRADOS");
+                    } else if (tipoCarga.contains("VAZIO") || tipoCarga.contains("PATIO")) {
+                        ticket.setStatus("VAZIO");
+                        ticket.setResultado("VEÍCULO VAZIO / PÁTIO");
+                    } else if (Math.abs(divergencia) <= limiteKg) {
                         ticket.setStatus("OK");
+                        ticket.setResultado("DENTRO DA TOLERÂNCIA");
                     } else if (divergencia < 0) {
-                        ticket.setResultado("FORA DA TOLERÂNCIA");
                         ticket.setStatus("FALTA");
-                    } else {
                         ticket.setResultado("FORA DA TOLERÂNCIA");
+                    } else {
                         ticket.setStatus("SOBRA");
+                        ticket.setResultado("FORA DA TOLERÂNCIA");
                     }
 
                     lista.add(ticket);
@@ -121,5 +157,37 @@ public class GoogleSheetsService {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    private String formatarNomeProprio(String str) {
+        if (str == null || str.trim().isEmpty()) return "";
+        String limpo = str.trim();
+        if (limpo.length() < 2) return limpo;
+
+        String[] palavras = limpo.toLowerCase().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+
+        for (String p : palavras) {
+            if (List.of("de", "da", "do", "dos", "das", "e").contains(p)) {
+                sb.append(p).append(" ");
+            } else if (!p.isEmpty()) {
+                sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1)).append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    private String identificarToleranciaPorVeiculo(String veiculo) {
+        if (veiculo == null || veiculo.isEmpty()) return "TOLERÂNCIA TRUCK";
+        String v = veiculo.toUpperCase();
+        if (v.contains("VAN")) return "TOLERÂNCIA VAN";
+        if (v.contains("VUC")) return "TOLERÂNCIA VUC";
+        if (v.contains("3/4") || v.contains("34") || v.contains("3QT")) return "TOLERÂNCIA 34";
+        if (v.contains("TOCO")) return "TOLERÂNCIA TOCO";
+        if (v.contains("BITRUCK")) return "TOLERÂNCIA BITRUCK";
+        if (v.contains("TRUCK")) return "TOLERÂNCIA TRUCK";
+        if (v.contains("CARRETA") || v.contains("BITREM")) return "TOLERÂNCIA CARRETA";
+        if (v.contains("UTILITARIO") || v.contains("PARTICULAR")) return "TOLERÂNCIA UTILITARIO";
+        return "TOLERÂNCIA TRUCK";
     }
 }
