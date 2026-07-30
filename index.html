@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
-    <!-- Biblioteca para geração de PDF NAtivo -->
+    <!-- Biblioteca para geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -206,7 +206,6 @@
         .status-sd { background-color: #e2e8f0; color: #475569; font-weight: bold; text-transform: uppercase; }
         
         .spacer-row td { border: none; height: 6px; }
-        select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: bold; cursor: pointer; }
 
         .qr-footer {
             display: flex; align-items: center; justify-content: space-between;
@@ -416,18 +415,8 @@
                         <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
                         <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
                         <tr>
-                            <td class="label">
-                                <select id="toleranciaSelect" class="table-select" onchange="recalcularToleranciaManual()">
-                                    <option value="TOLERÂNCIA UTILITARIO">TOLERÂNCIA UTILITARIO</option>
-                                    <option value="TOLERÂNCIA VAN">TOLERÂNCIA VAN</option>
-                                    <option value="TOLERÂNCIA VUC">TOLERÂNCIA VUC</option>
-                                    <option value="TOLERÂNCIA 34">TOLERÂNCIA 34</option>
-                                    <option value="TOLERÂNCIA TOCO">TOLERÂNCIA TOCO</option>
-                                    <option value="TOLERÂNCIA TRUCK">TOLERÂNCIA TRUCK</option>
-                                    <option value="TOLERÂNCIA BITRUCK">TOLERÂNCIA BITRUCK</option>
-                                    <option value="TOLERÂNCIA CARRETA">TOLERÂNCIA CARRETA</option>
-                                </select>
-                            </td>
+                            <!-- TEXTO DE TOLERÂNCIA FIXO (SEM MUDANÇA PELO USUÁRIO) -->
+                            <td class="label" id="toleranciaRotuloText">TOLERÂNCIA TRUCK</td>
                             <td class="value" id="toleranciaValor">---</td>
                         </tr>
                         <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
@@ -619,11 +608,11 @@
             
             <form id="formLancamento" onsubmit="salvarNovoLancamento(event)">
                 
-                <div class="form-section-title">Dados da Identificação (ID Gerado Automático pela Planilha)</div>
+                <div class="form-section-title">Dados da Identificação (ID Gerado Automático)</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="formIdReg">ID do Registro (Coluna A) *</label>
-                        <input type="text" id="formIdReg" class="input-blocked" value="GERADO AUTOMÁTICO (BLOQUEADO)" readonly disabled title="Gerado automaticamente pela planilha na coluna A">
+                        <input type="text" id="formIdReg" class="input-blocked" value="A0381" readonly disabled title="Gerado automaticamente em sequência">
                     </div>
                     <div class="form-group">
                         <label for="formPlaca">Placa *</label>
@@ -950,6 +939,27 @@
             }
         }
 
+        // --- GERADOR AUTOMÁTICO DO PRÓXIMO ID SEQUENCIAL (EX: A0381) ---
+        function gerarProximoIdSequencial() {
+            let maiorNum = 380; // Ponto de partida mínimo (A0380)
+
+            ticketsCache.forEach(t => {
+                if (t.id && t.id.startsWith('A')) {
+                    const numPart = parseInt(t.id.replace('A', ''));
+                    if (!isNaN(numPart) && numPart > maiorNum) {
+                        // Se o ID já tiver dados reais, ele é considerado para a sequência
+                        if (t.statusCalculado !== 'S/D') {
+                            maiorNum = numPart;
+                        }
+                    }
+                }
+            });
+
+            const proximoNum = maiorNum + 1;
+            const proximoIdStr = 'A' + proximoNum.toString().padStart(4, '0');
+            return proximoIdStr;
+        }
+
         function setModoLancamento(modo) {
             modoFormulario = modo;
             document.getElementById('btnModeNovo').className = modo === 'NOVO' ? 'mode-btn active' : 'mode-btn';
@@ -969,15 +979,10 @@
                 titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
                 btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
                 
-                // No modo novo, autoseleciona a próxima linha livre S/D (Ex: A0381)
-                const proximoSD = ticketsCache.find(t => t.statusCalculado === 'S/D');
-                if (proximoSD) {
-                    inputIdReg.value = proximoSD.id + " (PRÓXIMA LINHA DISPONÍVEL)";
-                    idEditando = proximoSD.id;
-                } else {
-                    inputIdReg.value = "GERADO AUTOMÁTICO (BLOQUEADO)";
-                    idEditando = null;
-                }
+                // Gera e insere automaticamente o próximo ID sequencial
+                const proximoId = gerarProximoIdSequencial();
+                inputIdReg.value = proximoId;
+                idEditando = proximoId;
 
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
@@ -1135,6 +1140,13 @@
                 atualizarDashboard();
                 filtrarEspelho();
 
+                // Atualiza o ID do modo novo
+                if (modoFormulario === 'NOVO') {
+                    const nextId = gerarProximoIdSequencial();
+                    document.getElementById('formIdReg').value = nextId;
+                    idEditando = nextId;
+                }
+
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
                 ticketsCache.forEach(t => {
@@ -1149,7 +1161,6 @@
                     const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
                     if (recarregado) renderizarTicket(recarregado);
                 } else if (ticketsCache.length > 0) {
-                    // Seleciona por padrão o último ticket válido lançado
                     const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
                     if (ultimoValido) renderizarTicket(ultimoValido);
                 }
@@ -1305,14 +1316,7 @@
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
 
-            // Identifica se é novo lançamento e seleciona a próxima linha S/D (Ex: A0381)
-            let idFinalTarget = idEditando;
-            if (modoFormulario === 'NOVO') {
-                const proximoSD = ticketsCache.find(t => t.statusCalculado === 'S/D');
-                if (proximoSD) {
-                    idFinalTarget = proximoSD.id;
-                }
-            }
+            let idFinalTarget = idEditando || gerarProximoIdSequencial();
 
             let clientIp = "Indisponível";
             try {
@@ -1347,7 +1351,7 @@
 • Horário: ${dataHoraEdicao}
 • IP: ${clientIp}
 
-Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget} da planilha?`;
+Tem certeza que conferiu todos os dados antes de gravar no ID ${idFinalTarget} da planilha?`;
 
             const confirmado = confirm(resumoMsg);
 
@@ -1355,7 +1359,7 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
                 alert(`Lançamento confirmado para a linha do ID ${idFinalTarget}! O registro será salvo na planilha.`);
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
-                if (modoFormulario === 'EDITAR') setModoLancamento('NOVO');
+                setModoLancamento('NOVO');
             }
         }
 
@@ -1448,7 +1452,7 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             return 'TOLERÂNCIA TRUCK';
         }
 
-        // --- RENDERIZAÇÃO DO TICKET COMPLETO (CORRIGIDO) ---
+        // --- RENDERIZAÇÃO DO TICKET COMPLETO ---
         function renderizarTicket(t) {
             ticketAtual = t; 
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
@@ -1460,11 +1464,9 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
             document.getElementById('lacres').innerText = t.lacres || '---';
             
-            // Renderiza Quantidade e Peso dos Pallets
             document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
             document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
 
-            // Renderiza Pesos de Balança
             document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
             document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
             
@@ -1476,14 +1478,20 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
             document.getElementById('conferente').innerText = t.conferente || '---';
 
-            document.getElementById('toleranciaSelect').value = identificarToleranciaPorVeiculo(t.veiculoModelo);
+            // Atualiza o rótulo fixo de tolerância sem caixa de seleção
+            const tolNome = identificarToleranciaPorVeiculo(t.veiculoModelo);
+            document.getElementById('toleranciaRotuloText').innerText = tolNome;
+
             recalcularToleranciaManual(); 
             gerarQRCodeNativo(t);
         }
 
         function recalcularToleranciaManual() {
-            if (!ticketAtual) return; const tipoSel = document.getElementById('toleranciaSelect').value;
-            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; const divergencia = ticketAtual.divergencia || 0.0;
+            if (!ticketAtual) return; 
+            const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
+            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0; 
+            const divergencia = ticketAtual.divergencia || 0.0;
+            
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
             let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
@@ -1497,7 +1505,8 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
 
             document.getElementById('resultado').innerText = resultado;
             const statusEl = document.getElementById('status');
-            statusEl.innerText = status; statusEl.className = stClass;
+            statusEl.innerText = status; 
+            statusEl.className = stClass;
         }
 
         function gerarQRCodeNativo(t) {
@@ -1507,7 +1516,6 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
-        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
@@ -1538,7 +1546,7 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
                 return;
             }
 
-            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
             const resultado = document.getElementById('resultado').innerText;
             const status = document.getElementById('status').innerText;
             const hash = document.getElementById('authHash').innerText;
@@ -1566,7 +1574,7 @@ PESO LÍQUIDO: ${formatarNumero(ticketAtual.pesoLiquido)} KG
 PESO NF: ${formatarNumero(ticketAtual.pesoNf)} KG
 DIVERGÊNCIA: ${formatarNumero(ticketAtual.divergencia)} KG
 
-REGRA: ${tipoSel}
+REGRA: ${tolNome}
 RESULTADO: ${resultado}
 STATUS: ${status}
 CONFERENTE: ${ticketAtual.conferente}
