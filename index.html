@@ -731,6 +731,7 @@
                     </div>
                 </div>
 
+                <!-- CAMPOS CALCULADOS DA PLANILHA (SÃO FÓRMULAS -> BLOQUEADOS / CINZA) -->
                 <div class="form-section-title">Campos Calculados Automaticamente pela Planilha (Fórmulas -> Bloqueados)</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -860,7 +861,7 @@
         // --- REGRA DE NEGÓCIO DE STATUS COM CLASSIFICAÇÃO S/D (SEM DADOS) ---
         function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
             // Se faltarem os dados essenciais de registro (Placa ou Data de Entrada) -> S/D
-            if (!placa || !dataEntradaRaw || dataEntradaRaw === '---') {
+            if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') {
                 return 'S/D';
             }
 
@@ -993,7 +994,7 @@
             idEditando = encontrado.id;
             document.getElementById('formIdReg').value = encontrado.id;
 
-            document.getElementById('formPlaca').value = encontrado.placa;
+            document.getElementById('formPlaca').value = encontrado.placa !== '---' ? encontrado.placa : '';
             
             const selVeiculo = document.getElementById('formVeiculo');
             if (Array.from(selVeiculo.options).some(o => o.value === encontrado.veiculoModelo)) {
@@ -1196,7 +1197,7 @@
             const stVolMap = { VAZIO: 0, OK: 0, FALTA: 0, SOBRA: 0 };
 
             filtradosValidos.forEach(t => {
-                if (t.id) {
+                if (t.id && t.dataEntradaRaw) {
                     idsUnicosPorStatus.TOTAL.add(t.id);
                     const st = t.statusCalculado;
                     if (idsUnicosPorStatus[st]) {
@@ -1430,18 +1431,45 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             return 'TOLERÂNCIA TRUCK';
         }
 
+        // --- RENDERIZAÇÃO DO TICKET COMPLETO (CORRIGIDO) ---
         function renderizarTicket(t) {
-            ticketAtual = t; document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
-            document.getElementById('id').innerText = t.id; document.getElementById('placa').innerText = t.placa;
-            document.getElementById('veiculoModelo').innerText = t.veiculoModelo; document.getElementById('motorista').innerText = t.motorista;
-            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto; document.getElementById('dataSaida').innerText = t.dataSaidaTexto;
+            ticketAtual = t; 
+            document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
+            document.getElementById('id').innerText = t.id; 
+            document.getElementById('placa').innerText = t.placa || '---';
+            document.getElementById('veiculoModelo').innerText = t.veiculoModelo || '---'; 
+            document.getElementById('motorista').innerText = t.motorista || '---';
+            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---'; 
+            document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
+            document.getElementById('lacres').innerText = t.lacres || '---';
+            
+            // Renderiza Quantidade e Peso dos Pallets
+            document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
+            document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
+
+            // Renderiza Pesos de Balança
+            document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
+            document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
+            
+            const pesoLiquido = (t.pesoCheio > 0 && t.pesoVazio > 0) ? (t.pesoCheio - t.pesoVazio) : null;
+            document.getElementById('pesoLiquido').innerText = pesoLiquido !== null ? formatarNumero(pesoLiquido) + ' KG' : '---';
+            
+            document.getElementById('pesoNf').innerText = t.pesoNf > 0 ? formatarNumero(t.pesoNf) + ' KG' : '---';
+            
+            document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
+            document.getElementById('conferente').innerText = t.conferente || '---';
+
             document.getElementById('toleranciaSelect').value = identificarToleranciaPorVeiculo(t.veiculoModelo);
-            recalcularToleranciaManual(); gerarQRCodeNativo(t);
+            recalcularToleranciaManual(); 
+            gerarQRCodeNativo(t);
         }
 
         function recalcularToleranciaManual() {
-            if (!ticketAtual) return; const tipoSel = document.getElementById('toleranciaSelect').value;
-            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; const divergencia = ticketAtual.divergencia || 0.0;
+            if (!ticketAtual) return; 
+            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; 
+            const divergencia = ticketAtual.divergencia || 0.0;
+            
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
             let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
@@ -1455,11 +1483,12 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
 
             document.getElementById('resultado').innerText = resultado;
             const statusEl = document.getElementById('status');
-            statusEl.innerText = status; statusEl.className = stClass;
+            statusEl.innerText = status; 
+            statusEl.className = stClass;
         }
 
         function gerarQRCodeNativo(t) {
-            const hash = `FRM-${t.id}-${t.placa}-${Math.abs(t.divergencia).toFixed(0)}`;
+            const hash = `FRM-${t.id}-${t.placa}-${Math.abs(t.divergencia || 0).toFixed(0)}`;
             document.getElementById('authHash').innerText = hash;
             const payload = encodeURIComponent(`FRIMESA FIDF|TICKET:${t.id}|PLACA:${t.placa}|AUTH:${hash}`);
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
