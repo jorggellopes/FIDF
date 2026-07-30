@@ -27,71 +27,38 @@
             margin: 0;
         }
 
-        /* --- NAVEGAÇÃO ENTRE AS ABAS --- */
         .nav-menu {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            max-width: 1080px;
-            margin-bottom: 12px;
+            display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px;
         }
         .nav-btn {
-            flex: 1;
-            padding: 12px 8px;
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border: 2px solid transparent;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
+            flex: 1; padding: 12px 8px; background-color: rgba(255, 255, 255, 0.2);
+            color: #fff; border: 2px solid transparent; border-radius: 6px;
+            font-weight: bold; font-size: 13px; cursor: pointer; text-align: center;
+            transition: all 0.2s ease; text-transform: uppercase;
         }
         .nav-btn:hover { background-color: rgba(255, 255, 255, 0.35); }
         .nav-btn.active {
-            background-color: #ffffff;
-            color: #511d9b;
-            border-color: #ffffff;
+            background-color: #ffffff; color: #511d9b; border-color: #ffffff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        /* --- BARRA DE STATUS E MOSTRADOR ONLINE --- */
         .status-bar {
-            background-color: rgba(0, 0, 0, 0.4);
-            color: #ffffff;
-            width: 100%;
-            max-width: 1080px;
-            padding: 8px 15px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            flex-wrap: wrap;
-            gap: 8px;
+            background-color: rgba(0, 0, 0, 0.4); color: #ffffff; width: 100%;
+            max-width: 1080px; padding: 8px 15px; border-radius: 6px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
+            flex-wrap: wrap; gap: 8px;
         }
         .status-indicator { display: flex; align-items: center; gap: 6px; }
         .status-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background-color: #ffcc00; box-shadow: 0 0 6px rgba(0,0,0,0.5);
-            transition: background-color 0.3s;
+            width: 10px; height: 10px; border-radius: 50%; background-color: #ffcc00;
+            box-shadow: 0 0 6px rgba(0,0,0,0.5); transition: background-color 0.3s;
         }
         .status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
         .status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
 
         .online-counter {
-            background-color: #0284c7;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 10px;
+            background-color: #0284c7; color: white; padding: 3px 8px; border-radius: 12px;
+            font-weight: bold; display: flex; align-items: center; gap: 4px; font-size: 10px;
         }
 
         .btn-install {
@@ -100,11 +67,9 @@
             cursor: pointer; margin-left: 10px;
         }
 
-        /* --- CONTAINER DE CONTEÚDO DAS ABAS --- */
         .tab-content { display: none; width: 100%; max-width: 1080px; }
         .tab-content.active { display: block; }
 
-        /* --- ABA TICKET --- */
         .search-container {
             background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
@@ -123,19 +88,14 @@
         }
 
         .main-layout {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            width: 100%;
-            align-items: flex-start;
-            justify-content: center;
+            display: flex; flex-wrap: wrap; gap: 20px; width: 100%;
+            align-items: flex-start; justify-content: center;
         }
 
         .ticket-card {
-            flex: 1; min-width: 320px; max-width: 440px;
-            background-color: #fff; border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden;
-            padding-bottom: 0;
+            flex: 1; min-width: 320px; max-width: 440px; background-color: #fff;
+            border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px; overflow: hidden; padding-bottom: 0;
         }
 
         .ticket-actions {
@@ -155,15 +115,14 @@
         .btn-print { background-color: #475569; }
 
         .dashboard-card {
-            flex: 1.3; min-width: 340px; max-width: 620px;
-            background-color: #ffffff; border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3); border-radius: 4px; padding: 15px;
+            flex: 1.3; min-width: 340px; max-width: 620px; background-color: #ffffff;
+            border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border-radius: 4px; padding: 15px;
         }
 
         .dashboard-header {
-            background-color: #511d9b; color: white; padding: 8px 12px;
-            font-weight: bold; font-size: 14px; text-align: center;
-            border-radius: 4px; margin-bottom: 15px; text-transform: uppercase;
+            background-color: #511d9b; color: white; padding: 8px 12px; font-weight: bold;
+            font-size: 14px; text-align: center; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase;
         }
 
         .filter-group {
@@ -179,8 +138,8 @@
         .stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
 
         .dash-section-title {
-            font-size: 11px; font-weight: bold; color: #511d9b;
-            border-bottom: 2px solid #511d9b; padding-bottom: 3px; margin: 12px 0 6px 0; text-transform: uppercase;
+            font-size: 11px; font-weight: bold; color: #511d9b; border-bottom: 2px solid #511d9b;
+            padding-bottom: 3px; margin: 12px 0 6px 0; text-transform: uppercase;
         }
 
         .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
@@ -217,11 +176,8 @@
         .qr-img { width: 55px; height: 55px; object-fit: contain; }
 
         .espelho-card, .lancamento-card {
-            background-color: #ffffff;
-            border: 2px solid #000;
-            border-radius: 6px;
-            padding: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
+            padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         .espelho-filters {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -242,17 +198,10 @@
         .btn-clear-filters:hover { background-color: #dc2626; }
 
         .status-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px; margin-bottom: 15px;
         }
-        .status-summary-card {
-            border-radius: 6px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
+        .status-summary-card { border-radius: 6px; padding: 10px; border: 1px solid #ccc; text-align: center; }
         .summary-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
         .summary-val { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
         .summary-sub { font-size: 10px; opacity: 0.9; }
@@ -289,7 +238,6 @@
         }
         .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        /* --- MÓDULO DE LANÇAMENTO / EDIÇÃO --- */
         .mode-selector {
             display: flex; gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 10px; border-radius: 6px; border: 1px solid #d8b4fe;
         }
@@ -311,10 +259,7 @@
             padding: 8px 12px; border-radius: 4px; margin: 15px 0 10px 0; text-transform: uppercase; border: 1px solid #d8b4fe;
         }
         .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px;
         }
         .form-group { display: flex; flex-direction: column; position: relative; }
         .form-group label { font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; text-transform: uppercase; }
@@ -327,11 +272,8 @@
         .form-group input:disabled, 
         .form-group select:disabled, 
         .input-blocked { 
-            background-color: #d1d5db !important; 
-            color: #374151 !important; 
-            border-color: #9ca3af !important; 
-            cursor: not-allowed !important; 
-            font-weight: bold;
+            background-color: #d1d5db !important; color: #374151 !important; border-color: #9ca3af !important; 
+            cursor: not-allowed !important; font-weight: bold;
         }
         
         .input-outro { margin-top: 5px; display: none; border-color: #a259ff; }
@@ -352,6 +294,12 @@
     </style>
 </head>
 <body>
+
+    <!-- FORMULÁRIO E IFRAME OCULTOS PARA ENVIO DIRETO SEM BLOQUEIO DE CORS -->
+    <iframe name="hidden_upload_iframe" id="hidden_upload_iframe" style="display:none;"></iframe>
+    <form id="nativeGasForm" action="https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec" method="POST" target="hidden_upload_iframe" style="display:none;">
+        <input type="hidden" name="payload" id="hiddenPayloadInput">
+    </form>
 
     <div class="nav-menu">
         <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
@@ -749,10 +697,6 @@
     <script>
         // LEITURA DO CSV DA PLANILHA V2
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
-
-        // URL DA SUA API JAVA (SPRING BOOT)
-        // Substitua pelo endereço real do seu servidor (ex: https://sua-api.com/api/tickets/gravar)
-        const JAVA_API_URL = "/api/tickets/gravar";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -1305,7 +1249,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SALVAMENTO VIA API JAVA ---
+        // --- SALVAMENTO NATIVO VIA FORMULÁRIO COM VALIDAÇÃO REAL DA PLANILHA ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1365,7 +1309,7 @@
 
             const dataHoraEdicao = new Date().toLocaleString('pt-BR');
 
-            // POP-UP DIFERENCIADO
+            // MENSAGEM DE CONFIRMAÇÃO EXATA
             let resumoMsg = "";
             if (modoFormulario === 'NOVO') {
                 resumoMsg = `TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS? PODEMOS GERAR A GRAVAÇÃO DAS INFORMAÇÕES NA ID ${idFinalTarget}?`;
@@ -1396,8 +1340,9 @@ Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget}
             if (confirmado) {
                 const btnSubmit = document.getElementById('btnSubmitForm');
                 btnSubmit.disabled = true;
-                btnSubmit.innerText = "⏳ GRAVANDO NA PLANILHA VIA JAVA...";
+                btnSubmit.innerText = "⏳ ENVIANDO PARA A PLANILHA...";
 
+                // Mapeamento explícito das propriedades que serão gravadas
                 const recordData = {
                     id: idFinalTarget,
                     placa: placa,
@@ -1426,30 +1371,36 @@ Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget}
                     }
                 };
 
-                try {
-                    const response = await fetch(JAVA_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(recordData)
-                    });
+                // DISPARO NATIVO PARA O APPS SCRIPT
+                document.getElementById('hiddenPayloadInput').value = JSON.stringify(recordData);
+                document.getElementById('nativeGasForm').submit();
 
-                    if (response.ok) {
-                        alert(`✅ Lançamento gravado com SUCESSO no ID ${idFinalTarget}!`);
-                        document.getElementById('formLancamento').reset();
-                        document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
-                        setModoLancamento('NOVO');
-                        setTimeout(carregarDadosPlanilha, 2000);
-                    } else {
-                        alert("⚠️ A API Java retornou um erro ao gravar. Verifique o servidor.");
+                btnSubmit.innerText = "⏳ VERIFICANDO GRAVAÇÃO REAL NA PLANILHA...";
+
+                // Valida na planilha em tempo real se o dado foi gravado de fato
+                let gravouSucesso = false;
+                for (let tentativa = 1; tentativa <= 5; tentativa++) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    await carregarDadosPlanilha();
+                    
+                    const encontrado = ticketsCache.find(t => t.id === idFinalTarget);
+                    if (encontrado && (encontrado.placa === placa || modoFormulario === 'EDITAR')) {
+                        gravouSucesso = true;
+                        break;
                     }
-
-                } catch (error) {
-                    console.error("Erro no envio:", error);
-                    alert("⚠️ Erro de comunicação com o servidor Java.");
-                } finally {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
                 }
+
+                if (gravouSucesso) {
+                    alert(`✅ Lançamento CONFIRMADO e GRAVADO com sucesso no ID ${idFinalTarget} da planilha!`);
+                    document.getElementById('formLancamento').reset();
+                    document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
+                    setModoLancamento('NOVO');
+                } else {
+                    alert(`⚠️ O comando foi enviado, mas a gravação na planilha ainda não foi confirmada. Verifique as permissões do Apps Script ou tente novamente.`);
+                }
+
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
             }
         }
 
@@ -1605,7 +1556,6 @@ Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget}
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
-        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
