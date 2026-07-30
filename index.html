@@ -203,6 +203,7 @@
         .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
         .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
         .status-vazio { background-color: #0284c7; color: #ffffff; font-weight: bold; text-transform: uppercase; }
+        .status-sd { background-color: #e2e8f0; color: #475569; font-weight: bold; text-transform: uppercase; }
         
         .spacer-row td { border: none; height: 6px; }
         select.table-select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: bold; cursor: pointer; }
@@ -232,12 +233,11 @@
             width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
         }
 
-        /* Botão Borracha para Limpar Filtros */
         .btn-clear-filters {
             background-color: #ef4444; color: white; border: none; padding: 7px 12px;
             border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
             height: 31px; display: flex; align-items: center; justify-content: center; gap: 4px;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s; width: 100%;
         }
         .btn-clear-filters:hover { background-color: #dc2626; }
 
@@ -322,7 +322,18 @@
             padding: 9px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; width: 100%;
         }
         .form-group input:focus, .form-group select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
-        .form-group input[readonly] { background-color: #f1f5f9; color: #475569; cursor: not-allowed; }
+        
+        /* ESTILO PARA CAMPOS BLOQUEADOS / FÓRMULAS / ID (CINZA) */
+        .form-group input[readonly], 
+        .form-group input:disabled, 
+        .form-group select:disabled, 
+        .input-blocked { 
+            background-color: #d1d5db !important; 
+            color: #374151 !important; 
+            border-color: #9ca3af !important; 
+            cursor: not-allowed !important; 
+            font-weight: bold;
+        }
         
         .input-outro { margin-top: 5px; display: none; border-color: #a259ff; }
         
@@ -525,9 +536,9 @@
                         <option value="OK">OK (Verde)</option>
                         <option value="FALTA">FALTA (Amarelo)</option>
                         <option value="SOBRA">SOBRA (Amarelo)</option>
+                        <option value="S/D">S/D (Sem Dados)</option>
                     </select>
                 </div>
-                <!-- BOTÃO BORRACHA PARA LIMPAR FILTROS -->
                 <div>
                     <button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
                         🧹 Limpar Filtros
@@ -609,8 +620,12 @@
             
             <form id="formLancamento" onsubmit="salvarNovoLancamento(event)">
                 
-                <div class="form-section-title">Dados do Veículo e Operação</div>
+                <div class="form-section-title">Dados da Identificação (ID Gerado Automático pela Planilha)</div>
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label for="formIdReg">ID do Registro (Coluna A) *</label>
+                        <input type="text" id="formIdReg" class="input-blocked" value="GERADO AUTOMÁTICO (BLOQUEADO)" readonly disabled title="Gerado automaticamente pela planilha na coluna A">
+                    </div>
                     <div class="form-group">
                         <label for="formPlaca">Placa *</label>
                         <input type="text" id="formPlaca" list="listPlacas" placeholder="ABC1D23" required style="text-transform:uppercase;">
@@ -683,7 +698,7 @@
                     </div>
                 </div>
 
-                <div class="form-section-title">Tempos e Pesos (Campos Opcionais no Lançamento Inicial)</div>
+                <div class="form-section-title">Tempos e Pesos</div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="formDtEntrada">Data/Hora de Entrada *</label>
@@ -696,23 +711,39 @@
                     
                     <div class="form-group">
                         <label for="formPesoCheio">Peso Cheio (KG)</label>
-                        <input type="number" step="1" id="formPesoCheio" placeholder="Ex: 48280" min="0">
+                        <input type="number" step="1" id="formPesoCheio" placeholder="Ex: 48280" min="0" oninput="calcularPesosFormulario()">
                     </div>
                     <div class="form-group">
                         <label for="formPesoVazio">Peso Vazio / Tara (KG)</label>
-                        <input type="number" step="1" id="formPesoVazio" placeholder="Ex: 15400" min="0">
+                        <input type="number" step="1" id="formPesoVazio" placeholder="Ex: 15400" min="0" oninput="calcularPesosFormulario()">
                     </div>
                     <div class="form-group">
                         <label for="formPesoNf">Peso NF (KG)</label>
-                        <input type="number" step="1" id="formPesoNf" placeholder="Ex: 32880 (0 p/ Vazio)" min="0">
+                        <input type="number" step="1" id="formPesoNf" placeholder="Ex: 32880 (0 p/ Vazio)" min="0" oninput="calcularPesosFormulario()">
                     </div>
                     <div class="form-group">
                         <label for="formPallets">Total de Pallets</label>
                         <input type="number" id="formPallets" placeholder="Ex: 28" min="0" oninput="calcularPesoPalletsAutomatico()">
                     </div>
                     <div class="form-group">
-                        <label for="formPesoPallets">Peso Pallets (KG) [Autocalculado]</label>
-                        <input type="number" step="1" id="formPesoPallets" placeholder="26 KG x Qt. Pallets" readonly>
+                        <label for="formPesoPallets">Peso Pallets (Fórmula 26KG) * Bloqueado</label>
+                        <input type="number" step="1" id="formPesoPallets" class="input-blocked" placeholder="Autocalculado pela quantidade" readonly disabled>
+                    </div>
+                </div>
+
+                <div class="form-section-title">Campos Calculados Automaticamente pela Planilha (Fórmulas -> Bloqueados)</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="formPesoLiquidoCalc">Peso Líquido (Fórmula) * Bloqueado</label>
+                        <input type="text" id="formPesoLiquidoCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (Cheio - Vazio)" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="formDivergenciaCalc">Divergência (Fórmula) * Bloqueado</label>
+                        <input type="text" id="formDivergenciaCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (Líquido - NF)" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="formStatusCalc">Status (Fórmula) * Bloqueado</label>
+                        <input type="text" id="formStatusCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (OK / VAZIO / FALTA / SOBRA)" readonly disabled>
                     </div>
                 </div>
 
@@ -826,10 +857,17 @@
             r.push(p); return r;
         }
 
-        function calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg) {
+        // --- REGRA DE NEGÓCIO DE STATUS COM CLASSIFICAÇÃO S/D (SEM DADOS) ---
+        function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
+            // Se faltarem os dados essenciais de registro (Placa ou Data de Entrada) -> S/D
+            if (!placa || !dataEntradaRaw || dataEntradaRaw === '---') {
+                return 'S/D';
+            }
+
             const cargaUpper = (tipoCarga || '').toUpperCase();
             if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) return 'VAZIO';
             if (pesoNf === 0) return 'OK';
+
             return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
@@ -895,6 +933,23 @@
             const qtPallets = parseInt(document.getElementById('formPallets').value) || 0;
             const pesoTotalPallets = qtPallets * 26;
             document.getElementById('formPesoPallets').value = pesoTotalPallets > 0 ? pesoTotalPallets : '';
+            calcularPesosFormulario();
+        }
+
+        function calcularPesosFormulario() {
+            const cheio = parseFloat(document.getElementById('formPesoCheio').value) || 0;
+            const vazio = parseFloat(document.getElementById('formPesoVazio').value) || 0;
+            const nf = parseFloat(document.getElementById('formPesoNf').value) || 0;
+
+            if (cheio > 0 && vazio > 0) {
+                const liq = cheio - vazio;
+                const div = liq - nf;
+                document.getElementById('formPesoLiquidoCalc').value = formatarNumero(liq) + " KG";
+                document.getElementById('formDivergenciaCalc').value = formatarNumero(div) + " KG";
+            } else {
+                document.getElementById('formPesoLiquidoCalc').value = "CÁLCULO AUTOMÁTICO (Cheio - Vazio)";
+                document.getElementById('formDivergenciaCalc').value = "CÁLCULO AUTOMÁTICO (Líquido - NF)";
+            }
         }
 
         function setModoLancamento(modo) {
@@ -905,6 +960,7 @@
             const boxEdit = document.getElementById('boxBuscaEdit');
             const titleHeader = document.getElementById('formHeaderTitle');
             const btnSubmit = document.getElementById('btnSubmitForm');
+            const inputIdReg = document.getElementById('formIdReg');
 
             if (modo === 'EDITAR') {
                 boxEdit.style.display = 'block';
@@ -914,6 +970,7 @@
                 boxEdit.style.display = 'none';
                 titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
                 btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
+                inputIdReg.value = "GERADO AUTOMÁTICO (BLOQUEADO)";
                 idEditando = null;
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
@@ -934,6 +991,7 @@
             }
 
             idEditando = encontrado.id;
+            document.getElementById('formIdReg').value = encontrado.id;
 
             document.getElementById('formPlaca').value = encontrado.placa;
             
@@ -983,6 +1041,8 @@
             document.getElementById('formPesoVazio').value = encontrado.pesoVazio > 0 ? encontrado.pesoVazio : '';
             document.getElementById('formPesoNf').value = encontrado.pesoNf > 0 ? encontrado.pesoNf : '';
 
+            calcularPesosFormulario();
+
             alert(`Dados do Ticket ${encontrado.id} (${encontrado.placa}) carregados! Faça as alterações necessárias e clique em Atualizar.`);
         }
 
@@ -1009,11 +1069,7 @@
 
                     const placa = limpar(col[1]).toUpperCase();
                     const dataEntradaRaw = limpar(col[8]);
-
-                    // Desconsidera linhas pré-geradas vazias
-                    if (!dataEntradaRaw || dataEntradaRaw === '---' || !placa) {
-                        continue;
-                    }
+                    const dataSaidaTexto = (limpar(col[10]) + ' ' + limpar(col[11])).trim() || '---';
 
                     const veiculo = limpar(col[2]) || '---';
                     const motorista = formatarNomeProprio(col[3]);
@@ -1042,13 +1098,15 @@
 
                     const tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
-                    const stCalculado = calcularStatusInteligente(tipoCarga, pesoNf, divergencia, limiteKg);
+                    
+                    // Aplica cálculo com verificação de S/D (Sem Dados)
+                    const stCalculado = calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg);
 
                     ticketsCache.push({
-                        id: idVal, placa: placa, veiculoModelo: veiculo, motorista: motorista || '---', movimento: movimento, tipoCarga: tipoCarga,
+                        id: idVal, placa: placa || '---', veiculoModelo: veiculo, motorista: motorista || '---', movimento: movimento, tipoCarga: tipoCarga,
                         dataEntradaRaw: dataEntradaRaw,
                         dataEntradaTexto: (dataEntradaRaw + ' ' + limpar(col[9])).trim() || '---',
-                        dataSaidaTexto: (limpar(col[10]) + ' ' + limpar(col[11])).trim() || '---',
+                        dataSaidaTexto: dataSaidaTexto,
                         lacres: limpar(col[12]) || '---',
                         quantPallets: quantPallets,
                         pesoPallets: parseNum(col[16]),
@@ -1086,7 +1144,6 @@
             } catch (err) { console.error("Erro ao carregar CSV:", err); atualizarFarol(false, "FALHA DE COMUNICAÇÃO"); }
         }
 
-        // --- FUNÇÃO DA BORRACHA / LIMPAR FILTROS ---
         function limparFiltrosEspelho() {
             document.getElementById('espFiltroBusca').value = '';
             document.getElementById('espDataInicio').value = '';
@@ -1105,7 +1162,7 @@
                 const matchTexto = !busca || t.id.toUpperCase().includes(busca) || t.placa.toUpperCase().includes(busca) || t.motorista.toUpperCase().includes(busca);
                 const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
                 let matchData = true;
-                if (t.dataEntradaRaw) {
+                if (t.dataEntradaRaw && t.dataEntradaRaw !== '---') {
                     const p = t.dataEntradaRaw.split('/');
                     if (p.length === 3) {
                         const isoData = `${p[2]}-${p[1]}-${p[0]}`;
@@ -1121,8 +1178,12 @@
             renderizarTabelaEspelho();
         }
 
+        // --- CÁLCULO DO DASHBOARD ESPELHO (DESCONSIDERA S/D) ---
         function atualizarCardsResumoEspelho() {
-            const totalVol = filtradosEspelho.reduce((sum, item) => sum + item.pesoNf, 0);
+            // Considera apenas registros reais (sem S/D) para os totais do Dashboard
+            const filtradosValidos = filtradosEspelho.filter(t => t.statusCalculado !== 'S/D');
+
+            const totalVol = filtradosValidos.reduce((sum, item) => sum + item.pesoNf, 0);
 
             const idsUnicosPorStatus = {
                 TOTAL: new Set(),
@@ -1134,8 +1195,8 @@
 
             const stVolMap = { VAZIO: 0, OK: 0, FALTA: 0, SOBRA: 0 };
 
-            filtradosEspelho.forEach(t => {
-                if (t.id && t.dataEntradaRaw) {
+            filtradosValidos.forEach(t => {
+                if (t.id) {
                     idsUnicosPorStatus.TOTAL.add(t.id);
                     const st = t.statusCalculado;
                     if (idsUnicosPorStatus[st]) {
@@ -1180,6 +1241,7 @@
                 let stClass = 'status-ok';
                 if(t.statusCalculado === 'FALTA' || t.statusCalculado === 'SOBRA') stClass = 'status-falta';
                 else if(t.statusCalculado === 'VAZIO') stClass = 'status-vazio';
+                else if(t.statusCalculado === 'S/D') stClass = 'status-sd';
 
                 tbody.innerHTML += `<tr>
                     <td style="text-align:center;"><button class="btn-view-ticket" onclick="abrirTicketPorId('${t.id}')">🎫 Ver</button></td>
@@ -1282,7 +1344,9 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             const filterValue = document.getElementById('filterDate').value;
             if (!filterValue) return;
             const pF = filterValue.split('-'); const dF = `${pF[2]}/${pF[1]}/${pF[0]}`;
-            const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dF);
+            
+            // Filtra apenas registros válidos e com data para o painel diário
+            const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dF && t.statusCalculado !== 'S/D');
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
             const totalVol = filtrados.reduce((sum, item) => sum + item.pesoNf, 0);
@@ -1380,13 +1444,14 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; const divergencia = ticketAtual.divergencia || 0.0;
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
-            let status = calcularStatusInteligente(ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
+            let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
             
             let resultado = "FORA DA TOLERÂNCIA";
             let stClass = 'value status-falta';
 
             if(status === 'VAZIO') { resultado = "VEÍCULO VAZIO / PÁTIO"; stClass = 'value status-vazio'; }
             else if(status === 'OK') { resultado = "DENTRO DA TOLERÂNCIA"; stClass = 'value status-ok'; }
+            else if(status === 'S/D') { resultado = "SEM DADOS REGISTRADOS"; stClass = 'value status-sd'; }
 
             document.getElementById('resultado').innerText = resultado;
             const statusEl = document.getElementById('status');
