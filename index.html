@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
-    <!-- Biblioteca para geração de PDF -->
+    <!-- Biblioteca para geração de PDF NAtivo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -323,7 +323,6 @@
         }
         .form-group input:focus, .form-group select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
         
-        /* ESTILO PARA CAMPOS BLOQUEADOS / FÓRMULAS / ID (CINZA) */
         .form-group input[readonly], 
         .form-group input:disabled, 
         .form-group select:disabled, 
@@ -731,7 +730,6 @@
                     </div>
                 </div>
 
-                <!-- CAMPOS CALCULADOS DA PLANILHA (SÃO FÓRMULAS -> BLOQUEADOS / CINZA) -->
                 <div class="form-section-title">Campos Calculados Automaticamente pela Planilha (Fórmulas -> Bloqueados)</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -860,7 +858,6 @@
 
         // --- REGRA DE NEGÓCIO DE STATUS COM CLASSIFICAÇÃO S/D (SEM DADOS) ---
         function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
-            // Se faltarem os dados essenciais de registro (Placa ou Data de Entrada) -> S/D
             if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') {
                 return 'S/D';
             }
@@ -971,8 +968,17 @@
                 boxEdit.style.display = 'none';
                 titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
                 btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
-                inputIdReg.value = "GERADO AUTOMÁTICO (BLOQUEADO)";
-                idEditando = null;
+                
+                // No modo novo, autoseleciona a próxima linha livre S/D (Ex: A0381)
+                const proximoSD = ticketsCache.find(t => t.statusCalculado === 'S/D');
+                if (proximoSD) {
+                    inputIdReg.value = proximoSD.id + " (PRÓXIMA LINHA DISPONÍVEL)";
+                    idEditando = proximoSD.id;
+                } else {
+                    inputIdReg.value = "GERADO AUTOMÁTICO (BLOQUEADO)";
+                    idEditando = null;
+                }
+
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
             }
@@ -1085,7 +1091,7 @@
 
                     const conferente = formatarNomeProprio(col[22]);
 
-                    if (placa) opcoesForm.placas.add(placa);
+                    if (placa && placa !== '---') opcoesForm.placas.add(placa);
                     if (motorista) opcoesForm.motoristas.add(motorista);
                     if (doca && doca !== '---') opcoesForm.docas.add(doca);
                     if (tipoCarga) opcoesForm.tiposCarga.add(tipoCarga);
@@ -1100,7 +1106,6 @@
                     const tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
                     
-                    // Aplica cálculo com verificação de S/D (Sem Dados)
                     const stCalculado = calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg);
 
                     ticketsCache.push({
@@ -1133,14 +1138,20 @@
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
                 ticketsCache.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t.id; opt.label = `${t.id} - ${t.placa}`;
-                    datalist.appendChild(opt);
+                    if (t.statusCalculado !== 'S/D') {
+                        const opt = document.createElement('option');
+                        opt.value = t.id; opt.label = `${t.id} - ${t.placa}`;
+                        datalist.appendChild(opt);
+                    }
                 });
 
                 if (ticketAtual) {
                     const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
                     if (recarregado) renderizarTicket(recarregado);
+                } else if (ticketsCache.length > 0) {
+                    // Seleciona por padrão o último ticket válido lançado
+                    const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
+                    if (ultimoValido) renderizarTicket(ultimoValido);
                 }
             } catch (err) { console.error("Erro ao carregar CSV:", err); atualizarFarol(false, "FALHA DE COMUNICAÇÃO"); }
         }
@@ -1179,11 +1190,8 @@
             renderizarTabelaEspelho();
         }
 
-        // --- CÁLCULO DO DASHBOARD ESPELHO (DESCONSIDERA S/D) ---
         function atualizarCardsResumoEspelho() {
-            // Considera apenas registros reais (sem S/D) para os totais do Dashboard
             const filtradosValidos = filtradosEspelho.filter(t => t.statusCalculado !== 'S/D');
-
             const totalVol = filtradosValidos.reduce((sum, item) => sum + item.pesoNf, 0);
 
             const idsUnicosPorStatus = {
@@ -1297,6 +1305,15 @@
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
 
+            // Identifica se é novo lançamento e seleciona a próxima linha S/D (Ex: A0381)
+            let idFinalTarget = idEditando;
+            if (modoFormulario === 'NOVO') {
+                const proximoSD = ticketsCache.find(t => t.statusCalculado === 'S/D');
+                if (proximoSD) {
+                    idFinalTarget = proximoSD.id;
+                }
+            }
+
             let clientIp = "Indisponível";
             try {
                 const ipRes = await fetch("https://api.ipify.org?format=json");
@@ -1305,15 +1322,16 @@
                     clientIp = ipData.ip;
                 }
             } catch (errIp) {
-                console.warn("Não foi possível consultar o IP do cliente:", errIp);
+                console.warn("Não foi possível consultar o IP:", errIp);
             }
 
             const dataHoraEdicao = new Date().toLocaleString('pt-BR');
-            const acaoTexto = modoFormulario === 'EDITAR' ? `ATUALIZAÇÃO DO TICKET ${idEditando}` : 'NOVO LANÇAMENTO';
+            const acaoTexto = modoFormulario === 'EDITAR' ? `ATUALIZAÇÃO DO TICKET ${idFinalTarget}` : `NOVO LANÇAMENTO NO ID ${idFinalTarget}`;
 
             const resumoMsg = 
 `CONFIRMAÇÃO: (${acaoTexto})
 
+• ID Destino: ${idFinalTarget}
 • Placa: ${placa}
 • Veículo: ${veiculo}
 • Motorista: ${motorista}
@@ -1325,16 +1343,16 @@
 • Peso Vazio: ${pesoVazio} KG
 • Peso NF: ${pesoNf} KG
 
-🔒 DADOS DE AUDITORIA E SEGURANÇA:
-• Horário da Operação: ${dataHoraEdicao}
-• IP do Dispositivo: ${clientIp}
+🔒 AUDITORIA:
+• Horário: ${dataHoraEdicao}
+• IP: ${clientIp}
 
-Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
+Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget} da planilha?`;
 
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
-                alert("Dados confirmados com auditoria gravada! Na Etapa 3, o Apps Script registrará este IP e horário na planilha.");
+                alert(`Lançamento confirmado para a linha do ID ${idFinalTarget}! O registro será salvo na planilha.`);
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                 if (modoFormulario === 'EDITAR') setModoLancamento('NOVO');
@@ -1346,7 +1364,6 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             if (!filterValue) return;
             const pF = filterValue.split('-'); const dF = `${pF[2]}/${pF[1]}/${pF[0]}`;
             
-            // Filtra apenas registros válidos e com data para o painel diário
             const filtrados = ticketsCache.filter(t => t.dataEntradaRaw === dF && t.statusCalculado !== 'S/D');
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
@@ -1465,11 +1482,8 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
         }
 
         function recalcularToleranciaManual() {
-            if (!ticketAtual) return; 
-            const tipoSel = document.getElementById('toleranciaSelect').value;
-            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; 
-            const divergencia = ticketAtual.divergencia || 0.0;
-            
+            if (!ticketAtual) return; const tipoSel = document.getElementById('toleranciaSelect').value;
+            const limiteKg = TABELA_TOLERANCIAS[tipoSel] || 24.0; const divergencia = ticketAtual.divergencia || 0.0;
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
             let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
@@ -1483,8 +1497,7 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
 
             document.getElementById('resultado').innerText = resultado;
             const statusEl = document.getElementById('status');
-            statusEl.innerText = status; 
-            statusEl.className = stClass;
+            statusEl.innerText = status; statusEl.className = stClass;
         }
 
         function gerarQRCodeNativo(t) {
@@ -1494,8 +1507,76 @@ Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
-        function baixarPDF() { /* ... lógica PDF ... */ }
-        function enviarEmail() { /* ... lógica Email ... */ }
+        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
+        function baixarPDF() {
+            if (!ticketAtual) {
+                alert("Por favor, pesquise e selecione um Ticket primeiro.");
+                return;
+            }
+
+            const element = document.getElementById('ticket');
+            
+            const opt = {
+                margin:       [0.15, 0.15, 0.15, 0.15],
+                filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0
+                },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function enviarEmail() {
+            if (!ticketAtual) {
+                alert("Por favor, pesquise e selecione um Ticket primeiro.");
+                return;
+            }
+
+            const tipoSel = document.getElementById('toleranciaSelect').value;
+            const resultado = document.getElementById('resultado').innerText;
+            const status = document.getElementById('status').innerText;
+            const hash = document.getElementById('authHash').innerText;
+
+            const assunto = encodeURIComponent(`Ticket Balança Frimesa FIDF - ID: ${ticketAtual.id} (Placa: ${ticketAtual.placa})`);
+            const corpo = encodeURIComponent(
+`FRIMESA FILIAL FIDF - TICKET BALANÇA
+Emissão: ${new Date().toLocaleString('pt-BR')}
+
+--------------------------------------------------
+ID: ${ticketAtual.id}
+PLACA: ${ticketAtual.placa}
+VEÍCULO: ${ticketAtual.veiculoModelo}
+MOTORISTA: ${ticketAtual.motorista}
+ENTRADA: ${ticketAtual.dataEntradaTexto}
+SAÍDA: ${ticketAtual.dataSaidaTexto}
+LACRE(S): ${ticketAtual.lacres}
+
+QUANT. PALLETS: ${ticketAtual.quantPallets}
+PESO PALLETS: ${formatarNumero(ticketAtual.pesoPallets)} KG
+
+PESO CHEIO: ${formatarNumero(ticketAtual.pesoCheio)} KG
+PESO VAZIO / TARA: ${formatarNumero(ticketAtual.pesoVazio)} KG
+PESO LÍQUIDO: ${formatarNumero(ticketAtual.pesoLiquido)} KG
+PESO NF: ${formatarNumero(ticketAtual.pesoNf)} KG
+DIVERGÊNCIA: ${formatarNumero(ticketAtual.divergencia)} KG
+
+REGRA: ${tipoSel}
+RESULTADO: ${resultado}
+STATUS: ${status}
+CONFERENTE: ${ticketAtual.conferente}
+AUTENTICAÇÃO: ${hash}
+--------------------------------------------------`
+            );
+
+            window.location.href = `mailto:?subject=${assunto}&body=${corpo}`;
+        }
+
         function imprimirTicket() { if (!ticketAtual) return; window.print(); }
 
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
