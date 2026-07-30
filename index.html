@@ -751,12 +751,10 @@
                 }
             };
 
-            // Notifica presença e limpa desconectados
             setInterval(() => {
                 onlineChannel.postMessage({ type: 'ping', id: mySessionId });
                 activeSessions.set(mySessionId, Date.now());
                 
-                // Remove sessões inativas há mais de 6 segundos
                 const now = Date.now();
                 activeSessions.forEach((lastSeen, id) => {
                     if (now - lastSeen > 6000) activeSessions.delete(id);
@@ -1041,7 +1039,7 @@
 
                 popularDatalist('listPlacas', opcoesForm.placas);
                 popularSelectForm('formMotorista', opcoesForm.motoristas, false);
-                popularSelectForm('formTipoCarga', opcoesForm.tiposCarga, true); // Mantém opção de Veículo Vazio padrão
+                popularSelectForm('formTipoCarga', opcoesForm.tiposCarga, true);
                 popularSelectForm('formConferente', opcoesForm.conferentes, false);
                 popularSelectForm('formDoca', opcoesForm.docas, false);
 
@@ -1093,30 +1091,54 @@
             renderizarTabelaEspelho();
         }
 
+        // --- CÁLCULO E RENDERIZAÇÃO DOS CARDS DE RESUMO POR STATUS (IDS ÚNICOS) ---
         function atualizarCardsResumoEspelho() {
-            const totalVeic = filtradosEspelho.length;
             const totalVol = filtradosEspelho.reduce((sum, item) => sum + item.pesoNf, 0);
 
-            const stMap = { VAZIO: { v: 0, p: 0 }, OK: { v: 0, p: 0 }, FALTA: { v: 0, p: 0 }, SOBRA: { v: 0, p: 0 } };
+            // Conjuntos para contagem estrita de IDs ÚNICOS
+            const idsUnicosPorStatus = {
+                TOTAL: new Set(),
+                VAZIO: new Set(),
+                OK: new Set(),
+                FALTA: new Set(),
+                SOBRA: new Set()
+            };
+
+            const stVolMap = { VAZIO: 0, OK: 0, FALTA: 0, SOBRA: 0 };
 
             filtradosEspelho.forEach(t => {
-                const st = t.statusCalculado;
-                if (stMap[st]) { stMap[st].v += 1; stMap[st].p += t.pesoNf; }
+                if (t.id) {
+                    idsUnicosPorStatus.TOTAL.add(t.id);
+                    const st = t.statusCalculado;
+                    if (idsUnicosPorStatus[st]) {
+                        idsUnicosPorStatus[st].add(t.id);
+                        stVolMap[st] += t.pesoNf;
+                    }
+                }
             });
 
+            const totalVeicUnicos = idsUnicosPorStatus.TOTAL.size;
             const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
 
-            document.getElementById('stValVazio').innerText = `${stMap.VAZIO.v} veíc. (${calcPct(stMap.VAZIO.v, totalVeic)}%)`;
-            document.getElementById('stVolVazio').innerText = `${formatarNumero(stMap.VAZIO.p)} KG (${calcPct(stMap.VAZIO.p, totalVol)}%)`;
+            // Atualiza Card VAZIO
+            const qVazio = idsUnicosPorStatus.VAZIO.size;
+            document.getElementById('stValVazio').innerText = `${qVazio} veíc. (${calcPct(qVazio, totalVeicUnicos)}%)`;
+            document.getElementById('stVolVazio').innerText = `${formatarNumero(stVolMap.VAZIO)} KG (${calcPct(stVolMap.VAZIO, totalVol)}%)`;
 
-            document.getElementById('stValOk').innerText = `${stMap.OK.v} veíc. (${calcPct(stMap.OK.v, totalVeic)}%)`;
-            document.getElementById('stVolOk').innerText = `${formatarNumero(stMap.OK.p)} KG (${calcPct(stMap.OK.p, totalVol)}%)`;
+            // Atualiza Card OK
+            const qOk = idsUnicosPorStatus.OK.size;
+            document.getElementById('stValOk').innerText = `${qOk} veíc. (${calcPct(qOk, totalVeicUnicos)}%)`;
+            document.getElementById('stVolOk').innerText = `${formatarNumero(stVolMap.OK)} KG (${calcPct(stVolMap.OK, totalVol)}%)`;
 
-            document.getElementById('stValFalta').innerText = `${stMap.FALTA.v} veíc. (${calcPct(stMap.FALTA.v, totalVeic)}%)`;
-            document.getElementById('stVolFalta').innerText = `${formatarNumero(stMap.FALTA.p)} KG (${calcPct(stMap.FALTA.p, totalVol)}%)`;
+            // Atualiza Card FALTA
+            const qFalta = idsUnicosPorStatus.FALTA.size;
+            document.getElementById('stValFalta').innerText = `${qFalta} veíc. (${calcPct(qFalta, totalVeicUnicos)}%)`;
+            document.getElementById('stVolFalta').innerText = `${formatarNumero(stVolMap.FALTA)} KG (${calcPct(stVolMap.FALTA, totalVol)}%)`;
 
-            document.getElementById('stValSobra').innerText = `${stMap.SOBRA.v} veíc. (${calcPct(stMap.SOBRA.v, totalVeic)}%)`;
-            document.getElementById('stVolSobra').innerText = `${formatarNumero(stMap.SOBRA.p)} KG (${calcPct(stMap.SOBRA.p, totalVol)}%)`;
+            // Atualiza Card SOBRA
+            const qSobra = idsUnicosPorStatus.SOBRA.size;
+            document.getElementById('stValSobra').innerText = `${qSobra} veíc. (${calcPct(qSobra, totalVeicUnicos)}%)`;
+            document.getElementById('stVolSobra').innerText = `${formatarNumero(stVolMap.SOBRA)} KG (${calcPct(stVolMap.SOBRA, totalVol)}%)`;
         }
 
         function renderizarTabelaEspelho() {
@@ -1169,7 +1191,8 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        function salvarNovoLancamento(e) {
+        // --- SALVAMENTO COM CAPTURA DE IP E AUDITORIA DE SEGURANÇA ---
+        async function salvarNovoLancamento(e) {
             e.preventDefault();
             
             const obterValor = (selectId, outroInputId) => {
@@ -1188,6 +1211,19 @@
             const pesoVazio = document.getElementById('formPesoVazio').value || '0';
             const pesoNf = document.getElementById('formPesoNf').value || '0';
 
+            // CAPTURA DE IP PÚBLICO E HORÁRIO PARA AUDITORIA DE SEGURANÇA
+            let clientIp = "Indisponível";
+            try {
+                const ipRes = await fetch("https://api.ipify.org?format=json");
+                if (ipRes.ok) {
+                    const ipData = await ipRes.json();
+                    clientIp = ipData.ip;
+                }
+            } catch (errIp) {
+                console.warn("Não foi possível consultar o IP do cliente:", errIp);
+            }
+
+            const dataHoraEdicao = new Date().toLocaleString('pt-BR');
             const acaoTexto = modoFormulario === 'EDITAR' ? `ATUALIZAÇÃO DO TICKET ${idEditando}` : 'NOVO LANÇAMENTO';
 
             const resumoMsg = 
@@ -1204,12 +1240,25 @@
 • Peso Vazio: ${pesoVazio} KG
 • Peso NF: ${pesoNf} KG
 
+🔒 DADOS DE AUDITORIA E SEGURANÇA:
+• Horário da Operação: ${dataHoraEdicao}
+• IP do Dispositivo: ${clientIp}
+
 Tem certeza que conferiu todos os dados antes de salvar na planilha?`;
 
             const confirmado = confirm(resumoMsg);
 
             if (confirmado) {
-                alert("Dados confirmados! Na Etapa 3, o Apps Script receberá estes dados e atualizará a planilha.");
+                const dadosPayload = {
+                    id: idEditando,
+                    placa, veiculo, motorista, tipoCarga, conferente, dtEntrada, dtSaida, pesoCheio, pesoVazio, pesoNf,
+                    auditoria: {
+                        dataHora: dataHoraEdicao,
+                        ip: clientIp
+                    }
+                };
+
+                alert("Dados confirmados com auditoria gravada! Na Etapa 3, o Apps Script registrará este IP e horário na planilha.");
                 document.getElementById('formLancamento').reset();
                 document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                 if (modoFormulario === 'EDITAR') setModoLancamento('NOVO');
