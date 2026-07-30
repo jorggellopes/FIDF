@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
-    <!-- Biblioteca para geração de PDF -->
+    <!-- Biblioteca para geração de PDF NATIVO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -740,7 +740,7 @@
     </div>
 
     <script>
-        // CSV público para leitura
+        // CSV público oficial para leitura
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdD2cAUPKXWhbK6cTtPmtTYT1vvhly2Q0ZgiNbmTnVP2yLIiyOAUrp66vSeuf1MYgDVbmyJw9hsHVr/pub?output=csv";
         
         // URL da implantação ativa do Google Apps Script
@@ -1511,6 +1511,7 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             return 'TOLERÂNCIA TRUCK';
         }
 
+        // --- RENDERIZAÇÃO DO TICKET COMPLETO ---
         function renderizarTicket(t) {
             ticketAtual = t; 
             document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
@@ -1573,6 +1574,7 @@ Tem certeza que conferiu todos os dados antes de gravar na linha ${idFinalTarget
             document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
         }
 
+        // --- GERAÇÃO DE PDF NATIVO VIA HTML2PDF ---
         function baixarPDF() {
             if (!ticketAtual) {
                 alert("Por favor, pesquise e selecione um Ticket primeiro.");
