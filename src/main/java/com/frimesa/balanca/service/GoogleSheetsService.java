@@ -12,7 +12,6 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL do CSV Publicado da Planilha V2
     private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
 
     private static final Map<String, Double> TOLERANCIAS = Map.of(
@@ -38,15 +37,12 @@ public class GoogleSheetsService {
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
                     
-                    // Pula a linha do cabeçalho
                     if (primeiraLinha) { 
                         primeiraLinha = false; 
                         continue; 
                     }
 
-                    // Suporta separadores por vírgula ou ponto e vírgula respeitando aspas
                     String[] col = linha.split("(?!\"[^\"]*),(?![^\"]*\")|;", -1);
-
                     if (col.length < 1) continue;
 
                     String idVal = limparTexto(col[0]);
@@ -68,12 +64,9 @@ public class GoogleSheetsService {
                     String tipoCarga = col.length > 6 ? limparTexto(col[6]).toUpperCase() : "";
                     ticket.setTipoCarga(tipoCarga);
 
-                    // Nova Coluna H (Nº CARGA)
                     ticket.setNumCarga(col.length > 7 ? limparTexto(col[7]) : "");
-
                     ticket.setNf(col.length > 8 ? limparTexto(col[8]) : "");
 
-                    // Datas completas com Hora
                     String dtEntrada = col.length > 9 ? limparTexto(col[9]) : "";
                     String dtSaida = col.length > 10 ? limparTexto(col[10]) : "";
                     ticket.setDataEntradaTexto(dtEntrada);
@@ -91,7 +84,6 @@ public class GoogleSheetsService {
                     ticket.setPesoVazio(pesoVazio);
                     ticket.setPesoNf(pesoNf);
 
-                    // Cálculo do Peso Líquido e Divergência
                     double pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : (col.length > 16 ? converterDouble(col[16]) : 0.0);
                     double divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNf) : (col.length > 18 ? converterDouble(col[18]) : 0.0);
 
@@ -100,14 +92,12 @@ public class GoogleSheetsService {
 
                     ticket.setConferente(col.length > 19 ? formatarNomeProprio(col[19]) : "");
 
-                    // Identifica a tolerância recomendada pelo veículo
                     String tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     ticket.setToleranciaTipo(tolTipo);
 
                     double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
                     ticket.setLimiteToleranciaKg(limiteKg);
 
-                    // Regra de Status Inteligente (incluindo S/D para linhas sem Placa ou Entrada)
                     if (placa.isEmpty() || placa.equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
                         ticket.setStatus("S/D");
                         ticket.setResultado("SEM DADOS REGISTRADOS");
