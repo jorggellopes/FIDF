@@ -19,7 +19,6 @@ public class TicketController {
     @Autowired
     private GoogleSheetsService googleSheetsService;
 
-    // URL do App da Web do Google Apps Script
     private static final String GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec";
 
     @GetMapping
@@ -38,10 +37,10 @@ public class TicketController {
 
             ResponseEntity<String> response = restTemplate.postForEntity(GOOGLE_SCRIPT_URL, request, String.class);
 
-            return ResponseEntity.ok(response.getBody());
+            return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("{\"status\":\"ERROR\", \"message\":\"" + e.getMessage() + "\"}");
+            return ResponseEntity.internalServerError().body("{\"sucesso\": false, \"erro\": \"" + e.getMessage() + "\"}");
         }
     }
 }
