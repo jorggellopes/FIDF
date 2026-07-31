@@ -173,7 +173,7 @@
         .qr-info strong { display: block; color: #000; font-size: 8.5px; margin-bottom: 2px; }
         .qr-img { width: 55px; height: 55px; object-fit: contain; }
 
-        .espelho-card, .lancamento-card {
+        .espelho-card {
             background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
             padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
@@ -236,56 +236,25 @@
         }
         .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        .mode-selector {
-            display: flex; gap: 10px; margin-bottom: 15px; background-color: #f3e8ff; padding: 10px; border-radius: 6px; border: 1px solid #d8b4fe;
+        /* --- ESTILIZAÇÃO DO APPSHEET INCORPORADO --- */
+        .appsheet-container {
+            background-color: #ffffff;
+            border: 2px solid #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            height: 820px;
         }
-        .mode-btn {
-            flex: 1; padding: 8px; border: 1px solid #511d9b; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; background: #fff; color: #511d9b; text-align: center;
+        .appsheet-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        .mode-btn.active { background-color: #511d9b; color: #fff; }
-
-        .search-edit-box {
-            display: none; background-color: #fffbe3; border: 1px solid #ffe58f; padding: 12px; border-radius: 6px; margin-bottom: 15px;
-        }
-        .search-edit-box label { font-size: 11px; font-weight: bold; color: #854d0e; display: block; margin-bottom: 4px; }
-        .search-edit-inputs { display: flex; gap: 8px; }
-        .search-edit-inputs input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; text-transform: uppercase; }
-        .btn-load-edit { background-color: #d97706; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-
-        .form-section-title {
-            font-size: 12px; font-weight: bold; color: #511d9b; background-color: #f3e8ff;
-            padding: 8px 12px; border-radius: 4px; margin: 15px 0 10px 0; text-transform: uppercase; border: 1px solid #d8b4fe;
-        }
-        .form-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px;
-        }
-        .form-group { display: flex; flex-direction: column; position: relative; }
-        .form-group label { font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; text-transform: uppercase; }
-        .form-group input, .form-group select {
-            padding: 9px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; width: 100%;
-        }
-        .form-group input:focus, .form-group select:focus { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
-        
-        .form-group input[readonly], 
-        .form-group input:disabled, 
-        .form-group select:disabled, 
-        .input-blocked { 
-            background-color: #d1d5db !important; color: #374151 !important; border-color: #9ca3af !important; 
-            cursor: not-allowed !important; font-weight: bold;
-        }
-        
-        .input-outro { margin-top: 5px; display: none; border-color: #a259ff; }
-        
-        .btn-save-form {
-            background-color: #511d9b; color: white; border: none; padding: 14px 20px;
-            border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; width: 100%;
-            transition: background-color 0.2s; text-transform: uppercase; margin-top: 10px;
-        }
-        .btn-save-form:hover { background-color: #431882; }
 
         @media print {
             body { background: none; padding: 0; }
-            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .lancamento-card { display: none !important; }
+            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-container { display: none !important; }
             .main-layout { display: block; }
             .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
         }
@@ -296,7 +265,7 @@
     <div class="nav-menu">
         <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
         <button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
-        <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos</button>
+        <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos (AppSheet)</button>
     </div>
 
     <div class="status-bar">
@@ -529,160 +498,14 @@
         </div>
     </div>
 
-    <!-- ==================== ABA 3: LANÇAMENTOS ==================== -->
+    <!-- ==================== ABA 3: LANÇAMENTOS (APPSHEET) ==================== -->
     <div id="lancamentoTab" class="tab-content">
-        <div class="lancamento-card">
-            
-            <div class="mode-selector">
-                <div id="btnModeNovo" class="mode-btn active" onclick="setModoLancamento('NOVO')">➕ Novo Lançamento</div>
-                <div id="btnModeEditar" class="mode-btn" onclick="setModoLancamento('EDITAR')">✏️ Editar Lançamento Existente</div>
-            </div>
-
-            <div id="boxBuscaEdit" class="search-edit-box">
-                <label for="inputEditId">DIGITE O ID DO TICKET QUE DESEJA EDITAR:</label>
-                <div class="search-edit-inputs">
-                    <input type="text" id="inputEditId" placeholder="Ex: A0001" list="idList">
-                    <button type="button" class="btn-load-edit" onclick="carregarLancamentoParaEdicao()">🔍 Carregar Dados</button>
-                </div>
-            </div>
-
-            <div class="dashboard-header" id="formHeaderTitle" style="margin-bottom:20px;">NOVO LANÇAMENTO DE PESAGEM</div>
-            
-            <form id="formLancamento" onsubmit="salvarNovoLancamento(event)">
-                
-                <div class="form-section-title">Dados da Identificação (ID Gerado Automático)</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="formIdReg">ID do Registro (Coluna A) *</label>
-                        <input type="text" id="formIdReg" class="input-blocked" value="A0381" readonly disabled title="Gerado automaticamente em sequência">
-                    </div>
-                    <div class="form-group">
-                        <label for="formPlaca">Placa *</label>
-                        <input type="text" id="formPlaca" list="listPlacas" placeholder="ABC1D23" required style="text-transform:uppercase;">
-                        <datalist id="listPlacas"></datalist>
-                    </div>
-                    <div class="form-group">
-                        <label for="formVeiculo">Veículo / Modelo *</label>
-                        <select id="formVeiculo" required onchange="verificarOutro(this, 'formVeiculoOutro')">
-                            <option value="" disabled selected>Selecione...</option>
-                            <option value="Particular">Particular</option>
-                            <option value="Utilitario">Utilitario</option>
-                            <option value="VAN">VAN</option>
-                            <option value="VUC">VUC</option>
-                            <option value="3QT">3QT</option>
-                            <option value="TOCO">TOCO</option>
-                            <option value="TRUCK">TRUCK</option>
-                            <option value="BITRUCK">BITRUCK</option>
-                            <option value="CARRETA">CARRETA</option>
-                            <option value="BITREM">BITREM</option>
-                            <option value="OUTRO">>> Outro (Digitar) <<</option>
-                        </select>
-                        <input type="text" id="formVeiculoOutro" class="input-outro" placeholder="Digite o modelo...">
-                    </div>
-                    <div class="form-group">
-                        <label for="formMotorista">Motorista *</label>
-                        <select id="formMotorista" required onchange="verificarOutro(this, 'formMotoristaOutro')">
-                            <option value="" disabled selected>Selecione...</option>
-                            <option value="OUTRO">>> Outro (Digitar) <<</option>
-                        </select>
-                        <input type="text" id="formMotoristaOutro" class="input-outro" placeholder="Nome Completo">
-                    </div>
-                    <div class="form-group">
-                        <label for="formTipoCarga">Tipo de Carga *</label>
-                        <select id="formTipoCarga" required onchange="verificarOutro(this, 'formTipoCargaOutro')">
-                            <option value="VEICULO VAZIO - PATIO" selected>VEICULO VAZIO - PATIO</option>
-                            <option value="OUTRO">>> Outro (Digitar) <<</option>
-                        </select>
-                        <input type="text" id="formTipoCargaOutro" class="input-outro" placeholder="Ex: TRANSFERÊNCIA">
-                    </div>
-                    <div class="form-group">
-                        <label for="formMovimento">Movimento *</label>
-                        <select id="formMovimento" required>
-                            <option value="ENTRADA">ENTRADA</option>
-                            <option value="SAIDA">SAÍDA</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="formNumCarga">Nº da Carga</label>
-                        <input type="text" id="formNumCarga" placeholder="Ex: CARGA 1234">
-                    </div>
-                    <div class="form-group">
-                        <label for="formConferente">Conferente</label>
-                        <select id="formConferente" onchange="verificarOutro(this, 'formConferenteOutro')">
-                            <option value="" selected>Não definido / Pátio</option>
-                            <option value="OUTRO">>> Outro (Digitar) <<</option>
-                        </select>
-                        <input type="text" id="formConferenteOutro" class="input-outro" placeholder="Nome do Conferente">
-                    </div>
-                    <div class="form-group">
-                        <label for="formDoca">Nº da Doca</label>
-                        <select id="formDoca" onchange="verificarOutro(this, 'formDocaOutro')">
-                            <option value="" selected>Nenhuma / Pátio</option>
-                            <option value="OUTRO">>> Outro (Digitar) <<</option>
-                        </select>
-                        <input type="text" id="formDocaOutro" class="input-outro" placeholder="Ex: DOCA 15">
-                    </div>
-                    <div class="form-group">
-                        <label for="formNf">Nº NF-e</label>
-                        <input type="text" id="formNf" placeholder="Ex: 3660462">
-                    </div>
-                    <div class="form-group">
-                        <label for="formLacres">Lacre(s)</label>
-                        <input type="text" id="formLacres" placeholder="Ex: 180124, 180125">
-                    </div>
-                </div>
-
-                <div class="form-section-title">Tempos e Pesos</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="formDtEntrada">Data/Hora de Entrada *</label>
-                        <input type="datetime-local" id="formDtEntrada" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="formDtSaida">Data/Hora de Saída</label>
-                        <input type="datetime-local" id="formDtSaida">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="formPesoCheio">Peso Cheio (KG)</label>
-                        <input type="number" step="1" id="formPesoCheio" placeholder="Ex: 48280" min="0" oninput="calcularPesosFormulario()">
-                    </div>
-                    <div class="form-group">
-                        <label for="formPesoVazio">Peso Vazio / Tara (KG)</label>
-                        <input type="number" step="1" id="formPesoVazio" placeholder="Ex: 15400" min="0" oninput="calcularPesosFormulario()">
-                    </div>
-                    <div class="form-group">
-                        <label for="formPesoNf">Peso NF (KG)</label>
-                        <input type="number" step="1" id="formPesoNf" placeholder="Ex: 32880 (0 p/ Vazio)" min="0" oninput="calcularPesosFormulario()">
-                    </div>
-                    <div class="form-group">
-                        <label for="formPallets">Total de Pallets</label>
-                        <input type="number" id="formPallets" placeholder="Ex: 28" min="0" oninput="calcularPesoPalletsAutomatico()">
-                    </div>
-                    <div class="form-group">
-                        <label for="formPesoPallets">Peso Pallets (Fórmula 26KG) * Bloqueado</label>
-                        <input type="number" step="1" id="formPesoPallets" class="input-blocked" placeholder="Autocalculado pela quantidade" readonly disabled>
-                    </div>
-                </div>
-
-                <div class="form-section-title">Campos Calculados Automaticamente (Fórmulas do Site -> Gravados Direto)</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="formPesoLiquidoCalc">Peso Líquido * Bloqueado</label>
-                        <input type="text" id="formPesoLiquidoCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (Cheio - Vazio)" readonly disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="formDivergenciaCalc">Divergência * Bloqueado</label>
-                        <input type="text" id="formDivergenciaCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (Líquido - NF)" readonly disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="formStatusCalc">Status * Bloqueado</label>
-                        <input type="text" id="formStatusCalc" class="input-blocked" value="CÁLCULO AUTOMÁTICO (OK / VAZIO / FALTA / SOBRA)" readonly disabled>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-save-form" id="btnSubmitForm">💾 Gravar Lançamento na Planilha</button>
-            </form>
+        <div class="appsheet-container">
+            <iframe 
+                class="appsheet-iframe" 
+                src="https://www.appsheet.com/start/46b2c671-e43b-4318-8592-9c0f5ef42b00?platform=desktop#appName=CONTROLEDEBALAN%C3%87A-FIDF-V2-62577298&view=P%C3%A1gina1" 
+                title="AppSheet - Lançamentos da Balança FIDF">
+            </iframe>
         </div>
     </div>
 
@@ -690,27 +513,14 @@
         // LEITURA DO CSV DA PLANILHA V2
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
 
-        // ENDEREÇO DA SUA API JAVA HOSPETADA NO RENDER
-        const URL_API_JAVA = "https://fidf-api.onrender.com/api/tickets/gravar";
-
         let ticketsCache = [];
         let filtradosEspelho = [];
         let ticketAtual = null;
-        let modoFormulario = 'NOVO';
-        let idEditando = null;
         let deferredPrompt;
         let logoTentativa = 1;
 
         let paginaAtual = 1;
         const itensPorPagina = 15;
-
-        let opcoesForm = {
-            placas: new Set(),
-            motoristas: new Set(),
-            tiposCarga: new Set(),
-            conferentes: new Set(),
-            docas: new Set()
-        };
 
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
@@ -816,200 +626,6 @@
             }).join(' ');
         }
 
-        function popularSelectForm(selectId, setOpcoes, manterValorPadrao) {
-            const select = document.getElementById(selectId);
-            const erroOpt = select.options[0];
-            const outroOpt = select.options[select.options.length - 1];
-            
-            let htmlInner = '';
-            
-            Array.from(setOpcoes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })).forEach(opcao => {
-                if(opcao && opcao !== 'VEICULO VAZIO - PATIO') {
-                    htmlInner += `<option value="${opcao}">${opcao}</option>`;
-                }
-            });
-
-            if (manterValorPadrao) {
-                select.innerHTML = `<option value="VEICULO VAZIO - PATIO" selected>VEICULO VAZIO - PATIO</option>` + htmlInner + `<option value="OUTRO">>> Outro (Digitar) <<</option>`;
-            } else {
-                select.innerHTML = '';
-                select.appendChild(erroOpt);
-                select.insertAdjacentHTML('beforeend', htmlInner);
-                select.appendChild(outroOpt);
-            }
-        }
-
-        function popularDatalist(listId, setOpcoes) {
-            const datalist = document.getElementById(listId);
-            datalist.innerHTML = '';
-            Array.from(setOpcoes).sort().forEach(opcao => {
-                if(opcao) {
-                    const opt = document.createElement('option');
-                    opt.value = opcao;
-                    datalist.appendChild(opt);
-                }
-            });
-        }
-
-        function verificarOutro(selectElement, outroInputId) {
-            const outroInput = document.getElementById(outroInputId);
-            if (selectElement.value === 'OUTRO') {
-                outroInput.style.display = 'block';
-                outroInput.required = true;
-                outroInput.focus();
-            } else {
-                outroInput.style.display = 'none';
-                outroInput.required = false;
-                outroInput.value = '';
-            }
-        }
-
-        function calcularPesoPalletsAutomatico() {
-            const qtPallets = parseInt(document.getElementById('formPallets').value) || 0;
-            const pesoTotalPallets = qtPallets * 26;
-            document.getElementById('formPesoPallets').value = pesoTotalPallets > 0 ? pesoTotalPallets : '';
-            calcularPesosFormulario();
-        }
-
-        function calcularPesosFormulario() {
-            const cheio = parseFloat(document.getElementById('formPesoCheio').value) || 0;
-            const vazio = parseFloat(document.getElementById('formPesoVazio').value) || 0;
-            const nf = parseFloat(document.getElementById('formPesoNf').value) || 0;
-
-            if (cheio > 0 && vazio > 0) {
-                const liq = cheio - vazio;
-                const div = liq - nf;
-                document.getElementById('formPesoLiquidoCalc').value = formatarNumero(liq) + " KG";
-                document.getElementById('formDivergenciaCalc').value = formatarNumero(div) + " KG";
-                
-                const veiculoSel = document.getElementById('formVeiculo').value;
-                const tolNome = identificarToleranciaPorVeiculo(veiculoSel);
-                const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0;
-                
-                let st = Math.abs(div) <= limiteKg ? "OK" : (div < 0 ? "FALTA" : "SOBRA");
-                document.getElementById('formStatusCalc').value = st;
-            } else {
-                document.getElementById('formPesoLiquidoCalc').value = "CÁLCULO AUTOMÁTICO (Cheio - Vazio)";
-                document.getElementById('formDivergenciaCalc').value = "CÁLCULO AUTOMÁTICO (Líquido - NF)";
-                document.getElementById('formStatusCalc').value = "CÁLCULO AUTOMÁTICO (OK / VAZIO / FALTA / SOBRA)";
-            }
-        }
-
-        function gerarProximoIdSequencial() {
-            let maiorNum = 380;
-
-            ticketsCache.forEach(t => {
-                if (t.id && t.id.startsWith('A')) {
-                    const numPart = parseInt(t.id.replace('A', ''));
-                    if (!isNaN(numPart) && numPart > maiorNum) {
-                        if (t.statusCalculado !== 'S/D') {
-                            maiorNum = numPart;
-                        }
-                    }
-                }
-            });
-
-            const proximoNum = maiorNum + 1;
-            return 'A' + proximoNum.toString().padStart(4, '0');
-        }
-
-        function setModoLancamento(modo) {
-            modoFormulario = modo;
-            document.getElementById('btnModeNovo').className = modo === 'NOVO' ? 'mode-btn active' : 'mode-btn';
-            document.getElementById('btnModeEditar').className = modo === 'EDITAR' ? 'mode-btn active' : 'mode-btn';
-
-            const boxEdit = document.getElementById('boxBuscaEdit');
-            const titleHeader = document.getElementById('formHeaderTitle');
-            const btnSubmit = document.getElementById('btnSubmitForm');
-            const inputIdReg = document.getElementById('formIdReg');
-
-            if (modo === 'EDITAR') {
-                boxEdit.style.display = 'block';
-                titleHeader.innerText = 'EDITAR LANÇAMENTO EXISTENTE';
-                btnSubmit.innerText = '💾 Atualizar Lançamento na Planilha';
-            } else {
-                boxEdit.style.display = 'none';
-                titleHeader.innerText = 'NOVO LANÇAMENTO DE PESAGEM';
-                btnSubmit.innerText = '💾 Gravar Lançamento na Planilha';
-                
-                const proximoId = gerarProximoIdSequencial();
-                inputIdReg.value = proximoId;
-                idEditando = proximoId;
-
-                document.getElementById('formLancamento').reset();
-                document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
-            }
-        }
-
-        function carregarLancamentoParaEdicao() {
-            const idBusca = document.getElementById('inputEditId').value.trim().toUpperCase();
-            if (!idBusca) {
-                alert("Por favor, digite o ID do ticket que deseja editar.");
-                return;
-            }
-
-            const encontrado = ticketsCache.find(t => t.id.toUpperCase() === idBusca);
-            if (!encontrado) {
-                alert(`Nenhum lançamento localizado com o ID: ${idBusca}`);
-                return;
-            }
-
-            idEditando = encontrado.id;
-            document.getElementById('formIdReg').value = encontrado.id;
-
-            document.getElementById('formPlaca').value = encontrado.placa !== '---' ? encontrado.placa : '';
-            
-            const selVeiculo = document.getElementById('formVeiculo');
-            if (Array.from(selVeiculo.options).some(o => o.value === encontrado.veiculoModelo)) {
-                selVeiculo.value = encontrado.veiculoModelo;
-            } else {
-                selVeiculo.value = 'OUTRO';
-                document.getElementById('formVeiculoOutro').style.display = 'block';
-                document.getElementById('formVeiculoOutro').value = encontrado.veiculoModelo;
-            }
-
-            const selMotorista = document.getElementById('formMotorista');
-            if (Array.from(selMotorista.options).some(o => o.value === encontrado.motorista)) {
-                selMotorista.value = encontrado.motorista;
-            } else if (encontrado.motorista && encontrado.motorista !== '---') {
-                selMotorista.value = 'OUTRO';
-                document.getElementById('formMotoristaOutro').style.display = 'block';
-                document.getElementById('formMotoristaOutro').value = encontrado.motorista;
-            }
-
-            const selCarga = document.getElementById('formTipoCarga');
-            if (Array.from(selCarga.options).some(o => o.value === encontrado.tipoCarga)) {
-                selCarga.value = encontrado.tipoCarga;
-            } else {
-                selCarga.value = 'OUTRO';
-                document.getElementById('formTipoCargaOutro').style.display = 'block';
-                document.getElementById('formTipoCargaOutro').value = encontrado.tipoCarga;
-            }
-
-            document.getElementById('formMovimento').value = encontrado.movimento || 'ENTRADA';
-
-            const selConf = document.getElementById('formConferente');
-            if (Array.from(selConf.options).some(o => o.value === encontrado.conferente)) {
-                selConf.value = encontrado.conferente;
-            } else if (encontrado.conferente && encontrado.conferente !== '---') {
-                selConf.value = 'OUTRO';
-                document.getElementById('formConferenteOutro').style.display = 'block';
-                document.getElementById('formConferenteOutro').value = encontrado.conferente;
-            }
-
-            document.getElementById('formLacres').value = encontrado.lacres !== '---' ? encontrado.lacres : '';
-            document.getElementById('formPallets').value = encontrado.quantPallets > 0 ? encontrado.quantPallets : '';
-            calcularPesoPalletsAutomatico();
-
-            document.getElementById('formPesoCheio').value = encontrado.pesoCheio > 0 ? encontrado.pesoCheio : '';
-            document.getElementById('formPesoVazio').value = encontrado.pesoVazio > 0 ? encontrado.pesoVazio : '';
-            document.getElementById('formPesoNf').value = encontrado.pesoNf > 0 ? encontrado.pesoNf : '';
-
-            calcularPesosFormulario();
-
-            alert(`Dados do Ticket ${encontrado.id} (${encontrado.placa}) carregados! Faça as alterações necessárias e clique em Atualizar.`);
-        }
-
         async function carregarDadosPlanilha() {
             try {
                 const urlSemCache = SHEET_CSV_URL + "&_t=" + new Date().getTime();
@@ -1019,8 +635,6 @@
                 const csvText = await response.text();
                 const linhas = csvText.split(/\r?\n/);
                 ticketsCache = [];
-
-                opcoesForm = { placas: new Set(), motoristas: new Set(), tiposCarga: new Set(), conferentes: new Set(), docas: new Set() };
 
                 for (let i = 1; i < linhas.length; i++) {
                     const linha = linhas[i].trim();
@@ -1057,12 +671,6 @@
                     const divergencia = parseNum(col[18]);
                     const conferente = formatarNomeProprio(col[19]);
 
-                    if (placa && placa !== '---') opcoesForm.placas.add(placa);
-                    if (motorista) opcoesForm.motoristas.add(motorista);
-                    if (doca && doca !== '---') opcoesForm.docas.add(doca);
-                    if (tipoCarga) opcoesForm.tiposCarga.add(tipoCarga);
-                    if (conferente) opcoesForm.conferentes.add(conferente);
-
                     const tolTipo = identificarToleranciaPorVeiculo(veiculo);
                     const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
                     
@@ -1079,24 +687,12 @@
                     });
                 }
 
-                popularDatalist('listPlacas', opcoesForm.placas);
-                popularSelectForm('formMotorista', opcoesForm.motoristas, false);
-                popularSelectForm('formTipoCarga', opcoesForm.tiposCarga, true);
-                popularSelectForm('formConferente', opcoesForm.conferentes, false);
-                popularSelectForm('formDoca', opcoesForm.docas, false);
-
                 atualizarFarol(true);
                 const filterInput = document.getElementById('filterDate');
                 if (!filterInput.value) filterInput.value = new Date().toISOString().split('T')[0];
 
                 atualizarDashboard();
                 filtrarEspelho();
-
-                if (modoFormulario === 'NOVO') {
-                    const nextId = gerarProximoIdSequencial();
-                    document.getElementById('formIdReg').value = nextId;
-                    idEditando = nextId;
-                }
 
                 const datalist = document.getElementById('idList');
                 datalist.innerHTML = "";
@@ -1242,136 +838,6 @@
             const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
             link.setAttribute("download", `Espelho_Balanca_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
-
-        // --- SALVAMENTO NATIVO VIA BACKEND JAVA NO RENDER ---
-        async function salvarNovoLancamento(e) {
-            e.preventDefault();
-            
-            const obterValor = (selectId, outroInputId) => {
-                const select = document.getElementById(selectId);
-                return select.value === 'OUTRO' ? document.getElementById(outroInputId).value.trim() : select.value;
-            };
-
-            const placa = document.getElementById('formPlaca').value.trim().toUpperCase();
-            const veiculo = obterValor('formVeiculo', 'formVeiculoOutro');
-            const motorista = obterValor('formMotorista', 'formMotoristaOutro');
-            const tipoCarga = obterValor('formTipoCarga', 'formTipoCargaOutro');
-            const movimento = document.getElementById('formMovimento').value;
-            const numeroCarga = document.getElementById('formNumCarga').value.trim();
-            const conferente = obterValor('formConferente', 'formConferenteOutro');
-            const doca = obterValor('formDoca', 'formDocaOutro');
-            const nfe = document.getElementById('formNf').value.trim();
-            const lacre = document.getElementById('formLacres').value.trim();
-            const dtEntradaRaw = document.getElementById('formDtEntrada').value;
-            const dtSaidaRaw = document.getElementById('formDtSaida').value;
-            
-            const pesoCheio = parseFloat(document.getElementById('formPesoCheio').value) || 0;
-            const pesoVazio = parseFloat(document.getElementById('formPesoVazio').value) || 0;
-            const pesoNF = parseFloat(document.getElementById('formPesoNf').value) || 0;
-            const pallets = parseInt(document.getElementById('formPallets').value) || 0;
-            const pesoPallets = pallets * 26;
-
-            const pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : 0;
-            const divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNF) : 0;
-            
-            const tolNome = identificarToleranciaPorVeiculo(veiculo);
-            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0;
-            const status = calcularStatusInteligente(placa, dtEntradaRaw, dtSaidaRaw, tipoCarga, pesoNF, divergencia, limiteKg);
-
-            const formatarDataParaPlanilha = (isoStr) => {
-                if (!isoStr) return "";
-                const parts = isoStr.split('T');
-                const d = parts[0].split('-');
-                return `${d[2]}/${d[1]}/${d[0]} ${parts[1] || ''}`.trim();
-            };
-
-            const entrada = formatarDataParaPlanilha(dtEntradaRaw);
-            const saida = formatarDataParaPlanilha(dtSaidaRaw);
-
-            const proximoID = idEditando || gerarProximoIdSequencial();
-
-            let confirmacao = false;
-            if (modoFormulario === 'NOVO') {
-                confirmacao = confirm(`TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS?\n\nPodemos gerar a gravação das informações na ID ${proximoID}?`);
-            } else {
-                confirmacao = confirm(`CONFIRMA A EDIÇÃO DO TICKET ${proximoID}?\n\nPlaca: ${placa}\nMotorista: ${motorista}\nEntrada: ${entrada}`);
-            }
-
-            if (!confirmacao) return;
-
-            const btnSubmit = document.getElementById('btnSubmitForm');
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "⏳ ENVIANDO VIA API JAVA (RENDER)...";
-
-            const dados = {
-                acao: modoFormulario === 'EDITAR' ? "editar" : "novo",
-                id: modoFormulario === 'EDITAR' ? proximoID : "",
-                placa: placa,
-                veiculo: veiculo,
-                motorista: motorista,
-                doca: doca,
-                movimento: movimento,
-                tipoCarga: tipoCarga,
-                numeroCarga: numeroCarga,
-                nfe: nfe,
-                entrada: entrada,
-                saida: saida,
-                lacre: lacre,
-                pallets: pallets,
-                pesoPallets: pesoPallets,
-                pesoCheio: pesoCheio,
-                pesoVazio: pesoVazio,
-                pesoLiquido: pesoLiquido,
-                pesoNF: pesoNF,
-                divergencia: divergencia,
-                conferente: conferente,
-                status: status
-            };
-
-            try {
-                const response = await fetch(URL_API_JAVA, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dados)
-                });
-
-                const textRaw = await response.text();
-                let retorno = {};
-                try { retorno = JSON.parse(textRaw); } catch(errP) {}
-
-                if (response.ok && (retorno.sucesso || textRaw.includes("sucesso") || textRaw.includes("SUCCESS"))) {
-                    alert(`✅ ${retorno.mensagem || 'Registro salvo com sucesso!'}`);
-
-                    const novoItem = {
-                        id: retorno.id || proximoID, placa, veiculoModelo: veiculo, motorista, movimento, tipoCarga,
-                        numCarga: numeroCarga, nf: nfe, dataEntradaRaw: entrada, dataEntradaTexto: entrada, dataSaidaTexto: saida,
-                        lacres: lacre, quantPallets: pallets, pesoPallets, pesoCheio, pesoVazio, pesoLiquido,
-                        pesoNf: pesoNF, divergencia, conferente, statusCalculado: status
-                    };
-
-                    const idx = ticketsCache.findIndex(t => t.id === novoItem.id);
-                    if (idx >= 0) ticketsCache[idx] = novoItem;
-                    else ticketsCache.push(novoItem);
-
-                    renderizarTicket(novoItem);
-                    atualizarDashboard();
-                    filtrarEspelho();
-
-                    document.getElementById('formLancamento').reset();
-                    document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
-                    setModoLancamento('NOVO');
-                } else {
-                    alert(`⚠️ Erro reportado pelo servidor: ${retorno.erro || textRaw}`);
-                }
-
-            } catch (err) {
-                console.error("Erro no envio:", err);
-                alert("⚠️ Falha de comunicação com o servidor Java no Render. Se a instância estiver inicializando, aguarde alguns segundos e tente novamente.");
-            } finally {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
-            }
         }
 
         function atualizarDashboard() {
