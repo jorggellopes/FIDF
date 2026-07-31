@@ -584,14 +584,13 @@
 
                 atualizarFarol(true);
 
-                // Inicializa filtro de data no dashboard caso ainda esteja vazio
+                // Define a data no campo de filtro se ainda não tiver valor
                 const filterInput = document.getElementById('filterDate');
                 if (!filterInput.value && ticketsCache.length > 0) {
-                    // Encontra a data do registro mais recente
                     const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
                     if (ultimoValido) {
-                        const isoData = extrairDataISO(ultimoValido.dataEntradaRaw);
-                        if (isoData) filterInput.value = isoData;
+                        const iso = extrairDataISO(ultimoValido.dataEntradaRaw);
+                        if (iso) filterInput.value = iso;
                     }
                 }
 
@@ -621,39 +620,62 @@
             }
         }
 
-        // Função utilitária para converter qualquer formato de data (dd/MM/yyyy ou MM/dd/yyyy ou yyyy-MM-dd) em ISO yyyy-MM-dd
+        // FUNÇÃO DE EXTRAÇÃO DE DATA SUPER RESISTENTE (Suporta datas de qualquer formato)
         function extrairDataISO(strData) {
             if (!strData || strData === '---') return null;
-            const limpo = strData.split(' ')[0].trim(); // Pega apenas a data sem horário
             
-            // Formato yyyy-MM-dd
-            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
+            // Pega apenas a parte da data, descartando qualquer horário após espaço ou 'T'
+            const limpo = strData.split(' ')[0].split('T')[0].trim();
             
-            // Formato dd/MM/yyyy ou M/D/YYYY
+            // Caso 1: Já veio no formato YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) {
+                return limpo;
+            }
+
+            // Separa por barra, ponto ou hífen
             const partes = limpo.split(/[\/\.-]/);
             if (partes.length === 3) {
+                let d, m, y;
+                
                 if (partes[0].length === 4) {
-                    // yyyy/MM/dd
-                    return `${partes[0]}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
+                    // Formato YYYY/MM/DD
+                    y = partes[0]; m = partes[1]; d = partes[2];
+                } else if (partes[2].length === 4) {
+                    // Pode ser DD/MM/YYYY ou MM/DD/YYYY (do AppSheet em inglês)
+                    const p0 = parseInt(partes[0], 10);
+                    const p1 = parseInt(partes[1], 10);
+                    y = partes[2];
+
+                    if (p0 > 12) {
+                        // Com certeza o primeiro é o DIA (DD/MM/YYYY)
+                        d = partes[0]; m = partes[1];
+                    } else if (p1 > 12) {
+                        // Com certeza o segundo é o DIA (MM/DD/YYYY)
+                        m = partes[0]; d = partes[1];
+                    } else {
+                        // Assume padrão brasileiro DD/MM/YYYY
+                        d = partes[0]; m = partes[1];
+                    }
                 } else {
-                    // dd/MM/yyyy
-                    return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                    return null;
                 }
+
+                return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
             }
+
             return null;
         }
 
         function atualizarDashboard() {
             const filterInput = document.getElementById('filterDate');
-            if (!filterInput) return;
-            const dataFiltro = filterInput.value; // Formato yyyy-MM-dd
+            const dataFiltro = filterInput ? filterInput.value : ''; // Formato YYYY-MM-DD
 
             const filtrados = ticketsCache.filter(t => {
                 if (t.statusCalculado === 'S/D') return false;
-                if (!dataFiltro) return true; // Se não houver filtro, considera todos
+                if (!dataFiltro) return true; // Se o usuário limpar a data, mostra tudo
                 
-                const dataIsoTicket = extrairDataISO(t.dataEntradaRaw);
-                return dataIsoTicket === dataFiltro;
+                const isoTicket = extrairDataISO(t.dataEntradaRaw);
+                return isoTicket === dataFiltro;
             });
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
@@ -665,12 +687,12 @@
             const confM = {};
 
             filtrados.forEach(t => {
-                const c = (t.tipoCarga || 'NÃO INFORMADO').toUpperCase();
+                const c = (t.tipoCarga || 'OUTROS').toUpperCase().trim();
                 if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
                 cargasM[c].v++; 
                 cargasM[c].p += (t.pesoNf || 0);
 
-                const m = (t.movimento || 'NÃO INFORMADO').toUpperCase();
+                const m = (t.movimento || 'OUTROS').toUpperCase().trim();
                 if (!movM[m]) movM[m] = { v: 0, p: 0 };
                 movM[m].v++; 
                 movM[m].p += (t.pesoNf || 0);
@@ -688,7 +710,7 @@
                 tbody.innerHTML = "";
                 const keys = Object.keys(map);
                 if (keys.length === 0) { 
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados para esta data</td></tr>'; 
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados para a data</td></tr>'; 
                     return; 
                 }
                 keys.sort().forEach(k => {
@@ -704,7 +726,7 @@
             const confKeys = Object.keys(confM);
 
             if (confKeys.length === 0) {
-                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para esta data</td></tr>';
+                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>';
             } else {
                 confKeys.sort().forEach(k => {
                     const volConf = confM[k].p;
