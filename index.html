@@ -583,8 +583,17 @@
                 });
 
                 atualizarFarol(true);
+
+                // Inicializa filtro de data no dashboard caso ainda esteja vazio
                 const filterInput = document.getElementById('filterDate');
-                if (!filterInput.value) filterInput.value = new Date().toISOString().split('T')[0];
+                if (!filterInput.value && ticketsCache.length > 0) {
+                    // Encontra a data do registro mais recente
+                    const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
+                    if (ultimoValido) {
+                        const isoData = extrairDataISO(ultimoValido.dataEntradaRaw);
+                        if (isoData) filterInput.value = isoData;
+                    }
+                }
 
                 atualizarDashboard();
                 filtrarEspelho();
@@ -612,6 +621,105 @@
             }
         }
 
+        // Função utilitária para converter qualquer formato de data (dd/MM/yyyy ou MM/dd/yyyy ou yyyy-MM-dd) em ISO yyyy-MM-dd
+        function extrairDataISO(strData) {
+            if (!strData || strData === '---') return null;
+            const limpo = strData.split(' ')[0].trim(); // Pega apenas a data sem horário
+            
+            // Formato yyyy-MM-dd
+            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
+            
+            // Formato dd/MM/yyyy ou M/D/YYYY
+            const partes = limpo.split(/[\/\.-]/);
+            if (partes.length === 3) {
+                if (partes[0].length === 4) {
+                    // yyyy/MM/dd
+                    return `${partes[0]}-${partes[1].padStart(2, '0')}-${partes[2].padStart(2, '0')}`;
+                } else {
+                    // dd/MM/yyyy
+                    return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                }
+            }
+            return null;
+        }
+
+        function atualizarDashboard() {
+            const filterInput = document.getElementById('filterDate');
+            if (!filterInput) return;
+            const dataFiltro = filterInput.value; // Formato yyyy-MM-dd
+
+            const filtrados = ticketsCache.filter(t => {
+                if (t.statusCalculado === 'S/D') return false;
+                if (!dataFiltro) return true; // Se não houver filtro, considera todos
+                
+                const dataIsoTicket = extrairDataISO(t.dataEntradaRaw);
+                return dataIsoTicket === dataFiltro;
+            });
+
+            document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
+            const totalVol = filtrados.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
+            document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
+
+            const cargasM = {}; 
+            const movM = {}; 
+            const confM = {};
+
+            filtrados.forEach(t => {
+                const c = (t.tipoCarga || 'NÃO INFORMADO').toUpperCase();
+                if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
+                cargasM[c].v++; 
+                cargasM[c].p += (t.pesoNf || 0);
+
+                const m = (t.movimento || 'NÃO INFORMADO').toUpperCase();
+                if (!movM[m]) movM[m] = { v: 0, p: 0 };
+                movM[m].v++; 
+                movM[m].p += (t.pesoNf || 0);
+                
+                const conf = (t.conferente || '').trim();
+                if (conf && conf !== '---') {
+                    if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
+                    confM[conf].v++; 
+                    confM[conf].p += (t.pesoNf || 0);
+                }
+            });
+
+            const renderT = (id, map) => {
+                const tbody = document.getElementById(id); 
+                tbody.innerHTML = "";
+                const keys = Object.keys(map);
+                if (keys.length === 0) { 
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados para esta data</td></tr>'; 
+                    return; 
+                }
+                keys.sort().forEach(k => {
+                    tbody.innerHTML += `<tr><td>${k}</td><td class="num-col">${map[k].v}</td><td class="num-col">${formatarNumero(map[k].p)}</td></tr>`;
+                });
+            };
+
+            renderT('dashTableCarga', cargasM);
+            renderT('dashTableMovimento', movM);
+
+            const tbodyConf = document.getElementById('dashTableConferente');
+            tbodyConf.innerHTML = "";
+            const confKeys = Object.keys(confM);
+
+            if (confKeys.length === 0) {
+                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para esta data</td></tr>';
+            } else {
+                confKeys.sort().forEach(k => {
+                    const volConf = confM[k].p;
+                    const pctVol = totalVol > 0 ? ((volConf / totalVol) * 100).toFixed(1) : "0.0";
+                    tbodyConf.innerHTML += `
+                        <tr>
+                            <td>${k}</td>
+                            <td class="num-col">${confM[k].v}</td>
+                            <td class="num-col">${formatarNumero(volConf)}</td>
+                            <td class="num-col" style="color:#511d9b;">${pctVol}%</td>
+                        </tr>`;
+                });
+            }
+        }
+
         function limparFiltrosEspelho() {
             document.getElementById('espFiltroBusca').value = '';
             document.getElementById('espDataInicio').value = '';
@@ -630,14 +738,13 @@
                 const matchTexto = !busca || t.id.toUpperCase().includes(busca) || t.placa.toUpperCase().includes(busca) || t.motorista.toUpperCase().includes(busca);
                 const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
                 let matchData = true;
-                if (t.dataEntradaRaw && t.dataEntradaRaw !== '---') {
-                    const p = t.dataEntradaRaw.split(' ')[0].split('/');
-                    if (p.length === 3) {
-                        const isoData = `${p[2]}-${p[1]}-${p[0]}`;
-                        if (dtInicio && isoData < dtInicio) matchData = false;
-                        if (dtFim && isoData > dtFim) matchData = false;
-                    }
+                
+                const isoData = extrairDataISO(t.dataEntradaRaw);
+                if (isoData) {
+                    if (dtInicio && isoData < dtInicio) matchData = false;
+                    if (dtFim && isoData > dtFim) matchData = false;
                 }
+
                 return matchTexto && matchStatus && matchData;
             });
 
@@ -729,68 +836,6 @@
             const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
             link.setAttribute("download", `Espelho_Balanca_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
-
-        function atualizarDashboard() {
-            const filterValue = document.getElementById('filterDate').value;
-            if (!filterValue) return;
-            const pF = filterValue.split('-'); const dF = `${pF[2]}/${pF[1]}/${pF[0]}`;
-            
-            const filtrados = ticketsCache.filter(t => t.dataEntradaRaw.includes(dF) && t.statusCalculado !== 'S/D');
-
-            document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
-            const totalVol = filtrados.reduce((sum, item) => sum + item.pesoNf, 0);
-            document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
-
-            const cargasM = {}; const movM = {}; const confM = {};
-
-            filtrados.forEach(t => {
-                const c = t.tipoCarga.toUpperCase();
-                if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
-                cargasM[c].v++; cargasM[c].p += t.pesoNf;
-
-                const m = t.movimento.toUpperCase();
-                if (!movM[m]) movM[m] = { v: 0, p: 0 };
-                movM[m].v++; movM[m].p += t.pesoNf;
-                
-                const conf = t.conferente;
-                if(conf && conf !== '---') {
-                    if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
-                    confM[conf].v++; confM[conf].p += t.pesoNf;
-                }
-            });
-
-            const renderT = (id, map) => {
-                const tbody = document.getElementById(id); tbody.innerHTML = "";
-                const keys = Object.keys(map);
-                if(keys.length === 0) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>'; return; }
-                keys.sort().forEach(k => {
-                    tbody.innerHTML += `<tr><td>${k}</td><td class="num-col">${map[k].v}</td><td class="num-col">${formatarNumero(map[k].p)}</td></tr>`;
-                });
-            };
-
-            renderT('dashTableCarga', cargasM);
-            renderT('dashTableMovimento', movM);
-
-            const tbodyConf = document.getElementById('dashTableConferente');
-            tbodyConf.innerHTML = "";
-            const confKeys = Object.keys(confM);
-
-            if (confKeys.length === 0) {
-                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>';
-            } else {
-                confKeys.sort().forEach(k => {
-                    const volConf = confM[k].p;
-                    const pctVol = totalVol > 0 ? ((volConf / totalVol) * 100).toFixed(1) : "0.0";
-                    tbodyConf.innerHTML += `
-                        <tr>
-                            <td>${k}</td>
-                            <td class="num-col">${confM[k].v}</td>
-                            <td class="num-col">${formatarNumero(volConf)}</td>
-                            <td class="num-col" style="color:#511d9b;">${pctVol}%</td>
-                        </tr>`;
-                });
-            }
         }
 
         function atualizarFarol(online, msg) {
