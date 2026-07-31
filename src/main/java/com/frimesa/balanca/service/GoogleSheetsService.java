@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -12,8 +13,8 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL OFICIAL DO CSV PUBLICADO DA PLANILHA BALANÇA GESTÃO FIDF
-    private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAp03g1-8VvtUlWt6pfqgtr_lQRgh4z_bbUmvRQd9a3y-reMeR5rn1Umj1p4DAN_Wt4cCaFlSb8iGD/pub?output=csv";
+    // URL DO SEU WEB APP APPS SCRIPT
+    private static final String SCRIPT_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
 
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
@@ -30,15 +31,30 @@ public class GoogleSheetsService {
         List<TicketDTO> lista = new ArrayList<>();
         
         try {
-            URL url = new URL(CSV_URL + "&_t=" + System.currentTimeMillis());
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+            String urlAtual = SCRIPT_URL;
+            HttpURLConnection conn;
+            
+            // Loop para seguir os redirecionamentos (302/301) do googleusercontent.com
+            while (true) {
+                URL url = new URL(urlAtual);
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setInstanceFollowRedirects(false);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                int status = conn.getResponseCode();
+
+                if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == 307 || status == 308) {
+                    urlAtual = conn.getHeaderField("Location");
+                } else {
+                    break;
+                }
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
                 String linha;
                 boolean primeiraLinha = true;
 
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
-                    
-                    // Descarta HTMLs de erro ou login do Google se houver
                     if (linha.toUpperCase().contains("<!DOCTYPE") || linha.toUpperCase().contains("HTML")) continue;
 
                     if (primeiraLinha) { 
@@ -46,7 +62,8 @@ public class GoogleSheetsService {
                         continue; 
                     }
 
-                    String[] col = linha.split("(?!\"[^\"]*),(?![^\"]*\")|;", -1);
+                    // Fatiamento seguro por ponto e vírgula ou vírgula
+                    String[] col = linha.split(";");
                     if (col.length < 1) continue;
 
                     String idVal = limparTexto(col[0]);
