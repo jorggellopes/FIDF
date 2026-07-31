@@ -530,7 +530,6 @@
         let ticketsCache = [];
         let filtradosEspelho = [];
         let ticketAtual = null;
-        let deferredPrompt;
 
         let paginaAtual = 1;
         const itensPorPagina = 15;
@@ -609,7 +608,7 @@
                 }
             } catch (err) { 
                 console.error("Erro ao carregar do servidor Java:", err); 
-                atualizarFarol(false, "SINCRO EM ANDAMENTO..."); 
+                atualizarFarol(false, "CONECTANDO VIA APPSHEET..."); 
             }
         }
 
@@ -796,7 +795,7 @@
 
         function atualizarFarol(online, msg) {
             document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('statusText').innerText = online ? `BASE CONECTADA VIA JAVA (${ticketsCache.length})` : (msg || 'FALHA');
+            document.getElementById('statusText').innerText = online ? `CONECTADO VIA APPSHEET API (${ticketsCache.length})` : (msg || 'FALHA');
             if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
         }
 
