@@ -13,9 +13,9 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL DO SEU WEB APP APPS SCRIPT
-   private static final String SCRIPT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
-
+    // URL DO SEU WEB APP SHEET
+   private static final String ACCESS_KEY = "V2-drcFW-JI6tk-93uYP-MFvMx-XwQxC-eMjCI-z6tM5-W21kN";
+    
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
         "TOLERÂNCIA VAN", 3.0,
