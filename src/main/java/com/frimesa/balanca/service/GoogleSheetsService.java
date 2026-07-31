@@ -1,10 +1,11 @@
 package com.frimesa.balanca.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.frimesa.balanca.dto.TicketDTO;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -13,9 +14,11 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL DO SEU WEB APP SHEET
-   private static final String ACCESS_KEY = "V2-drcFW-JI6tk-93uYP-MFvMx-XwQxC-eMjCI-z6tM5-W21kN";
-    
+    // IDENTIFICADORES DA API DO APPSHEET
+    private static final String APP_ID = "b5fbbbbc-a969-499f-858d-a50acab02d5c";
+    private static final String ACCESS_KEY = "V2-drcFW-JI6tk-93uYP-MFvMx-XwQxC-eMjCI-z6tM5-W21kN";
+    private static final String TABLE_NAME = "Página1"; 
+
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
         "TOLERÂNCIA VAN", 3.0,
@@ -29,145 +32,133 @@ public class GoogleSheetsService {
 
     public List<TicketDTO> buscarDadosPlanilha() {
         List<TicketDTO> lista = new ArrayList<>();
-        
+
         try {
-            String urlAtual = SCRIPT_URL;
-            HttpURLConnection conn;
-            
-            // Loop para seguir os redirecionamentos (302/301) do googleusercontent.com
-            while (true) {
-                URL url = new URL(urlAtual);
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setInstanceFollowRedirects(false);
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                int status = conn.getResponseCode();
+            URL url = new URL("https://api.appsheet.com/api/v2/apps/" + APP_ID + "/tables/" + TABLE_NAME + "/Action");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("ApplicationAccessKey", ACCESS_KEY);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
 
-                if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM || status == 307 || status == 308) {
-                    urlAtual = conn.getHeaderField("Location");
-                } else {
-                    break;
-                }
+            // Payload para consultar os registros via API oficial do AppSheet
+            String jsonPayload = "{\"Action\": \"Find\", \"Properties\": {}, \"Rows\": []}";
+
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
             }
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
-                String linha;
-                boolean primeiraLinha = true;
+            if (conn.getResponseCode() == 200) {
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode rootNode = mapper.readTree(conn.getInputStream());
 
-                while ((linha = reader.readLine()) != null) {
-                    if (linha.trim().isEmpty()) continue;
-                    if (linha.toUpperCase().contains("<!DOCTYPE") || linha.toUpperCase().contains("HTML")) continue;
+                if (rootNode.isArray()) {
+                    for (JsonNode row : rootNode) {
+                        String idVal = getText(row, "ID");
+                        if (idVal.isEmpty()) continue;
 
-                    if (primeiraLinha) { 
-                        primeiraLinha = false; 
-                        continue; 
+                        TicketDTO ticket = new TicketDTO();
+                        ticket.setId(idVal);
+
+                        String placa = getText(row, "PLACA").toUpperCase();
+                        ticket.setPlaca(placa);
+
+                        String veiculo = getText(row, "Veiculo / Modelo");
+                        ticket.setVeiculoModelo(veiculo);
+
+                        ticket.setMotorista(formatarNomeProprio(getText(row, "MOTORISTA")));
+                        ticket.setDoca(getText(row, "Nº DA DOCA").toUpperCase());
+                        ticket.setMovimento(getText(row, "MOVIMENTO").toUpperCase());
+
+                        String tipoCarga = getText(row, "TIPO DE CARGA").toUpperCase();
+                        ticket.setTipoCarga(tipoCarga);
+
+                        ticket.setNumCarga(getText(row, "Nº CARGA"));
+                        ticket.setNf(getText(row, "NF-e"));
+
+                        String dtEntrada = getText(row, "Data de Entrada");
+                        String dtSaida = getText(row, "Data de saída");
+                        ticket.setDataEntradaTexto(dtEntrada);
+                        ticket.setDataSaidaTexto(dtSaida);
+
+                        ticket.setLacres(getText(row, "Nº LACRE"));
+                        ticket.setQuantPallets(getInt(row, "Qt Pallets"));
+                        ticket.setPesoPallets(getDouble(row, "PESO PALLET"));
+
+                        double pesoCheio = getDouble(row, "PESO CHEIO ()");
+                        double pesoVazio = getDouble(row, "PESO VAZIO ()");
+                        double pesoNf = getDouble(row, "Peso NF ()");
+
+                        ticket.setPesoCheio(pesoCheio);
+                        ticket.setPesoVazio(pesoVazio);
+                        ticket.setPesoNf(pesoNf);
+
+                        double pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : getDouble(row, "Peso Liquido ()");
+                        double divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNf) : getDouble(row, "Divergência ()");
+
+                        ticket.setPesoLiquido(pesoLiquido);
+                        ticket.setDivergencia(divergencia);
+
+                        ticket.setConferente(formatarNomeProprio(getText(row, "Conferente")));
+
+                        String tolTipo = identificarToleranciaPorVeiculo(veiculo);
+                        ticket.setToleranciaTipo(tolTipo);
+
+                        double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
+                        ticket.setLimiteToleranciaKg(limiteKg);
+
+                        if (placa.isEmpty() || placa.equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
+                            ticket.setStatus("S/D");
+                            ticket.setResultado("SEM DADOS REGISTRADOS");
+                        } else if (tipoCarga.contains("VAZIO") || tipoCarga.contains("PATIO")) {
+                            ticket.setStatus("VAZIO");
+                            ticket.setResultado("VEÍCULO VAZIO / PÁTIO");
+                        } else if (Math.abs(divergencia) <= limiteKg) {
+                            ticket.setStatus("OK");
+                            ticket.setResultado("DENTRO DA TOLERÂNCIA");
+                        } else if (divergencia < 0) {
+                            ticket.setStatus("FALTA");
+                            ticket.setResultado("FORA DA TOLERÂNCIA");
+                        } else {
+                            ticket.setStatus("SOBRA");
+                            ticket.setResultado("FORA DA TOLERÂNCIA");
+                        }
+
+                        lista.add(ticket);
                     }
-
-                    // Fatiamento seguro por ponto e vírgula ou vírgula
-                    String[] col = linha.split(";");
-                    if (col.length < 1) continue;
-
-                    String idVal = limparTexto(col[0]);
-                    if (idVal.isEmpty() || idVal.equalsIgnoreCase("ID") || idVal.startsWith("http")) continue;
-
-                    TicketDTO ticket = new TicketDTO();
-                    ticket.setId(idVal);
-                    
-                    String placa = col.length > 1 ? limparTexto(col[1]).toUpperCase() : "";
-                    ticket.setPlaca(placa);
-
-                    String veiculo = col.length > 2 ? limparTexto(col[2]) : "";
-                    ticket.setVeiculoModelo(veiculo);
-
-                    ticket.setMotorista(col.length > 3 ? formatarNomeProprio(col[3]) : "");
-                    ticket.setDoca(col.length > 4 ? limparTexto(col[4]).toUpperCase() : "");
-                    ticket.setMovimento(col.length > 5 ? limparTexto(col[5]).toUpperCase() : "");
-                    
-                    String tipoCarga = col.length > 6 ? limparTexto(col[6]).toUpperCase() : "";
-                    ticket.setTipoCarga(tipoCarga);
-
-                    ticket.setNumCarga(col.length > 7 ? limparTexto(col[7]) : "");
-                    ticket.setNf(col.length > 8 ? limparTexto(col[8]) : "");
-
-                    String dtEntrada = col.length > 9 ? limparTexto(col[9]) : "";
-                    String dtSaida = col.length > 10 ? limparTexto(col[10]) : "";
-                    ticket.setDataEntradaTexto(dtEntrada);
-                    ticket.setDataSaidaTexto(dtSaida);
-
-                    ticket.setLacres(col.length > 11 ? limparTexto(col[11]) : "");
-                    ticket.setQuantPallets(col.length > 12 ? converterInteiro(col[12]) : 0);
-                    ticket.setPesoPallets(col.length > 13 ? converterDouble(col[13]) : 0.0);
-
-                    double pesoCheio = col.length > 14 ? converterDouble(col[14]) : 0.0;
-                    double pesoVazio = col.length > 15 ? converterDouble(col[15]) : 0.0;
-                    double pesoNf = col.length > 17 ? converterDouble(col[17]) : 0.0;
-
-                    ticket.setPesoCheio(pesoCheio);
-                    ticket.setPesoVazio(pesoVazio);
-                    ticket.setPesoNf(pesoNf);
-
-                    double pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : (col.length > 16 ? converterDouble(col[16]) : 0.0);
-                    double divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNf) : (col.length > 18 ? converterDouble(col[18]) : 0.0);
-
-                    ticket.setPesoLiquido(pesoLiquido);
-                    ticket.setDivergencia(divergencia);
-
-                    ticket.setConferente(col.length > 19 ? formatarNomeProprio(col[19]) : "");
-
-                    String tolTipo = identificarToleranciaPorVeiculo(veiculo);
-                    ticket.setToleranciaTipo(tolTipo);
-
-                    double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
-                    ticket.setLimiteToleranciaKg(limiteKg);
-
-                    if (placa.isEmpty() || placa.equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
-                        ticket.setStatus("S/D");
-                        ticket.setResultado("SEM DADOS REGISTRADOS");
-                    } else if (tipoCarga.contains("VAZIO") || tipoCarga.contains("PATIO")) {
-                        ticket.setStatus("VAZIO");
-                        ticket.setResultado("VEÍCULO VAZIO / PÁTIO");
-                    } else if (Math.abs(divergencia) <= limiteKg) {
-                        ticket.setStatus("OK");
-                        ticket.setResultado("DENTRO DA TOLERÂNCIA");
-                    } else if (divergencia < 0) {
-                        ticket.setStatus("FALTA");
-                        ticket.setResultado("FORA DA TOLERÂNCIA");
-                    } else {
-                        ticket.setStatus("SOBRA");
-                        ticket.setResultado("FORA DA TOLERÂNCIA");
-                    }
-
-                    lista.add(ticket);
                 }
+            } else {
+                System.err.println("Erro na chamada da API do AppSheet: HTTP " + conn.getResponseCode());
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return lista;
     }
 
-    private String limparTexto(String valor) {
-        if (valor == null) return "";
-        return valor.replace("\"", "").replaceAll("[\\r\\n]", "").trim();
+    private String getText(JsonNode node, String field) {
+        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText().trim() : "";
     }
 
-    private Double converterDouble(String valor) {
+    private double getDouble(JsonNode node, String field) {
         try {
-            if (valor == null || valor.trim().isEmpty()) return 0.0;
-            String limpo = valor.replace("\"", "").replace(".", "").replace(",", ".").trim();
-            return Double.parseDouble(limpo);
-        } catch (Exception e) {
-            return 0.0;
-        }
+            if (node.has(field) && !node.get(field).isNull()) {
+                String val = node.get(field).asText().replace(".", "").replace(",", ".").trim();
+                return Double.parseDouble(val);
+            }
+        } catch (Exception ignored) {}
+        return 0.0;
     }
 
-    private Integer converterInteiro(String valor) {
+    private int getInt(JsonNode node, String field) {
         try {
-            if (valor == null || valor.trim().isEmpty()) return 0;
-            String limpo = valor.replace("\"", "").replaceAll("[^0-9]", "").trim();
-            return Integer.parseInt(limpo);
-        } catch (Exception e) {
-            return 0;
-        }
+            if (node.has(field) && !node.get(field).isNull()) {
+                return Integer.parseInt(node.get(field).asText().replaceAll("[^0-9]", "").trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
     }
 
     private String formatarNomeProprio(String str) {
