@@ -690,8 +690,8 @@
         // LEITURA DO CSV DA PLANILHA V2
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
 
-        // URL DE PRODUÇÃO DA API NO GOOGLE APPS SCRIPT (/exec)
-        const URL_API_APPSCRIPT = "https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec";
+        // ENDEREÇO DA SUA API JAVA HOSPETADA NO RENDER
+        const URL_API_JAVA = "https://fidf-api.onrender.com/api/tickets/gravar";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -1244,7 +1244,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SALVAMENTO NATIVO CONSUMINDO CONTRATO JSON DA API ---
+        // --- SALVAMENTO NATIVO VIA BACKEND JAVA NO RENDER ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1291,7 +1291,6 @@
 
             const proximoID = idEditando || gerarProximoIdSequencial();
 
-            // MENSAGEM DE CONFIRMAÇÃO EXATA
             let confirmacao = false;
             if (modoFormulario === 'NOVO') {
                 confirmacao = confirm(`TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS?\n\nPodemos gerar a gravação das informações na ID ${proximoID}?`);
@@ -1303,9 +1302,8 @@
 
             const btnSubmit = document.getElementById('btnSubmitForm');
             btnSubmit.disabled = true;
-            btnSubmit.innerText = "⏳ ENVIANDO PARA A PLANILHA...";
+            btnSubmit.innerText = "⏳ ENVIANDO VIA API JAVA (RENDER)...";
 
-            // OBJETO CONFORME CONTRATO ESTRITO DA API
             const dados = {
                 acao: modoFormulario === 'EDITAR' ? "editar" : "novo",
                 id: modoFormulario === 'EDITAR' ? proximoID : "",
@@ -1332,19 +1330,19 @@
             };
 
             try {
-                // FETCH ASSÍNCRONO COM TRATAMENTO DE RETORNO DO JSON
-                const response = await fetch(URL_API_APPSCRIPT, {
+                const response = await fetch(URL_API_JAVA, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Evita preflight OPTIONS do CORS no Apps Script
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)
                 });
 
-                const retorno = await response.json();
+                const textRaw = await response.text();
+                let retorno = {};
+                try { retorno = JSON.parse(textRaw); } catch(errP) {}
 
-                if (retorno.sucesso) {
-                    alert(`✅ ${retorno.mensagem}`);
-                    
-                    // Atualiza cache local instantaneamente
+                if (response.ok && (retorno.sucesso || textRaw.includes("sucesso") || textRaw.includes("SUCCESS"))) {
+                    alert(`✅ ${retorno.mensagem || 'Registro salvo com sucesso!'}`);
+
                     const novoItem = {
                         id: retorno.id || proximoID, placa, veiculoModelo: veiculo, motorista, movimento, tipoCarga,
                         numCarga: numeroCarga, nf: nfe, dataEntradaRaw: entrada, dataEntradaTexto: entrada, dataSaidaTexto: saida,
@@ -1364,12 +1362,12 @@
                     document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                     setModoLancamento('NOVO');
                 } else {
-                    alert(`⚠️ Erro reportado pela API: ${retorno.erro}`);
+                    alert(`⚠️ Erro reportado pelo servidor: ${retorno.erro || textRaw}`);
                 }
 
             } catch (err) {
-                console.error("Erro na comunicação com a API:", err);
-                alert("⚠️ Erro ao comunicar com o servidor da planilha.");
+                console.error("Erro no envio:", err);
+                alert("⚠️ Falha de comunicação com o servidor Java no Render. Se a instância estiver inicializando, aguarde alguns segundos e tente novamente.");
             } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
