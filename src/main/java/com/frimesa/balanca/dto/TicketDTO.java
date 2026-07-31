@@ -1,7 +1,6 @@
 package com.frimesa.balanca.dto;
 
 public class TicketDTO {
-
     private String id;
     private String placa;
     private String veiculoModelo;
@@ -22,14 +21,14 @@ public class TicketDTO {
     private Double pesoNf;
     private Double divergencia;
     private String conferente;
+    private String status;
+    private String resultado;
     private String toleranciaTipo;
     private Double limiteToleranciaKg;
-    private String resultado;
-    private String status;
 
     public TicketDTO() {}
 
-    // GETTERS E SETTERS
+    // Getters e Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -90,15 +89,15 @@ public class TicketDTO {
     public String getConferente() { return conferente; }
     public void setConferente(String conferente) { this.conferente = conferente; }
 
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getResultado() { return resultado; }
+    public void setResultado(String resultado) { this.resultado = resultado; }
+
     public String getToleranciaTipo() { return toleranciaTipo; }
     public void setToleranciaTipo(String toleranciaTipo) { this.toleranciaTipo = toleranciaTipo; }
 
     public Double getLimiteToleranciaKg() { return limiteToleranciaKg; }
     public void setLimiteToleranciaKg(Double limiteToleranciaKg) { this.limiteToleranciaKg = limiteToleranciaKg; }
-
-    public String getResultado() { return resultado; }
-    public void setResultado(String resultado) { this.resultado = resultado; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
 }
