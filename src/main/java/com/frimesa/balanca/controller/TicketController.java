@@ -19,8 +19,8 @@ public class TicketController {
     @Autowired
     private GoogleSheetsService googleSheetsService;
 
-    // URL do WebApp do Apps Script publicado
-    private static final String GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec";
+    // URL DO NOVO WEB APP DO GOOGLE APPS SCRIPT
+    private static final String GOOGLE_SCRIPT_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
 
     @GetMapping
     public ResponseEntity<?> listar() {
@@ -36,7 +36,6 @@ public class TicketController {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
-            // Requisição feita direto no servidor Java -> Sem bloqueio de CORS
             ResponseEntity<String> response = restTemplate.postForEntity(GOOGLE_SCRIPT_URL, request, String.class);
 
             return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
