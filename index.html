@@ -27,9 +27,7 @@
             margin: 0;
         }
 
-        .nav-menu {
-            display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px;
-        }
+        .nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; }
         .nav-btn {
             flex: 1; padding: 12px 8px; background-color: rgba(255, 255, 255, 0.2);
             color: #fff; border: 2px solid transparent; border-radius: 6px;
@@ -294,12 +292,6 @@
     </style>
 </head>
 <body>
-
-    <!-- FORMULÁRIO E IFRAME OCULTOS PARA ENVIO DIRETO SEM BLOQUEIO DE CORS -->
-    <iframe name="hidden_upload_iframe" id="hidden_upload_iframe" style="display:none;"></iframe>
-    <form id="nativeGasForm" action="https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec" method="POST" target="hidden_upload_iframe" style="display:none;">
-        <input type="hidden" name="payload" id="hiddenPayloadInput">
-    </form>
 
     <div class="nav-menu">
         <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
@@ -697,6 +689,9 @@
     <script>
         // LEITURA DO CSV DA PLANILHA V2
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7F5Cxsuajdci2IlXL9BkRNifx5O4ljnRBxjNoQbmQRdMs2gZS8WK6mtRK3HulS-EnDYgrKakZENiZ/pub?output=csv";
+
+        // URL DE PRODUÇÃO DA API NO GOOGLE APPS SCRIPT (/exec)
+        const URL_API_APPSCRIPT = "https://script.google.com/macros/s/AKfycbxD39BgHL_IxRXP_e2n0zqx-y3Ub3ynNUXMMMiuZRElXNrP7OAFjssazRgmvlxnh_VZSA/exec";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -1249,7 +1244,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- SALVAMENTO NATIVO VIA FORMULÁRIO COM VALIDAÇÃO REAL DA PLANILHA ---
+        // --- SALVAMENTO NATIVO CONSUMINDO CONTRATO JSON DA API ---
         async function salvarNovoLancamento(e) {
             e.preventDefault();
             
@@ -1263,26 +1258,26 @@
             const motorista = obterValor('formMotorista', 'formMotoristaOutro');
             const tipoCarga = obterValor('formTipoCarga', 'formTipoCargaOutro');
             const movimento = document.getElementById('formMovimento').value;
-            const numCarga = document.getElementById('formNumCarga').value.trim();
+            const numeroCarga = document.getElementById('formNumCarga').value.trim();
             const conferente = obterValor('formConferente', 'formConferenteOutro');
             const doca = obterValor('formDoca', 'formDocaOutro');
-            const nf = document.getElementById('formNf').value.trim();
-            const lacres = document.getElementById('formLacres').value.trim();
+            const nfe = document.getElementById('formNf').value.trim();
+            const lacre = document.getElementById('formLacres').value.trim();
             const dtEntradaRaw = document.getElementById('formDtEntrada').value;
             const dtSaidaRaw = document.getElementById('formDtSaida').value;
+            
             const pesoCheio = parseFloat(document.getElementById('formPesoCheio').value) || 0;
             const pesoVazio = parseFloat(document.getElementById('formPesoVazio').value) || 0;
-            const pesoNf = parseFloat(document.getElementById('formPesoNf').value) || 0;
-            const quantPallets = parseInt(document.getElementById('formPallets').value) || 0;
-            const pesoPallets = quantPallets * 26;
+            const pesoNF = parseFloat(document.getElementById('formPesoNf').value) || 0;
+            const pallets = parseInt(document.getElementById('formPallets').value) || 0;
+            const pesoPallets = pallets * 26;
 
             const pesoLiquido = (pesoCheio > 0 && pesoVazio > 0) ? (pesoCheio - pesoVazio) : 0;
-            const divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNf) : 0;
+            const divergencia = (pesoLiquido > 0) ? (pesoLiquido - pesoNF) : 0;
             
             const tolNome = identificarToleranciaPorVeiculo(veiculo);
             const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0;
-            
-            const statusCalculado = calcularStatusInteligente(placa, dtEntradaRaw, dtSaidaRaw, tipoCarga, pesoNf, divergencia, limiteKg);
+            const status = calcularStatusInteligente(placa, dtEntradaRaw, dtSaidaRaw, tipoCarga, pesoNF, divergencia, limiteKg);
 
             const formatarDataParaPlanilha = (isoStr) => {
                 if (!isoStr) return "";
@@ -1291,114 +1286,91 @@
                 return `${d[2]}/${d[1]}/${d[0]} ${parts[1] || ''}`.trim();
             };
 
-            const dtEntrada = formatarDataParaPlanilha(dtEntradaRaw);
-            const dtSaida = formatarDataParaPlanilha(dtSaidaRaw);
+            const entrada = formatarDataParaPlanilha(dtEntradaRaw);
+            const saida = formatarDataParaPlanilha(dtSaidaRaw);
 
-            const idFinalTarget = idEditando || gerarProximoIdSequencial();
-
-            let clientIp = "Indisponível";
-            try {
-                const ipRes = await fetch("https://api.ipify.org?format=json");
-                if (ipRes.ok) {
-                    const ipData = await ipRes.json();
-                    clientIp = ipData.ip;
-                }
-            } catch (errIp) {
-                console.warn("Não foi possível consultar o IP:", errIp);
-            }
-
-            const dataHoraEdicao = new Date().toLocaleString('pt-BR');
+            const proximoID = idEditando || gerarProximoIdSequencial();
 
             // MENSAGEM DE CONFIRMAÇÃO EXATA
-            let resumoMsg = "";
+            let confirmacao = false;
             if (modoFormulario === 'NOVO') {
-                resumoMsg = `TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS? PODEMOS GERAR A GRAVAÇÃO DAS INFORMAÇÕES NA ID ${idFinalTarget}?`;
+                confirmacao = confirm(`TEM CERTEZA QUE TODAS AS INFORMAÇÕES ESTÃO CORRETAS?\n\nPodemos gerar a gravação das informações na ID ${proximoID}?`);
             } else {
-                resumoMsg = 
-`CONFIRMAÇÃO DE EDIÇÃO (TICKET ${idFinalTarget}):
-
-• Placa: ${placa}
-• Veículo: ${veiculo}
-• Motorista: ${motorista}
-• Tipo Carga: ${tipoCarga}
-• Conferente: ${conferente || 'Não definido'}
-• Entrada: ${dtEntrada}
-• Saída: ${dtSaida || 'Pendente'}
-• Peso Cheio: ${pesoCheio} KG
-• Peso Vazio: ${pesoVazio} KG
-• Peso NF: ${pesoNf} KG
-
-🔒 AUDITORIA:
-• Horário: ${dataHoraEdicao}
-• IP: ${clientIp}
-
-Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget} da planilha?`;
+                confirmacao = confirm(`CONFIRMA A EDIÇÃO DO TICKET ${proximoID}?\n\nPlaca: ${placa}\nMotorista: ${motorista}\nEntrada: ${entrada}`);
             }
 
-            const confirmado = confirm(resumoMsg);
+            if (!confirmacao) return;
 
-            if (confirmado) {
-                const btnSubmit = document.getElementById('btnSubmitForm');
-                btnSubmit.disabled = true;
-                btnSubmit.innerText = "⏳ ENVIANDO PARA A PLANILHA...";
+            const btnSubmit = document.getElementById('btnSubmitForm');
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "⏳ ENVIANDO PARA A PLANILHA...";
 
-                // Mapeamento explícito das propriedades que serão gravadas
-                const recordData = {
-                    id: idFinalTarget,
-                    placa: placa,
-                    veiculo: veiculo,
-                    motorista: motorista,
-                    doca: doca,
-                    movimento: movimento,
-                    tipoCarga: tipoCarga,
-                    numCarga: numCarga,
-                    nf: nf,
-                    dtEntrada: dtEntrada,
-                    dtSaida: dtSaida,
-                    lacres: lacres,
-                    quantPallets: quantPallets,
-                    pesoPallets: pesoPallets,
-                    pesoCheio: pesoCheio,
-                    pesoVazio: pesoVazio,
-                    pesoLiquido: pesoLiquido,
-                    pesoNf: pesoNf,
-                    divergencia: divergencia,
-                    statusCalculado: statusCalculado,
-                    conferente: conferente,
-                    auditoria: {
-                        dataHora: dataHoraEdicao,
-                        ip: clientIp
-                    }
-                };
+            // OBJETO CONFORME CONTRATO ESTRITO DA API
+            const dados = {
+                acao: modoFormulario === 'EDITAR' ? "editar" : "novo",
+                id: modoFormulario === 'EDITAR' ? proximoID : "",
+                placa: placa,
+                veiculo: veiculo,
+                motorista: motorista,
+                doca: doca,
+                movimento: movimento,
+                tipoCarga: tipoCarga,
+                numeroCarga: numeroCarga,
+                nfe: nfe,
+                entrada: entrada,
+                saida: saida,
+                lacre: lacre,
+                pallets: pallets,
+                pesoPallets: pesoPallets,
+                pesoCheio: pesoCheio,
+                pesoVazio: pesoVazio,
+                pesoLiquido: pesoLiquido,
+                pesoNF: pesoNF,
+                divergencia: divergencia,
+                conferente: conferente,
+                status: status
+            };
 
-                // DISPARO NATIVO PARA O APPS SCRIPT
-                document.getElementById('hiddenPayloadInput').value = JSON.stringify(recordData);
-                document.getElementById('nativeGasForm').submit();
+            try {
+                // FETCH ASSÍNCRONO COM TRATAMENTO DE RETORNO DO JSON
+                const response = await fetch(URL_API_APPSCRIPT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Evita preflight OPTIONS do CORS no Apps Script
+                    body: JSON.stringify(dados)
+                });
 
-                btnSubmit.innerText = "⏳ VERIFICANDO GRAVAÇÃO REAL NA PLANILHA...";
+                const retorno = await response.json();
 
-                // Valida na planilha em tempo real se o dado foi gravado de fato
-                let gravouSucesso = false;
-                for (let tentativa = 1; tentativa <= 5; tentativa++) {
-                    await new Promise(r => setTimeout(r, 2000));
-                    await carregarDadosPlanilha();
+                if (retorno.sucesso) {
+                    alert(`✅ ${retorno.mensagem}`);
                     
-                    const encontrado = ticketsCache.find(t => t.id === idFinalTarget);
-                    if (encontrado && (encontrado.placa === placa || modoFormulario === 'EDITAR')) {
-                        gravouSucesso = true;
-                        break;
-                    }
-                }
+                    // Atualiza cache local instantaneamente
+                    const novoItem = {
+                        id: retorno.id || proximoID, placa, veiculoModelo: veiculo, motorista, movimento, tipoCarga,
+                        numCarga: numeroCarga, nf: nfe, dataEntradaRaw: entrada, dataEntradaTexto: entrada, dataSaidaTexto: saida,
+                        lacres: lacre, quantPallets: pallets, pesoPallets, pesoCheio, pesoVazio, pesoLiquido,
+                        pesoNf: pesoNF, divergencia, conferente, statusCalculado: status
+                    };
 
-                if (gravouSucesso) {
-                    alert(`✅ Lançamento CONFIRMADO e GRAVADO com sucesso no ID ${idFinalTarget} da planilha!`);
+                    const idx = ticketsCache.findIndex(t => t.id === novoItem.id);
+                    if (idx >= 0) ticketsCache[idx] = novoItem;
+                    else ticketsCache.push(novoItem);
+
+                    renderizarTicket(novoItem);
+                    atualizarDashboard();
+                    filtrarEspelho();
+
                     document.getElementById('formLancamento').reset();
                     document.querySelectorAll('.input-outro').forEach(i => i.style.display = 'none');
                     setModoLancamento('NOVO');
                 } else {
-                    alert(`⚠️ O comando foi enviado, mas a gravação na planilha ainda não foi confirmada. Verifique as permissões do Apps Script ou tente novamente.`);
+                    alert(`⚠️ Erro reportado pela API: ${retorno.erro}`);
                 }
 
+            } catch (err) {
+                console.error("Erro na comunicação com a API:", err);
+                alert("⚠️ Erro ao comunicar com o servidor da planilha.");
+            } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerText = "💾 Gravar Lançamento na Planilha";
             }
@@ -1568,12 +1540,7 @@ Tem certeza que conferiu todos os dados antes de atualizar o ID ${idFinalTarget}
                 margin:       [0.15, 0.15, 0.15, 0.15],
                 filename:     `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true,
-                    scrollY: 0,
-                    scrollX: 0
-                },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
                 pagebreak:    { mode: 'avoid-all' }
             };
