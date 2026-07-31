@@ -12,9 +12,9 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL OFICIAL DO CSV PUBLICADO DA PLANILHA BALANÇA GESTÃO FIDF
-    private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAp03g1-8VvtUlWt6pfqgtr_lQRgh4z_bbUmvRQd9a3y-reMeR5rn1Umj1p4DAN_Wt4cCaFlSb8iGD/pub?output=csv";
-
+   // URL DO WEB APP DO APPS SCRIPT NA FRIMESA
+private static final String CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
+    
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
         "TOLERÂNCIA VAN", 3.0,
