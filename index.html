@@ -11,10 +11,6 @@
     <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
     <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
 
-    <!-- SDK Oficial de Login do Google -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-    <!-- Biblioteca para geração de PDF NATIVO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -29,43 +25,6 @@
             padding: 15px;
             margin: 0;
         }
-
-        .auth-banner {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 1080px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .auth-banner-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: #511d9b;
-        }
-
-        .btn-google-login {
-            background-color: #4285F4;
-            color: #ffffff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-google-login:hover { background-color: #3367d6; }
 
         .nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; }
         .nav-btn {
@@ -305,23 +264,13 @@
 
         @media print {
             body { background: none; padding: 0; }
-            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box, .auth-banner { display: none !important; }
+            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box { display: none !important; }
             .main-layout { display: block; }
             .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
         }
     </style>
 </head>
 <body>
-
-    <!-- PAINEL DE CONEXÃO GOOGLE FRIMESA -->
-    <div class="auth-banner" id="authBanner">
-        <div class="auth-banner-title">
-            🔒 LEITURA DE DADOS RESTRITA (FRIMESA WORKSPACE)
-        </div>
-        <button class="btn-google-login" onclick="autenticarComGoogle()">
-            🔑 Entrar com Conta Frimesa
-        </button>
-    </div>
 
     <div class="nav-menu">
         <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
@@ -332,7 +281,7 @@
     <div class="status-bar">
         <div class="status-indicator">
             <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">AGUARDANDO AUTENTICAÇÃO GOOGLE...</span>
+            <span id="statusText">CONECTANDO A BASE DE DADOS...</span>
         </div>
         
         <div class="online-counter">
@@ -345,7 +294,7 @@
         </div>
     </div>
 
-    <!-- ==================== ABA 1: TICKET ==================== -->
+    <!-- ABA 1: TICKET -->
     <div id="ticketTab" class="tab-content active">
         <div class="search-container">
             <label for="inputId">PESQUISAR ID:</label>
@@ -471,7 +420,7 @@
         </div>
     </div>
 
-    <!-- ==================== ABA 2: ESPELHO DA PLANILHA ==================== -->
+    <!-- ABA 2: ESPELHO DA PLANILHA -->
     <div id="espelhoTab" class="tab-content">
         <div class="espelho-card">
             
@@ -543,7 +492,7 @@
                         </tr>
                     </thead>
                     <tbody id="espelhoTableBody">
-                        <tr><td colspan="12" style="text-align:center; padding: 20px;">Aguardando login com conta Frimesa...</td></tr>
+                        <tr><td colspan="12" style="text-align:center; padding: 20px;">Carregando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -559,7 +508,7 @@
         </div>
     </div>
 
-    <!-- ==================== ABA 3: LANÇAMENTOS (APPSHEET DIRETO) ==================== -->
+    <!-- ABA 3: LANÇAMENTOS (APPSHEET DIRETO) -->
     <div id="lancamentoTab" class="tab-content">
         <div class="appsheet-box">
             <h2 style="color: #511d9b; margin-top: 0; margin-bottom: 10px;">📝 MÓDULO DE LANÇAMENTOS</h2>
@@ -576,14 +525,13 @@
     </div>
 
     <script>
-        const SPREADSHEET_ID = "1ANJ2W-I1-vV8XrOIlp85OQtrmkPhQoxtRbDpvf11Q40";
-        // ATENÇÃO: COLE O SEU CLIENT_ID DO GOOGLE CLOUD CONSOLE AQUI ABAIXO
-        const GOOGLE_CLIENT_ID = "SEU_CLIENT_ID_AQUI.apps.googleusercontent.com";
+        const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
 
-        let accessToken = null;
         let ticketsCache = [];
         let filtradosEspelho = [];
         let ticketAtual = null;
+        let deferredPrompt;
+
         let paginaAtual = 1;
         const itensPorPagina = 15;
 
@@ -593,78 +541,47 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        function autenticarComGoogle() {
-            if (GOOGLE_CLIENT_ID.includes("SEU_CLIENT_ID_AQUI")) {
-                alert("É necessário configurar o CLIENT_ID do Google Cloud Console no script para abrir a janela de login!");
-                return;
-            }
-
-            const client = google.accounts.oauth2.initTokenClient({
-                client_id: GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
-                callback: (response) => {
-                    if (response.access_token) {
-                        accessToken = response.access_token;
-                        document.getElementById('authBanner').style.display = 'none';
-                        document.getElementById('statusText').innerText = "AUTENTICADO VIA GOOGLE";
-                        carregarDadosPlanilhaAPI();
-                    }
-                },
-            });
-            client.requestAccessToken();
+        function trocarAba(abaId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(abaId).classList.add('active');
+            btnElement.classList.add('active');
+            if (abaId === 'espelhoTab') filtrarEspelho();
         }
 
-        async function carregarDadosPlanilhaAPI() {
-            if (!accessToken) return;
-
+        async function carregarDadosPlanilha() {
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/P%C3%A1gina1!A1:Z1000`;
-                const response = await fetch(url, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
-
+                const response = await fetch(API_JAVA_URL);
                 if (!response.ok) throw new Error("Status HTTP " + response.status);
-                const data = await response.json();
                 
-                const linhas = data.values;
-                if (!linhas || linhas.length < 2) return;
+                const dados = await response.json();
+                if (!Array.isArray(dados)) throw new Error("Resposta inválida do servidor Java");
 
-                ticketsCache = [];
-                for (let i = 1; i < linhas.length; i++) {
-                    const col = linhas[i];
-                    if (!col || col.length < 2) continue;
-
-                    const idVal = col[0] ? col[0].trim() : '';
-                    if (!idVal || idVal.toUpperCase() === 'ID') continue;
-
-                    const placa = (col[1] || '').toUpperCase().trim();
-                    const veiculo = col[2] || '---';
-                    const motorista = col[3] || '---';
-                    const movimento = col[5] || 'N/A';
-                    const tipoCarga = (col[6] || '').toUpperCase();
-                    const dtEntrada = col[9] || '---';
-                    const dtSaida = col[10] || '---';
-                    const lacres = col[11] || '---';
-                    const qPallets = parseInt(col[12]) || 0;
-                    const pPallets = parseFloat(col[13]) || 0;
-                    const pCheio = parseFloat(col[14]) || 0;
-                    const pVazio = parseFloat(col[15]) || 0;
-                    const pLiquido = parseFloat(col[16]) || 0;
-                    const pNf = parseFloat(col[17]) || 0;
-                    const divergencia = parseFloat(col[18]) || 0;
-                    const conferente = col[19] || '---';
-
-                    const tolTipo = identificarToleranciaPorVeiculo(veiculo);
-                    const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
-                    const stCalculado = calcularStatusInteligente(placa, dtEntrada, dtSaida, tipoCarga, pNf, divergencia, limiteKg);
-
-                    ticketsCache.push({
-                        id: idVal, placa: placa || '---', veiculoModelo: veiculo, motorista: motorista, movimento: movimento, tipoCarga: tipoCarga,
-                        dataEntradaRaw: dtEntrada, dataEntradaTexto: dtEntrada, dataSaidaTexto: dtSaida, lacres: lacres,
-                        quantPallets: qPallets, pesoPallets: pPallets, pesoCheio: pCheio, pesoVazio: pVazio, pesoLiquido: pLiquido,
-                        pesoNf: pNf, divergencia: divergencia, conferente: conferente, statusCalculado: stCalculado
-                    });
-                }
+                ticketsCache = dados.map(item => {
+                    return {
+                        id: item.id || '---',
+                        placa: item.placa || '---',
+                        veiculoModelo: item.veiculoModelo || '---',
+                        motorista: item.motorista || '---',
+                        movimento: item.movimento || '---',
+                        tipoCarga: item.tipoCarga || '---',
+                        numCarga: item.numCarga || '',
+                        nf: item.nf || '',
+                        dataEntradaRaw: item.dataEntradaTexto || '',
+                        dataEntradaTexto: item.dataEntradaTexto || '---',
+                        dataSaidaTexto: item.dataSaidaTexto || '---',
+                        lacres: item.lacres || '---',
+                        quantPallets: item.quantPallets || 0,
+                        pesoPallets: item.pesoPallets || 0,
+                        pesoCheio: item.pesoCheio || 0,
+                        pesoVazio: item.pesoVazio || 0,
+                        pesoLiquido: item.pesoLiquido || 0,
+                        pesoNf: item.pesoNf || 0,
+                        divergencia: item.divergencia || 0,
+                        conferente: item.conferente || '---',
+                        statusCalculado: item.status || 'S/D'
+                    };
+                });
 
                 atualizarFarol(true);
                 const filterInput = document.getElementById('filterDate');
@@ -683,27 +600,17 @@
                     }
                 });
 
-                if (ticketsCache.length > 0) renderizarTicket(ticketsCache[ticketsCache.length - 1]);
-
-            } catch (err) {
-                console.error("Erro na leitura da API do Google:", err);
-                atualizarFarol(false, "ERRO NA AUTENTICAÇÃO");
+                if (ticketAtual) {
+                    const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
+                    if (recarregado) renderizarTicket(recarregado);
+                } else if (ticketsCache.length > 0) {
+                    const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
+                    if (ultimoValido) renderizarTicket(ultimoValido);
+                }
+            } catch (err) { 
+                console.error("Erro ao carregar do servidor Java:", err); 
+                atualizarFarol(false, "SINCRO EM ANDAMENTO..."); 
             }
-        }
-
-        function trocarAba(abaId, btnElement) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(abaId).classList.add('active');
-            btnElement.classList.add('active');
-            if (abaId === 'espelhoTab') filtrarEspelho();
-        }
-
-        function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
-            if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') return 'S/D';
-            if (tipoCarga.includes('VAZIO') || tipoCarga.includes('PATIO')) return 'VAZIO';
-            if (pesoNf === 0) return 'OK';
-            return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
         function limparFiltrosEspelho() {
@@ -839,11 +746,11 @@
             const cargasM = {}; const movM = {}; const confM = {};
 
             filtrados.forEach(t => {
-                const c = t.tipoCarga;
+                const c = t.tipoCarga.toUpperCase();
                 if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
                 cargasM[c].v++; cargasM[c].p += t.pesoNf;
 
-                const m = t.movimento;
+                const m = t.movimento.toUpperCase();
                 if (!movM[m]) movM[m] = { v: 0, p: 0 };
                 movM[m].v++; movM[m].p += t.pesoNf;
                 
@@ -889,9 +796,10 @@
 
         function atualizarFarol(online, msg) {
             document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('statusText').innerText = online ? `PLANILHA CONECTADA VIA GOOGLE (${ticketsCache.length})` : (msg || 'FALHA');
+            document.getElementById('statusText').innerText = online ? `BASE CONECTADA VIA JAVA (${ticketsCache.length})` : (msg || 'FALHA');
             if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
         }
+
         function tratarKeyPress(e) { if (e.key === 'Enter') executarBusca(); }
         function executarBusca() {
             const rawVal = document.getElementById('inputId').value; if (!rawVal) return;
@@ -919,14 +827,18 @@
             document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---'; 
             document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
             document.getElementById('lacres').innerText = t.lacres || '---';
+            
             document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
             document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
+
             document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
             document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
             
             const pesoLiquido = (t.pesoCheio > 0 && t.pesoVazio > 0) ? (t.pesoCheio - t.pesoVazio) : null;
             document.getElementById('pesoLiquido').innerText = pesoLiquido !== null ? formatarNumero(pesoLiquido) + ' KG' : '---';
+            
             document.getElementById('pesoNf').innerText = t.pesoNf > 0 ? formatarNumero(t.pesoNf) + ' KG' : '---';
+            
             document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
             document.getElementById('conferente').innerText = t.conferente || '---';
 
@@ -946,6 +858,7 @@
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
             
             let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
+            
             let resultado = "FORA DA TOLERÂNCIA";
             let stClass = 'value status-falta';
 
@@ -957,6 +870,14 @@
             const statusEl = document.getElementById('status');
             statusEl.innerText = status; 
             statusEl.className = stClass;
+        }
+
+        function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
+            if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') return 'S/D';
+            const cargaUpper = (tipoCarga || '').toUpperCase();
+            if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) return 'VAZIO';
+            if (pesoNf === 0) return 'OK';
+            return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
         function gerarQRCodeNativo(t) {
@@ -985,6 +906,8 @@
         }
 
         function imprimirTicket() { if (ticketAtual) window.print(); }
+
+        carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
     </script>
 </body>
 </html>
