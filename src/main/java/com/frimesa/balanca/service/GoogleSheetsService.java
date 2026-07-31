@@ -12,9 +12,9 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-   // URL DO WEB APP DO APPS SCRIPT NA FRIMESA
-private static final String CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
-    
+    // URL DO PROXY APPS SCRIPT NA ORGANIZAÇÃO FRIMESA
+    private static final String CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
+
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
         "TOLERÂNCIA VAN", 3.0,
@@ -30,7 +30,7 @@ private static final String CSV_URL = "https://script.google.com/a/macros/frimes
         List<TicketDTO> lista = new ArrayList<>();
         
         try {
-            URL url = new URL(CSV_URL + "&_t=" + System.currentTimeMillis());
+            URL url = new URL(CSV_URL + "?_t=" + System.currentTimeMillis());
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                 String linha;
                 boolean primeiraLinha = true;
