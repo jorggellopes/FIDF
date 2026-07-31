@@ -12,8 +12,8 @@ import java.util.*;
 @Service
 public class GoogleSheetsService {
 
-    // URL DO PROXY APPS SCRIPT NA ORGANIZAÇÃO FRIMESA
-    private static final String CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
+    // URL OFICIAL DO CSV PUBLICADO DA PLANILHA BALANÇA GESTÃO FIDF
+    private static final String CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAp03g1-8VvtUlWt6pfqgtr_lQRgh4z_bbUmvRQd9a3y-reMeR5rn1Umj1p4DAN_Wt4cCaFlSb8iGD/pub?output=csv";
 
     private static final Map<String, Double> TOLERANCIAS = Map.of(
         "TOLERÂNCIA UTILITARIO", 1.5,
@@ -30,7 +30,7 @@ public class GoogleSheetsService {
         List<TicketDTO> lista = new ArrayList<>();
         
         try {
-            URL url = new URL(CSV_URL + "?_t=" + System.currentTimeMillis());
+            URL url = new URL(CSV_URL + "&_t=" + System.currentTimeMillis());
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                 String linha;
                 boolean primeiraLinha = true;
@@ -38,6 +38,9 @@ public class GoogleSheetsService {
                 while ((linha = reader.readLine()) != null) {
                     if (linha.trim().isEmpty()) continue;
                     
+                    // Descarta HTMLs de erro ou login do Google se houver
+                    if (linha.toUpperCase().contains("<!DOCTYPE") || linha.toUpperCase().contains("HTML")) continue;
+
                     if (primeiraLinha) { 
                         primeiraLinha = false; 
                         continue; 
@@ -47,7 +50,7 @@ public class GoogleSheetsService {
                     if (col.length < 1) continue;
 
                     String idVal = limparTexto(col[0]);
-                    if (idVal.isEmpty() || idVal.equalsIgnoreCase("ID")) continue;
+                    if (idVal.isEmpty() || idVal.equalsIgnoreCase("ID") || idVal.startsWith("http")) continue;
 
                     TicketDTO ticket = new TicketDTO();
                     ticket.setId(idVal);
