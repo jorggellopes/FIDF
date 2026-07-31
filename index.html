@@ -282,7 +282,7 @@
     <div class="status-bar">
         <div class="status-indicator">
             <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">CONECTANDO PLANILHA...</span>
+            <span id="statusText">CONECTANDO A BASE DE DADOS...</span>
         </div>
         
         <div class="online-counter">
@@ -526,8 +526,8 @@
     </div>
 
     <script>
-       // URL PROXY DO GOOGLE APPS SCRIPT (MANTÉM PLANILHA RESTRITA NA FRIMESA)
-const SHEET_CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfycbw9Eaqn_HdhSsl9Ya64hum7kCi3ZRLyjQN4FGIskTLLDklogOAVOi6rwH9bL1ifgg/exec";
+        // ROTA REST DO NOSSO BACKEND JAVA NO RENDER (LÊ A PLANILHA VIA APPS SCRIPT)
+        const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
 
         let ticketsCache = [];
         let filtradosEspelho = [];
@@ -609,17 +609,6 @@ const SHEET_CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfyc
             }
         }
 
-        function parseCSVLine(text) {
-            let p = '', c = '', r = []; let q = false;
-            for (let i = 0; i < text.length; i++) {
-                c = text[i];
-                if (c === '"') q = !q;
-                else if ((c === ',' || c === ';') && !q) { r.push(p); p = ''; } 
-                else p += c;
-            }
-            r.push(p); return r;
-        }
-
         function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
             if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') {
                 return 'S/D';
@@ -632,76 +621,40 @@ const SHEET_CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfyc
             return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
         }
 
-        function formatarNomeProprio(str) {
-            if (!str) return '';
-            const limpo = str.trim();
-            if (!limpo || limpo === '---' || limpo === 'N/A' || limpo.length < 2) return '';
-            return limpo.toLowerCase().split(/\s+/).map(word => {
-                if (['de', 'da', 'do', 'dos', 'das', 'e'].includes(word)) return word;
-                return word.charAt(0).toUpperCase() + word.slice(1);
-            }).join(' ');
-        }
-
+        // --- BUSCA OS DADOS DIRETAMENTE DO NOSSO BACKEND JAVA NO RENDER ---
         async function carregarDadosPlanilha() {
             try {
-                const urlSemCache = SHEET_CSV_URL + "&_t=" + new Date().getTime();
-                const response = await fetch(urlSemCache);
+                const response = await fetch(API_JAVA_URL);
                 if (!response.ok) throw new Error("Status HTTP " + response.status);
                 
-                const csvText = await response.text();
-                const linhas = csvText.split(/\r?\n/);
-                ticketsCache = [];
+                const dados = await response.json();
+                if (!Array.isArray(dados)) throw new Error("Resposta inválida do servidor Java");
 
-                for (let i = 1; i < linhas.length; i++) {
-                    const linha = linhas[i].trim();
-                    if (!linha) continue;
-                    const col = parseCSVLine(linha);
-                    if (col.length < 2) continue;
-
-                    const idVal = limpar(col[0]);
-                    if (!idVal || idVal.toUpperCase() === 'ID') continue;
-
-                    const placa = limpar(col[1]).toUpperCase();
-                    const veiculo = limpar(col[2]) || '---';
-                    const motorista = formatarNomeProprio(col[3]);
-                    const doca = limpar(col[4]).toUpperCase();
-                    const movimento = limpar(col[5]) || 'N/A';
-                    
-                    let tipoCargaRaw = limpar(col[6]);
-                    let tipoCarga = tipoCargaRaw.toUpperCase();
-                    if (tipoCarga.includes('VAZIO') || tipoCarga.includes('PATIO')) {
-                        tipoCarga = 'VEICULO VAZIO - PATIO';
-                    }
-
-                    const numCarga = limpar(col[7]);
-                    const nf = limpar(col[8]);
-                    const dataEntradaRaw = limpar(col[9]);
-                    const dataSaidaTexto = limpar(col[10]) || '---';
-                    const lacres = limpar(col[11]) || '---';
-                    const quantPallets = parseNum(col[12]);
-                    const pesoPallets = parseNum(col[13]);
-                    const pesoCheio = parseNum(col[14]);
-                    const pesoVazio = parseNum(col[15]);
-                    const pesoLiquido = parseNum(col[16]);
-                    const pesoNf = parseNum(col[17]);
-                    const divergencia = parseNum(col[18]);
-                    const conferente = formatarNomeProprio(col[19]);
-
-                    const tolTipo = identificarToleranciaPorVeiculo(veiculo);
-                    const limiteKg = TABELA_TOLERANCIAS[tolTipo] || 24.0;
-                    
-                    const stCalculado = calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg);
-
-                    ticketsCache.push({
-                        id: idVal, placa: placa || '---', veiculoModelo: veiculo, motorista: motorista || '---', movimento: movimento, tipoCarga: tipoCarga,
-                        numCarga: numCarga, nf: nf, dataEntradaRaw: dataEntradaRaw,
-                        dataEntradaTexto: dataEntradaRaw || '---',
-                        dataSaidaTexto: dataSaidaTexto,
-                        lacres: lacres, quantPallets: quantPallets, pesoPallets: pesoPallets,
-                        pesoCheio: pesoCheio, pesoVazio: pesoVazio, pesoLiquido: pesoLiquido,
-                        pesoNf: pesoNf, divergencia: divergencia, conferente: conferente || '---', statusCalculado: stCalculado
-                    });
-                }
+                ticketsCache = dados.map(item => {
+                    return {
+                        id: item.id || '---',
+                        placa: item.placa || '---',
+                        veiculoModelo: item.veiculoModelo || '---',
+                        motorista: item.motorista || '---',
+                        movimento: item.movimento || '---',
+                        tipoCarga: item.tipoCarga || '---',
+                        numCarga: item.numCarga || '',
+                        nf: item.nf || '',
+                        dataEntradaRaw: item.dataEntradaTexto || '',
+                        dataEntradaTexto: item.dataEntradaTexto || '---',
+                        dataSaidaTexto: item.dataSaidaTexto || '---',
+                        lacres: item.lacres || '---',
+                        quantPallets: item.quantPallets || 0,
+                        pesoPallets: item.pesoPallets || 0,
+                        pesoCheio: item.pesoCheio || 0,
+                        pesoVazio: item.pesoVazio || 0,
+                        pesoLiquido: item.pesoLiquido || 0,
+                        pesoNf: item.pesoNf || 0,
+                        divergencia: item.divergencia || 0,
+                        conferente: item.conferente || '---',
+                        statusCalculado: item.status || 'S/D'
+                    };
+                });
 
                 atualizarFarol(true);
                 const filterInput = document.getElementById('filterDate');
@@ -727,7 +680,10 @@ const SHEET_CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfyc
                     const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
                     if (ultimoValido) renderizarTicket(ultimoValido);
                 }
-            } catch (err) { console.error("Erro ao carregar CSV:", err); atualizarFarol(false, "FALHA DE COMUNICAÇÃO"); }
+            } catch (err) { 
+                console.error("Erro ao carregar do servidor Java:", err); 
+                atualizarFarol(false, "CONECTANDO..."); 
+            }
         }
 
         function limparFiltrosEspelho() {
@@ -918,14 +874,9 @@ const SHEET_CSV_URL = "https://script.google.com/a/macros/frimesa.com.br/s/AKfyc
             }
         }
 
-        function limpar(val) { return val ? val.replace(/^"|"$/g, '').replace(/\r/g, '').trim() : ''; }
-        function parseNum(val) {
-            if (!val) return 0; const limpo = val.replace(/^"|"$/g, '').replace(/\./g, '').replace(',', '.').trim();
-            const n = parseFloat(limpo); return isNaN(n) ? 0 : n;
-        }
         function atualizarFarol(online, msg) {
             document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('statusText').innerText = online ? `PLANILHA ONLINE (${ticketsCache.length})` : (msg || 'FALHA');
+            document.getElementById('statusText').innerText = online ? `BASE CONECTADA VIA JAVA (${ticketsCache.length})` : (msg || 'FALHA');
             if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
         }
         function tratarKeyPress(e) { if (e.key === 'Enter') executarBusca(); }
