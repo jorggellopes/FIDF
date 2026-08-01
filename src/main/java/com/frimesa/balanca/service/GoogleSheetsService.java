@@ -9,14 +9,14 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.*;
 
 @Service
 public class GoogleSheetsService {
 
-    // IDENTIFICADORES DA API DO APPSHEET
-    private static final String APP_ID = "b5fbbbbc-a969-499f-858d-a50acab02d5c";
-    private static final String ACCESS_KEY = "V2-drcFW-JI6tk-93uYP-MFvMx-XwQxC-eMjCI-z6tM5-W21kN";
+    private static final String APP_ID = "b5fbbbbc-a969-499f-858d-a50acab02d5c"; 
+    private static final String ACCESS_KEY = "V2-drcFW-JI6tk-93uYP-MFvMx-XwQxC-eMjCI-z6tM5-W21kN"; 
     private static final String TABLE_NAME = "Página1"; 
 
     private static final Map<String, Double> TOLERANCIAS = Map.of(
@@ -41,7 +41,6 @@ public class GoogleSheetsService {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
-            // Payload para consultar os registros via API oficial do AppSheet
             String jsonPayload = "{\"Action\": \"Find\", \"Properties\": {}, \"Rows\": []}";
 
             try (OutputStream os = conn.getOutputStream()) {
@@ -60,25 +59,20 @@ public class GoogleSheetsService {
 
                         TicketDTO ticket = new TicketDTO();
                         ticket.setId(idVal);
-
-                        String placa = getText(row, "PLACA").toUpperCase();
-                        ticket.setPlaca(placa);
-
+                        ticket.setPlaca(getText(row, "PLACA").toUpperCase());
+                        
                         String veiculo = getText(row, "Veiculo / Modelo");
                         ticket.setVeiculoModelo(veiculo);
 
                         ticket.setMotorista(formatarNomeProprio(getText(row, "MOTORISTA")));
                         ticket.setDoca(getText(row, "Nº DA DOCA").toUpperCase());
                         ticket.setMovimento(getText(row, "MOVIMENTO").toUpperCase());
-
-                        String tipoCarga = getText(row, "TIPO DE CARGA").toUpperCase();
-                        ticket.setTipoCarga(tipoCarga);
-
+                        ticket.setTipoCarga(getText(row, "TIPO DE CARGA").toUpperCase());
                         ticket.setNumCarga(getText(row, "Nº CARGA"));
                         ticket.setNf(getText(row, "NF-e"));
 
                         String dtEntrada = getText(row, "Data de Entrada");
-                        String dtSaida = getText(row, "Data de saída");
+                        String dtSaida = getText(row, "Data de saida");
                         ticket.setDataEntradaTexto(dtEntrada);
                         ticket.setDataSaidaTexto(dtSaida);
 
@@ -108,10 +102,10 @@ public class GoogleSheetsService {
                         double limiteKg = TOLERANCIAS.getOrDefault(tolTipo.toUpperCase(), 24.0);
                         ticket.setLimiteToleranciaKg(limiteKg);
 
-                        if (placa.isEmpty() || placa.equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
+                        if (ticket.getPlaca().isEmpty() || ticket.getPlaca().equals("---") || dtEntrada.isEmpty() || dtEntrada.equals("---")) {
                             ticket.setStatus("S/D");
                             ticket.setResultado("SEM DADOS REGISTRADOS");
-                        } else if (tipoCarga.contains("VAZIO") || tipoCarga.contains("PATIO")) {
+                        } else if (ticket.getTipoCarga().contains("VAZIO") || ticket.getTipoCarga().contains("PATIO")) {
                             ticket.setStatus("VAZIO");
                             ticket.setResultado("VEÍCULO VAZIO / PÁTIO");
                         } else if (Math.abs(divergencia) <= limiteKg) {
@@ -129,7 +123,7 @@ public class GoogleSheetsService {
                     }
                 }
             } else {
-                System.err.println("Erro na chamada da API do AppSheet: HTTP " + conn.getResponseCode());
+                System.err.println("Erro API AppSheet: HTTP " + conn.getResponseCode());
             }
 
         } catch (Exception e) {
@@ -138,15 +132,43 @@ public class GoogleSheetsService {
         return lista;
     }
 
+    // =======================================================
+    // MOTOR DE BUSCA IGNORANDO MAIÚSCULAS, MINÚSCULAS E ACENTOS
+    // =======================================================
+    private JsonNode getNodeIgnoreCase(JsonNode node, String key) {
+        if (node.has(key)) return node.get(key);
+        
+        String normalizedKey = normalizeString(key);
+        Iterator<String> fieldNames = node.fieldNames();
+        
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            if (normalizeString(fieldName).equals(normalizedKey)) {
+                return node.get(fieldName);
+            }
+        }
+        return null;
+    }
+
+    private String normalizeString(String input) {
+        if (input == null) return "";
+        return Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase()
+                .trim();
+    }
+
     private String getText(JsonNode node, String field) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText().trim() : "";
+        JsonNode val = getNodeIgnoreCase(node, field);
+        return val != null && !val.isNull() ? val.asText().trim() : "";
     }
 
     private double getDouble(JsonNode node, String field) {
         try {
-            if (node.has(field) && !node.get(field).isNull()) {
-                String val = node.get(field).asText().replace(".", "").replace(",", ".").trim();
-                return Double.parseDouble(val);
+            JsonNode val = getNodeIgnoreCase(node, field);
+            if (val != null && !val.isNull()) {
+                String strVal = val.asText().replace(".", "").replace(",", ".").trim();
+                return Double.parseDouble(strVal);
             }
         } catch (Exception ignored) {}
         return 0.0;
@@ -154,8 +176,9 @@ public class GoogleSheetsService {
 
     private int getInt(JsonNode node, String field) {
         try {
-            if (node.has(field) && !node.get(field).isNull()) {
-                return Integer.parseInt(node.get(field).asText().replaceAll("[^0-9]", "").trim());
+            JsonNode val = getNodeIgnoreCase(node, field);
+            if (val != null && !val.isNull()) {
+                return Integer.parseInt(val.asText().replaceAll("[^0-9]", "").trim());
             }
         } catch (Exception ignored) {}
         return 0;
