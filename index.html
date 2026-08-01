@@ -177,7 +177,6 @@
             padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         
-        /* GRID DE FILTROS COM CONFERENTE INCLUÍDO */
         .espelho-filters {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
@@ -458,7 +457,7 @@
                 </div>
                 <div>
                     <button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
-                        隔离 Limpar Filtros
+                        🧹 Limpar Filtros
                     </button>
                 </div>
             </div>
@@ -592,9 +591,24 @@
 
                 atualizarFarol(true);
 
-                // Preenche o menu de conferentes com valores únicos
+                // 1. Preenche a lista de sugestões da busca (Lupa / DataList)
+                const datalist = document.getElementById('idList');
+                if (datalist) {
+                    datalist.innerHTML = "";
+                    ticketsCache.forEach(t => {
+                        if (t.id && t.id !== '---') {
+                            const opt = document.createElement('option');
+                            opt.value = t.id;
+                            opt.label = `${t.id} - ${t.placa}`;
+                            datalist.appendChild(opt);
+                        }
+                    });
+                }
+
+                // 2. Preenche o select de conferentes no espelho
                 popularSelectConferentes();
 
+                // 3. Define a data padrão do filtro do dashboard caso esteja vazio
                 const filterInput = document.getElementById('filterDate');
                 if (!filterInput.value && ticketsCache.length > 0) {
                     const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
@@ -606,16 +620,6 @@
 
                 atualizarDashboard();
                 filtrarEspelho();
-
-                const datalist = document.getElementById('idList');
-                datalist.innerHTML = "";
-                ticketsCache.forEach(t => {
-                    if (t.statusCalculado !== 'S/D') {
-                        const opt = document.createElement('option');
-                        opt.value = t.id; opt.label = `${t.id} - ${t.placa}`;
-                        datalist.appendChild(opt);
-                    }
-                });
 
                 if (ticketAtual) {
                     const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
@@ -634,24 +638,28 @@
             const select = document.getElementById('espFiltroConferente');
             if (!select) return;
             
-            const valorAtual = select.value;
+            const valorSelecionado = select.value || 'TODOS';
             select.innerHTML = '<option value="TODOS">TODOS OS CONFERENTES</option>';
             
-            const conferentesUnicos = new Set();
+            const conjuntoConferentes = new Set();
             ticketsCache.forEach(t => {
                 const conf = (t.conferente || '').trim();
-                if (conf && conf !== '---') conferentesUnicos.add(conf);
+                if (conf && conf !== '---' && conf !== 'null') {
+                    conjuntoConferentes.add(conf);
+                }
             });
 
-            Array.from(conferentesUnicos).sort().forEach(conf => {
+            Array.from(conjuntoConferentes).sort().forEach(conf => {
                 const opt = document.createElement('option');
                 opt.value = conf;
-                opt.innerText = conf;
+                opt.textContent = conf;
                 select.appendChild(opt);
             });
 
-            if (conferentesUnicos.has(valorAtual)) {
-                select.value = valorAtual;
+            if (conjuntoConferentes.has(valorSelecionado)) {
+                select.value = valorSelecionado;
+            } else {
+                select.value = 'TODOS';
             }
         }
 
@@ -792,11 +800,8 @@
             renderizarTabelaEspelho();
         }
 
-        // CÁLCULO E CONTABILIZAÇÃO CORRIGIDOS PARA O DASHBOARD DO ESPELHO
         function atualizarCardsResumoEspelho() {
-            // Contadores de veículos
             let cntVazio = 0, cntOk = 0, cntFalta = 0, cntSobra = 0;
-            // Soma dos pesos de NF (KG)
             let volVazio = 0, volOk = 0, volFalta = 0, volSobra = 0;
 
             const totalRegistros = filtradosEspelho.length;
