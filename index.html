@@ -176,8 +176,10 @@
             background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
             padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
+        
+        /* GRID DE FILTROS COM CONFERENTE INCLUÍDO */
         .espelho-filters {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
             border-radius: 6px; border: 1px solid #d8b4fe; align-items: end;
         }
@@ -430,6 +432,12 @@
                     <input type="text" id="espFiltroBusca" placeholder="Digite para filtrar..." oninput="filtrarEspelho()">
                 </div>
                 <div>
+                    <label for="espFiltroConferente">CONFERENTE:</label>
+                    <select id="espFiltroConferente" onchange="filtrarEspelho()">
+                        <option value="TODOS">TODOS OS CONFERENTES</option>
+                    </select>
+                </div>
+                <div>
                     <label for="espDataInicio">DATA INICIAL:</label>
                     <input type="date" id="espDataInicio" onchange="filtrarEspelho()">
                 </div>
@@ -450,7 +458,7 @@
                 </div>
                 <div>
                     <button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
-                        🧹 Limpar Filtros
+                        隔离 Limpar Filtros
                     </button>
                 </div>
             </div>
@@ -584,7 +592,9 @@
 
                 atualizarFarol(true);
 
-                // Define a data no campo de filtro se ainda não tiver valor
+                // Preenche o menu de conferentes com valores únicos
+                popularSelectConferentes();
+
                 const filterInput = document.getElementById('filterDate');
                 if (!filterInput.value && ticketsCache.length > 0) {
                     const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
@@ -620,60 +630,64 @@
             }
         }
 
-        // FUNÇÃO DE EXTRAÇÃO DE DATA SUPER RESISTENTE (Suporta datas de qualquer formato)
+        function popularSelectConferentes() {
+            const select = document.getElementById('espFiltroConferente');
+            if (!select) return;
+            
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="TODOS">TODOS OS CONFERENTES</option>';
+            
+            const conferentesUnicos = new Set();
+            ticketsCache.forEach(t => {
+                const conf = (t.conferente || '').trim();
+                if (conf && conf !== '---') conferentesUnicos.add(conf);
+            });
+
+            Array.from(conferentesUnicos).sort().forEach(conf => {
+                const opt = document.createElement('option');
+                opt.value = conf;
+                opt.innerText = conf;
+                select.appendChild(opt);
+            });
+
+            if (conferentesUnicos.has(valorAtual)) {
+                select.value = valorAtual;
+            }
+        }
+
         function extrairDataISO(strData) {
             if (!strData || strData === '---') return null;
-            
-            // Pega apenas a parte da data, descartando qualquer horário após espaço ou 'T'
             const limpo = strData.split(' ')[0].split('T')[0].trim();
             
-            // Caso 1: Já veio no formato YYYY-MM-DD
-            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) {
-                return limpo;
-            }
+            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
 
-            // Separa por barra, ponto ou hífen
             const partes = limpo.split(/[\/\.-]/);
             if (partes.length === 3) {
                 let d, m, y;
-                
                 if (partes[0].length === 4) {
-                    // Formato YYYY/MM/DD
                     y = partes[0]; m = partes[1]; d = partes[2];
                 } else if (partes[2].length === 4) {
-                    // Pode ser DD/MM/YYYY ou MM/DD/YYYY (do AppSheet em inglês)
                     const p0 = parseInt(partes[0], 10);
                     const p1 = parseInt(partes[1], 10);
                     y = partes[2];
-
-                    if (p0 > 12) {
-                        // Com certeza o primeiro é o DIA (DD/MM/YYYY)
-                        d = partes[0]; m = partes[1];
-                    } else if (p1 > 12) {
-                        // Com certeza o segundo é o DIA (MM/DD/YYYY)
-                        m = partes[0]; d = partes[1];
-                    } else {
-                        // Assume padrão brasileiro DD/MM/YYYY
-                        d = partes[0]; m = partes[1];
-                    }
+                    if (p0 > 12) { d = partes[0]; m = partes[1]; }
+                    else if (p1 > 12) { m = partes[0]; d = partes[1]; }
+                    else { d = partes[0]; m = partes[1]; }
                 } else {
                     return null;
                 }
-
                 return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
             }
-
             return null;
         }
 
         function atualizarDashboard() {
             const filterInput = document.getElementById('filterDate');
-            const dataFiltro = filterInput ? filterInput.value : ''; // Formato YYYY-MM-DD
+            const dataFiltro = filterInput ? filterInput.value : '';
 
             const filtrados = ticketsCache.filter(t => {
                 if (t.statusCalculado === 'S/D') return false;
-                if (!dataFiltro) return true; // Se o usuário limpar a data, mostra tudo
-                
+                if (!dataFiltro) return true;
                 const isoTicket = extrairDataISO(t.dataEntradaRaw);
                 return isoTicket === dataFiltro;
             });
@@ -682,26 +696,21 @@
             const totalVol = filtrados.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
             document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
 
-            const cargasM = {}; 
-            const movM = {}; 
-            const confM = {};
+            const cargasM = {}; const movM = {}; const confM = {};
 
             filtrados.forEach(t => {
                 const c = (t.tipoCarga || 'OUTROS').toUpperCase().trim();
                 if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
-                cargasM[c].v++; 
-                cargasM[c].p += (t.pesoNf || 0);
+                cargasM[c].v++; cargasM[c].p += (t.pesoNf || 0);
 
                 const m = (t.movimento || 'OUTROS').toUpperCase().trim();
                 if (!movM[m]) movM[m] = { v: 0, p: 0 };
-                movM[m].v++; 
-                movM[m].p += (t.pesoNf || 0);
+                movM[m].v++; movM[m].p += (t.pesoNf || 0);
                 
                 const conf = (t.conferente || '').trim();
                 if (conf && conf !== '---') {
                     if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
-                    confM[conf].v++; 
-                    confM[conf].p += (t.pesoNf || 0);
+                    confM[conf].v++; confM[conf].p += (t.pesoNf || 0);
                 }
             });
 
@@ -744,6 +753,7 @@
 
         function limparFiltrosEspelho() {
             document.getElementById('espFiltroBusca').value = '';
+            document.getElementById('espFiltroConferente').value = 'TODOS';
             document.getElementById('espDataInicio').value = '';
             document.getElementById('espDataFim').value = '';
             document.getElementById('espFiltroStatus').value = 'TODOS';
@@ -752,22 +762,29 @@
 
         function filtrarEspelho() {
             const busca = (document.getElementById('espFiltroBusca').value || '').trim().toUpperCase();
+            const confFiltro = document.getElementById('espFiltroConferente').value;
             const dtInicio = document.getElementById('espDataInicio').value;
             const dtFim = document.getElementById('espDataFim').value;
             const stFiltro = document.getElementById('espFiltroStatus').value;
 
             filtradosEspelho = ticketsCache.filter(t => {
-                const matchTexto = !busca || t.id.toUpperCase().includes(busca) || t.placa.toUpperCase().includes(busca) || t.motorista.toUpperCase().includes(busca);
+                const matchTexto = !busca || 
+                                   t.id.toUpperCase().includes(busca) || 
+                                   t.placa.toUpperCase().includes(busca) || 
+                                   t.motorista.toUpperCase().includes(busca) ||
+                                   t.conferente.toUpperCase().includes(busca);
+
+                const matchConferente = (confFiltro === 'TODOS') || (t.conferente === confFiltro);
                 const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
-                let matchData = true;
                 
+                let matchData = true;
                 const isoData = extrairDataISO(t.dataEntradaRaw);
                 if (isoData) {
                     if (dtInicio && isoData < dtInicio) matchData = false;
                     if (dtFim && isoData > dtFim) matchData = false;
                 }
 
-                return matchTexto && matchStatus && matchData;
+                return matchTexto && matchConferente && matchStatus && matchData;
             });
 
             atualizarCardsResumoEspelho();
@@ -775,38 +792,44 @@
             renderizarTabelaEspelho();
         }
 
+        // CÁLCULO E CONTABILIZAÇÃO CORRIGIDOS PARA O DASHBOARD DO ESPELHO
         function atualizarCardsResumoEspelho() {
-            const filtradosValidos = filtradosEspelho.filter(t => t.statusCalculado !== 'S/D');
-            const totalVol = filtradosValidos.reduce((sum, item) => sum + item.pesoNf, 0);
+            // Contadores de veículos
+            let cntVazio = 0, cntOk = 0, cntFalta = 0, cntSobra = 0;
+            // Soma dos pesos de NF (KG)
+            let volVazio = 0, volOk = 0, volFalta = 0, volSobra = 0;
 
-            const idsUnicosPorStatus = { TOTAL: new Set(), VAZIO: new Set(), OK: new Set(), FALTA: new Set(), SOBRA: new Set() };
-            const stVolMap = { VAZIO: 0, OK: 0, FALTA: 0, SOBRA: 0 };
+            const totalRegistros = filtradosEspelho.length;
+            const totalVolGeral = filtradosEspelho.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
 
-            filtradosValidos.forEach(t => {
-                if (t.id && t.dataEntradaRaw) {
-                    idsUnicosPorStatus.TOTAL.add(t.id);
-                    const st = t.statusCalculado;
-                    if (idsUnicosPorStatus[st]) {
-                        idsUnicosPorStatus[st].add(t.id);
-                        stVolMap[st] += t.pesoNf;
-                    }
+            filtradosEspelho.forEach(t => {
+                const st = t.statusCalculado;
+                const pNf = t.pesoNf || 0;
+
+                if (st === 'VAZIO') {
+                    cntVazio++; volVazio += pNf;
+                } else if (st === 'OK') {
+                    cntOk++; volOk += pNf;
+                } else if (st === 'FALTA') {
+                    cntFalta++; volFalta += pNf;
+                } else if (st === 'SOBRA') {
+                    cntSobra++; volSobra += pNf;
                 }
             });
 
-            const totalVeicUnicos = idsUnicosPorStatus.TOTAL.size;
             const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
 
-            document.getElementById('stValVazio').innerText = `${idsUnicosPorStatus.VAZIO.size} veíc. (${calcPct(idsUnicosPorStatus.VAZIO.size, totalVeicUnicos)}%)`;
-            document.getElementById('stVolVazio').innerText = `${formatarNumero(stVolMap.VAZIO)} KG (${calcPct(stVolMap.VAZIO, totalVol)}%)`;
+            document.getElementById('stValVazio').innerText = `${cntVazio} veíc. (${calcPct(cntVazio, totalRegistros)}%)`;
+            document.getElementById('stVolVazio').innerText = `${formatarNumero(volVazio)} KG (${calcPct(volVazio, totalVolGeral)}%)`;
 
-            document.getElementById('stValOk').innerText = `${idsUnicosPorStatus.OK.size} veíc. (${calcPct(idsUnicosPorStatus.OK.size, totalVeicUnicos)}%)`;
-            document.getElementById('stVolOk').innerText = `${formatarNumero(stVolMap.OK)} KG (${calcPct(stVolMap.OK, totalVol)}%)`;
+            document.getElementById('stValOk').innerText = `${cntOk} veíc. (${calcPct(cntOk, totalRegistros)}%)`;
+            document.getElementById('stVolOk').innerText = `${formatarNumero(volOk)} KG (${calcPct(volOk, totalVolGeral)}%)`;
 
-            document.getElementById('stValFalta').innerText = `${idsUnicosPorStatus.FALTA.size} veíc. (${calcPct(idsUnicosPorStatus.FALTA.size, totalVeicUnicos)}%)`;
-            document.getElementById('stVolFalta').innerText = `${formatarNumero(stVolMap.FALTA)} KG (${calcPct(stVolMap.FALTA, totalVol)}%)`;
+            document.getElementById('stValFalta').innerText = `${cntFalta} veíc. (${calcPct(cntFalta, totalRegistros)}%)`;
+            document.getElementById('stVolFalta').innerText = `${formatarNumero(volFalta)} KG (${calcPct(volFalta, totalVolGeral)}%)`;
 
-            document.getElementById('stValSobra').innerText = `${idsUnicosPorStatus.SOBRA.size} veíc. (${calcPct(idsUnicosPorStatus.SOBRA.size, totalVeicUnicos)}%)`;
-            document.getElementById('stVolSobra').innerText = `${formatarNumero(stVolMap.SOBRA)} KG (${calcPct(stVolMap.SOBRA, totalVol)}%)`;
+            document.getElementById('stValSobra').innerText = `${cntSobra} veíc. (${calcPct(cntSobra, totalRegistros)}%)`;
+            document.getElementById('stVolSobra').innerText = `${formatarNumero(volSobra)} KG (${calcPct(volSobra, totalVolGeral)}%)`;
         }
 
         function renderizarTabelaEspelho() {
