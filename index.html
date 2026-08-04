@@ -628,11 +628,11 @@
         </div>
     </div>
 
-    <!-- ABA 4: INFORMATIVO DIÁRIO -->
+    <!-- ABA 4: INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF -->
     <div id="informativoTab" class="tab-content">
         <div class="info-container">
             <div class="dashboard-header" style="background-color: #511d9b; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; text-transform: uppercase; font-size: 18px; font-weight: bold;">
-                INFORMATIVO DIÁRIO DA OPERAÇÃO
+                INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF
             </div>
 
             <!-- Seção de Filtros (type="datetime-local" PARA SELEÇÃO DE DATA E HORA EXATA) -->
@@ -687,10 +687,22 @@
                     <div class="info-subtitle">Soma: Vol. Disponível + Vol. CROSS</div>
                 </div>
 
+                <div class="info-card info-bg-blue">
+                    <h3>% Capacidade de Expedição</h3>
+                    <div class="info-value" id="valPctCapacidadeExp">0%</div>
+                    <div class="info-subtitle">Regra: Total Expedido / 38 Tons/dia (38.000 KG)</div>
+                </div>
+
                 <div class="info-card info-bg-orange">
                     <h3>Carros</h3>
                     <div class="info-value" id="valCarrosDisp">0</div>
                     <div class="info-subtitle">Regra: Total de veículos na operação</div>
+                </div>
+
+                <div class="info-card info-bg-orange">
+                    <h3>% Utilização da Frota</h3>
+                    <div class="info-value" id="valPctFrota">0%</div>
+                    <div class="info-subtitle">Regra: Carros Utilizados / 12 veículos da frota</div>
                 </div>
 
                 <div class="info-card info-bg-orange">
@@ -1211,12 +1223,11 @@
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
 
         /* =========================================================================
-           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO (LÓGICA VALIDADA COM OS DADOS REAIS)
+           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF
            ========================================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
             const hojeIso = new Date().toISOString().split('T')[0];
-            // Configura os filtros datetime-local por padrão no dia
             document.getElementById("dataInicio").value = hojeIso + "T00:00";
             document.getElementById("dataFim").value = hojeIso + "T23:59";
         });
@@ -1275,7 +1286,7 @@
                                 const hora = dataHora.getHours();
                                 const peso = lancamento.pesoNf || 0; 
 
-                                // Carros da operação (Contagem simples de placas únicas)
+                                // Carros da operação (Contagem de veículos na operação)
                                 if (lancamento.placa && lancamento.placa !== '---') {
                                     conjuntoCarros.add(lancamento.placa);
                                 }
@@ -1316,7 +1327,6 @@
                     const mm = ultimaHoraSaida.getMinutes().toString().padStart(2, '0');
                     strHoraLargada = `${hh.toString().padStart(2, '0')}:${mm}`;
                     
-                    // Se a última saída foi realizada até as 07:00 -> FINALIZADO
                     if (hh < 7 || (hh === 7 && mm === '00')) {
                         statusLargada = "FINALIZADO";
                         classStatus = "info-status-finalizado";
@@ -1326,7 +1336,14 @@
                     }
                 }
 
-                // CÁLCULO DA OCUPAÇÃO INVERTIDA DO WMS (87,6% OCUPADO)
+                // CÁLCULOS DOS NOVOS INDICADORES DE PERFORMANCE
+                const capacidadeExpedicaoKg = 38000; // 38 Tons/dia
+                const frotaTotalVeiculos = 12; // 12 Veículos
+                
+                const pctCapacidadeExp = capacidadeExpedicaoKg > 0 ? (totalExpedido / capacidadeExpedicaoKg) * 100 : 0;
+                const pctFrotaUtilizada = frotaTotalVeiculos > 0 ? (conjuntoCarros.size / frotaTotalVeiculos) * 100 : 0;
+
+                // CÁLCULO DA OCUPAÇÃO INVERTIDA DO WMS
                 const percCongeladoOcupado = 87.6;
                 const percResfriadoOcupado = 82.3;
                 const percCDOcupado = 84.2;
@@ -1336,7 +1353,11 @@
                 document.getElementById("valVolCross").innerText = formatarNumero(volCross) + " KG";
                 document.getElementById("valTotalExpedido").innerText = formatarNumero(totalExpedido) + " KG";
                 
+                // Atualização dos novos cards
+                document.getElementById("valPctCapacidadeExp").innerText = pctCapacidadeExp.toFixed(1) + "%";
                 document.getElementById("valCarrosDisp").innerText = conjuntoCarros.size;
+                document.getElementById("valPctFrota").innerText = pctFrotaUtilizada.toFixed(1) + "%";
+
                 document.getElementById("valHoraLargada").innerText = strHoraLargada;
                 
                 const stLargadaEl = document.getElementById("valStatusLargada");
