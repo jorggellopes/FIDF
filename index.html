@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Balança - Frimesa Filial FIDF</title>
-    
+
     <meta name="theme-color" content="#8a2be2">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Sistema Balança">
@@ -15,7 +15,7 @@
 
     <style>
         * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        
+
         body {
             background: linear-gradient(135deg, #a259ff 0%, #6c2bd9 100%);
             min-height: 100vh;
@@ -26,10 +26,10 @@
             margin: 0;
         }
 
-        .nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; }
+        .nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; flex-wrap: wrap; }
         .nav-btn {
             flex: 1; padding: 12px 8px; background-color: rgba(255, 255, 255, 0.2);
-            color: #fff; border: 2px solid transparent; border-radius: 6px;
+            color: #fff; border: 2px solid transparent; border-radius: 6px; min-width: 150px;
             font-weight: bold; font-size: 13px; cursor: pointer; text-align: center;
             transition: all 0.2s ease; text-transform: uppercase;
         }
@@ -78,7 +78,7 @@
             border-radius: 4px; outline: none; text-transform: uppercase;
         }
         .search-container input:focus { border-color: #7c3aed; }
-        
+
         .btn-search {
             background-color: #511d9b; color: white; border: none; padding: 10px 15px;
             border-radius: 4px; cursor: pointer; font-size: 16px;
@@ -156,12 +156,12 @@
         .label { font-weight: bold; text-transform: uppercase; width: 50%; }
         .value { text-align: left; }
         .value-highlight { background-color: #ffff00; font-weight: bold; }
-        
+
         .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
         .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
         .status-vazio { background-color: #0284c7; color: #ffffff; font-weight: bold; text-transform: uppercase; }
         .status-sd { background-color: #e2e8f0; color: #475569; font-weight: bold; text-transform: uppercase; }
-        
+
         .spacer-row td { border: none; height: 4px; }
 
         .qr-footer {
@@ -176,7 +176,7 @@
             background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
             padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
-        
+
         .espelho-filters {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
@@ -214,14 +214,14 @@
             background-color: #16a34a; color: white; border: none; padding: 8px 12px;
             border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
         }
-        
+
         .table-responsive { width: 100%; overflow-x: auto; }
         .espelho-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         .espelho-table th { background-color: #511d9b; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #3b1473; text-align: left; }
         .espelho-table td { padding: 6px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
         .espelho-table tr:nth-child(even) { background-color: #f8fafc; }
         .espelho-table tr:hover { background-color: #f1f5f9; }
-        
+
         .btn-view-ticket {
             background-color: #511d9b; color: white; border: none; padding: 3px 8px;
             border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;
@@ -263,9 +263,105 @@
             transform: translateY(-2px);
         }
 
+        /* -------------------------------------------------------------
+           CSS ADICIONAL PARA O INFORMATIVO DIÁRIO 
+           ------------------------------------------------------------- */
+        .info-container {
+            background: #f4f6f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #000;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .info-filters-section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
+        }
+        .info-filter-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 180px;
+        }
+        .info-filter-group label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #511d9b;
+            text-transform: uppercase;
+        }
+        .info-filter-group input, .info-filter-group select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .btn-filtrar-info {
+            background-color: #511d9b;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            height: 42px;
+        }
+        .btn-filtrar-info:hover {
+            background-color: #3b1473;
+        }
+        .info-dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+        .info-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-top: 4px solid #511d9b;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.90rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .info-card .info-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #511d9b;
+        }
+        .info-card .info-subtitle {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+            line-height: 1.2;
+        }
+        .info-status-finalizado { color: #28a745 !important; }
+        .info-status-atrasado { color: #dc3545 !important; }
+        .info-bg-blue { border-top-color: #007bff; }
+        .info-bg-green { border-top-color: #28a745; }
+        .info-bg-orange { border-top-color: #fd7e14; }
+        .info-bg-cyan { border-top-color: #17a2b8; }
+
         @media print {
             body { background: none; padding: 0; }
-            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box { display: none !important; }
+            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box, .info-filters-section { display: none !important; }
             .main-layout { display: block; }
             .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
         }
@@ -277,6 +373,8 @@
         <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
         <button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
         <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos (AppSheet)</button>
+        <!-- NOVO BOTÃO ADICIONADO AQUI -->
+        <button class="nav-btn" onclick="trocarAba('informativoTab', this)">📈 Informativo Diário</button>
     </div>
 
     <div class="status-bar">
@@ -284,7 +382,7 @@
             <span class="status-dot" id="statusDot"></span>
             <span id="statusText">CONECTANDO A BASE DE DADOS...</span>
         </div>
-        
+
         <div class="online-counter">
             👥 ONLINE: <span id="activeUsersCount">1</span>
         </div>
@@ -402,7 +500,7 @@
                         <tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>
                     </tbody>
                 </table>
-                
+
                 <div class="dash-section-title">Produtividade por Conferente</div>
                 <table class="dash-table">
                     <thead>
@@ -424,7 +522,7 @@
     <!-- ABA 2: ESPELHO DA PLANILHA -->
     <div id="espelhoTab" class="tab-content">
         <div class="espelho-card">
-            
+
             <div class="espelho-filters">
                 <div>
                     <label for="espFiltroBusca">PESQUISA (ID / Placa / Motorista):</label>
@@ -531,6 +629,109 @@
         </div>
     </div>
 
+    <!-- ABA 4: INFORMATIVO DIÁRIO (NOVO SCRIPT INJETADO AQUI) -->
+    <div id="informativoTab" class="tab-content">
+        <div class="info-container">
+            <div class="dashboard-header" style="background-color: #511d9b; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; text-transform: uppercase; font-size: 18px; font-weight: bold;">
+                INFORMATIVO DIÁRIO DA OPERAÇÃO
+            </div>
+
+            <!-- Seção de Filtros -->
+            <div class="info-filters-section" id="filtroContainer">
+                <div class="info-filter-group">
+                    <label for="dataInicio">Data Início</label>
+                    <input type="date" id="dataInicio">
+                </div>
+                
+                <div class="info-filter-group">
+                    <label for="dataFim">Data Fim</label>
+                    <input type="date" id="dataFim">
+                </div>
+
+                <div class="info-filter-group">
+                    <label for="tipoCarga">Tipo de Carga</label>
+                    <select id="tipoCarga">
+                        <option value="TODOS">Todos</option>
+                        <option value="Transferencias">Transferências</option>
+                        <option value="Entregas">Entregas</option>
+                        <option value="CROSS">CROSS</option>
+                    </select>
+                </div>
+
+                <button class="btn-filtrar-info" onclick="processarInformativo()">Aplicar Filtros</button>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="info-dashboard-grid">
+                
+                <div class="info-card">
+                    <h3>Volume Recebido</h3>
+                    <div class="info-value" id="valVolRecebido">0,00 KG</div>
+                    <div class="info-subtitle">Regra: Transferências (Dia anterior 07h às 19h)</div>
+                </div>
+
+                <div class="info-card">
+                    <h3>Volume Disponível</h3>
+                    <div class="info-value" id="valVolDisponivel">0,00 KG</div>
+                    <div class="info-subtitle">Regra: Entregas (Dia anterior 19h às 07h de hoje)</div>
+                </div>
+
+                <div class="info-card">
+                    <h3>Volume CROSS</h3>
+                    <div class="info-value" id="valVolCross">0,00 KG</div>
+                    <div class="info-subtitle">Regra: CROSS (Dia anterior 19h às 07h de hoje)</div>
+                </div>
+
+                <div class="info-card info-bg-blue">
+                    <h3>Total Expedido</h3>
+                    <div class="info-value" id="valTotalExpedido">0,00 KG</div>
+                    <div class="info-subtitle">Soma: Vol. Disponível + Vol. CROSS</div>
+                </div>
+
+                <div class="info-card info-bg-orange">
+                    <h3>Carros Disponíveis</h3>
+                    <div class="info-value" id="valCarrosDisp">0</div>
+                    <div class="info-subtitle">Regra: Entregas (Dia anterior 19h às 07h)</div>
+                </div>
+
+                <div class="info-card info-bg-orange">
+                    <h3>Hora da Largada</h3>
+                    <div class="info-value" id="valHoraLargada">--:--</div>
+                    <div class="info-subtitle">Regra: Última saída (Entregas e CROSS)</div>
+                </div>
+
+                <div class="info-card info-bg-orange">
+                    <h3>Status da Largada</h3>
+                    <div class="info-value" id="valStatusLargada">---</div>
+                    <div class="info-subtitle">Regra: Até 07h = Finalizado | Após = Atrasado</div>
+                </div>
+
+                <div class="info-card info-bg-cyan">
+                    <h3>Ocupação Congelado</h3>
+                    <div class="info-value" id="valOcupCongelado">0%</div>
+                    <div class="info-subtitle">Posições Únicas / 186 disponíveis</div>
+                </div>
+
+                <div class="info-card info-bg-cyan">
+                    <h3>Ocupação Resfriado</h3>
+                    <div class="info-value" id="valOcupResfriado">0%</div>
+                    <div class="info-subtitle">Posições Únicas / 334 disponíveis</div>
+                </div>
+
+                <div class="info-card info-bg-green">
+                    <h3>Ocupação do CD (Total)</h3>
+                    <div class="info-value" id="valOcupCD">0%</div>
+                    <div class="info-subtitle">Total posições únicas / 520 de capacidade</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         JAVASCRIPT PRINCIPAL (MANTIDO INTACTO) 
+         ========================================== -->
     <script>
         const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
 
@@ -559,7 +760,7 @@
             try {
                 const response = await fetch(API_JAVA_URL);
                 if (!response.ok) throw new Error("Status HTTP " + response.status);
-                
+
                 const dados = await response.json();
                 if (!Array.isArray(dados)) throw new Error("Resposta inválida do servidor Java");
 
@@ -635,10 +836,10 @@
         function popularSelectConferentes() {
             const select = document.getElementById('espFiltroConferente');
             if (!select) return;
-            
+
             const valorSelecionado = select.value || 'TODOS';
             select.innerHTML = '<option value="TODOS">TODOS OS CONFERENTES</option>';
-            
+
             const conjuntoConferentes = new Set();
             ticketsCache.forEach(t => {
                 const conf = (t.conferente || '').trim();
@@ -665,7 +866,7 @@
             if (!strData || strData === '---') return null;
             // Remove espaços, Ts e vírgulas perdidas do AppSheet na primeira fatia da data
             const limpo = strData.split(' ')[0].split('T')[0].replace(/,/g, '').trim();
-            
+
             if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
 
             const partes = limpo.split(/[\/\.-]/);
@@ -713,7 +914,7 @@
                 const m = (t.movimento || 'OUTROS').toUpperCase().trim();
                 if (!movM[m]) movM[m] = { v: 0, p: 0 };
                 movM[m].v++; movM[m].p += (t.pesoNf || 0);
-                
+
                 const conf = (t.conferente || '').trim();
                 if (conf && conf !== '---') {
                     if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
@@ -783,7 +984,7 @@
 
                 const matchConferente = (confFiltro === 'TODOS') || (t.conferente === confFiltro);
                 const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
-                
+
                 let matchData = true;
                 const isoData = extrairDataISO(t.dataEntradaRaw);
                 if (isoData) {
@@ -920,18 +1121,18 @@
             document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---'; 
             document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
             document.getElementById('lacres').innerText = t.lacres || '---';
-            
+
             document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
             document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
 
             document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
             document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
-            
+
             const pesoLiquido = (t.pesoCheio > 0 && t.pesoVazio > 0) ? (t.pesoCheio - t.pesoVazio) : null;
             document.getElementById('pesoLiquido').innerText = pesoLiquido !== null ? formatarNumero(pesoLiquido) + ' KG' : '---';
-            
+
             document.getElementById('pesoNf').innerText = t.pesoNf > 0 ? formatarNumero(t.pesoNf) + ' KG' : '---';
-            
+
             document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
             document.getElementById('conferente').innerText = t.conferente || '---';
 
@@ -947,11 +1148,11 @@
             const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
             const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0; 
             const divergencia = ticketAtual.divergencia || 0.0;
-            
+
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
-            
+
             let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
-            
+
             let resultado = "FORA DA TOLERÂNCIA";
             let stClass = 'value status-falta';
 
@@ -1001,6 +1202,146 @@
         function imprimirTicket() { if (ticketAtual) window.print(); }
 
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
+
+        /* =========================================================================
+           SCRIPT INJETADO: INFORMATIVO DIÁRIO
+           ========================================================================= */
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById("dataInicio").value = hoje;
+            document.getElementById("dataFim").value = hoje;
+            processarInformativo();
+        });
+
+        async function processarInformativo() {
+            const dtInicio = document.getElementById("dataInicio").value;
+            const dtFim = document.getElementById("dataFim").value;
+            const tipoCargaFiltro = document.getElementById("tipoCarga").value;
+
+            try {
+                const dadosBalanca = buscarDadosBalancaSimulados(); 
+                const dadosWMS = buscarDadosWMSSimulados();
+
+                let volRecebido = 0;
+                let volDisponivel = 0;
+                let volCross = 0;
+                let carrosDisponiveis = new Set();
+                let ultimaHoraSaida = null;
+
+                const dateStart = new Date(dtInicio + 'T00:00:00');
+                const dateEnd = new Date(dtFim + 'T23:59:59');
+
+                dadosBalanca.forEach(lancamento => {
+                    const dataHora = new Date(lancamento.dataHora);
+                    if(dataHora >= dateStart && dataHora <= dateEnd) {
+                        const passaFiltroTela = (tipoCargaFiltro === "TODOS" || lancamento.tipoCarga === tipoCargaFiltro);
+                        
+                        if(passaFiltroTela) {
+                            const hora = dataHora.getHours();
+                            if (lancamento.tipoCarga === "Transferencias" && hora >= 7 && hora < 19) {
+                                volRecebido += lancamento.pesoLiquido;
+                            }
+                            if (lancamento.tipoCarga === "Entregas" && (hora >= 19 || hora < 7)) {
+                                volDisponivel += lancamento.pesoLiquido;
+                                carrosDisponiveis.add(lancamento.placa);
+                            }
+                            if (lancamento.tipoCarga === "CROSS" && (hora >= 19 || hora < 7)) {
+                                volCross += lancamento.pesoLiquido;
+                            }
+                            if ((lancamento.tipoCarga === "Entregas" || lancamento.tipoCarga === "CROSS") && (hora >= 19 || hora < 7)) {
+                                if (!ultimaHoraSaida || dataHora > ultimaHoraSaida) {
+                                    ultimaHoraSaida = dataHora;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const totalExpedido = volDisponivel + volCross;
+                let statusLargada = "---";
+                let strHoraLargada = "--:--";
+                let classStatus = "";
+
+                if (ultimaHoraSaida) {
+                    const hh = ultimaHoraSaida.getHours();
+                    const mm = ultimaHoraSaida.getMinutes().toString().padStart(2, '0');
+                    strHoraLargada = `${hh.toString().padStart(2, '0')}:${mm}`;
+                    
+                    if (hh < 7 || (hh === 7 && mm === '00')) {
+                        statusLargada = "FINALIZADO";
+                        classStatus = "info-status-finalizado";
+                    } else {
+                        statusLargada = "ATRASADO";
+                        classStatus = "info-status-atrasado";
+                    }
+                }
+
+                let posicoesCongelado = new Set();
+                let posicoesResfriado = new Set();
+
+                dadosWMS.forEach(item => {
+                    if (item.camara.toUpperCase() === "CONGELADO") {
+                        posicoesCongelado.add(item.localizacao);
+                    } else if (item.camara.toUpperCase() === "RESFRIADO") {
+                        posicoesResfriado.add(item.localizacao);
+                    }
+                });
+
+                const maxCongelado = 186;
+                const maxResfriado = 334;
+                const maxCD = 520;
+
+                const percCongelado = maxCongelado > 0 ? (posicoesCongelado.size / maxCongelado) * 100 : 0;
+                const percResfriado = maxResfriado > 0 ? (posicoesResfriado.size / maxResfriado) * 100 : 0;
+                const percCD = maxCD > 0 ? ((posicoesCongelado.size + posicoesResfriado.size) / maxCD) * 100 : 0;
+
+                document.getElementById("valVolRecebido").innerText = volRecebido.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
+                document.getElementById("valVolDisponivel").innerText = volDisponivel.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
+                document.getElementById("valVolCross").innerText = volCross.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
+                document.getElementById("valTotalExpedido").innerText = totalExpedido.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
+                
+                document.getElementById("valCarrosDisp").innerText = carrosDisponiveis.size;
+                document.getElementById("valHoraLargada").innerText = strHoraLargada;
+                
+                const stLargadaEl = document.getElementById("valStatusLargada");
+                stLargadaEl.innerText = statusLargada;
+                stLargadaEl.className = "info-value " + classStatus;
+
+                document.getElementById("valOcupCongelado").innerText = percCongelado.toFixed(1) + "%";
+                document.getElementById("valOcupResfriado").innerText = percResfriado.toFixed(1) + "%";
+                document.getElementById("valOcupCD").innerText = percCD.toFixed(1) + "%";
+
+            } catch (error) {
+                console.error("Erro ao processar informativo:", error);
+            }
+        }
+
+        // Funções Mock (O seu desenvolvedor deverá substituir pelos retornos reais do Java ou Planilha)
+        function buscarDadosBalancaSimulados() {
+            const hoje = new Date();
+            const ontem = new Date();
+            ontem.setDate(ontem.getDate() - 1);
+            
+            return [
+                { placa: "ABC1234", tipoCarga: "Transferencias", dataHora: ontem.toISOString().split('T')[0]+"T10:30:00", pesoLiquido: 5000 },
+                { placa: "DEF5678", tipoCarga: "Entregas", dataHora: ontem.toISOString().split('T')[0]+"T21:00:00", pesoLiquido: 3500 },
+                { placa: "GHI9012", tipoCarga: "CROSS", dataHora: hoje.toISOString().split('T')[0]+"T02:15:00", pesoLiquido: 2000 },
+                { placa: "JKL3456", tipoCarga: "Entregas", dataHora: hoje.toISOString().split('T')[0]+"T08:30:00", pesoLiquido: 1500 }
+            ];
+        }
+
+        function buscarDadosWMSSimulados() {
+            return [
+                { camara: "CONGELADO", localizacao: "A-01-01" },
+                { camara: "CONGELADO", localizacao: "A-01-01" },
+                { camara: "CONGELADO", localizacao: "A-01-02" },
+                { camara: "RESFRIADO", localizacao: "B-01-01" },
+                { camara: "RESFRIADO", localizacao: "B-01-02" },
+                { camara: "RESFRIADO", localizacao: "B-01-03" }
+            ];
+        }
+
     </script>
 </body>
 </html>
