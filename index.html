@@ -290,7 +290,7 @@
             display: flex;
             flex-direction: column;
             flex: 1;
-            min-width: 180px;
+            min-width: 200px;
         }
         .info-filter-group label {
             font-size: 0.85rem;
@@ -635,16 +635,16 @@
                 INFORMATIVO DIÁRIO DA OPERAÇÃO
             </div>
 
-            <!-- Seção de Filtros -->
+            <!-- Seção de Filtros (AGORA COM type="datetime-local" PARA DATA E HORA) -->
             <div class="info-filters-section" id="filtroContainer">
                 <div class="info-filter-group">
-                    <label for="dataInicio">Data Início</label>
-                    <input type="date" id="dataInicio">
+                    <label for="dataInicio">Data e Hora Início</label>
+                    <input type="datetime-local" id="dataInicio">
                 </div>
                 
                 <div class="info-filter-group">
-                    <label for="dataFim">Data Fim</label>
-                    <input type="date" id="dataFim">
+                    <label for="dataFim">Data e Hora Fim</label>
+                    <input type="datetime-local" id="dataFim">
                 </div>
 
                 <div class="info-filter-group">
@@ -729,6 +729,8 @@
 
 
     <script>
+        // SCRIPT ORIGINAL EXATAMENTE COMO VOCÊ ME PASSOU (Sem modificações de Data globais)
+
         const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
 
         let ticketsCache = [];
@@ -744,44 +746,12 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        // =========================================================================
-        // NOVO PARSER DE DATA/HORA PARA O PADRÃO BRASILEIRO (Resolve Bug de Leitura)
-        // =========================================================================
-        function parseDataBR(dataStr) {
-            if (!dataStr || dataStr === '---') return null;
-            let str = dataStr.trim().replace(/ AM| PM/gi, ''); 
-            let partes = str.split(/[ T]/);
-            let dataPart = partes[0];
-            let horaPart = partes.length > 1 ? partes[1] : '00:00:00';
-            
-            let dPartes = dataPart.split(/[\/\.-]/);
-            if(dPartes.length !== 3) return null;
-            
-            let d, m, y;
-            // Força a leitura exata (DD/MM/AAAA) a menos que comece com o ano
-            if (dPartes[0].length === 4) {
-                y = dPartes[0]; m = dPartes[1]; d = dPartes[2];
-            } else {
-                d = dPartes[0]; m = dPartes[1]; y = dPartes[2];
-            }
-            
-            let hPartes = horaPart.split(':');
-            let h = parseInt(hPartes[0] || 0, 10);
-            let min = parseInt(hPartes[1] || 0, 10);
-            let s = parseInt(hPartes[2] || 0, 10);
-            
-            return new Date(y, parseInt(m, 10) - 1, d, h, min, s);
-        }
-
-        // =========================================================================
-
         function trocarAba(abaId, btnElement) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(abaId).classList.add('active');
             btnElement.classList.add('active');
             if (abaId === 'espelhoTab') filtrarEspelho();
-            if (abaId === 'informativoTab') processarInformativo();
         }
 
         async function carregarDadosPlanilha() {
@@ -846,11 +816,6 @@
 
                 atualizarDashboard();
                 filtrarEspelho();
-                
-                // Se o informativo estiver ativo na tela, recalcula
-                if(document.getElementById('informativoTab').classList.contains('active')) {
-                    processarInformativo();
-                }
 
                 if (ticketAtual) {
                     const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
@@ -894,11 +859,32 @@
             }
         }
 
-        // AGORA USA O NOVO PARSER PARA GARANTIR DATA E HORA EXATA NO FILTRO
+        // FUNÇÃO ORIGINAL RESTAURADA - SEM INVENTAR NADA NOVO
         function extrairDataISO(strData) {
-            const dt = parseDataBR(strData);
-            if (!dt || isNaN(dt.getTime())) return null;
-            return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+            if (!strData || strData === '---') return null;
+            // Remove espaços, Ts e vírgulas perdidas do AppSheet na primeira fatia da data
+            const limpo = strData.split(' ')[0].split('T')[0].replace(/,/g, '').trim();
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
+
+            const partes = limpo.split(/[\/\.-]/);
+            if (partes.length === 3) {
+                let d, m, y;
+                if (partes[0].length === 4) {
+                    y = partes[0]; m = partes[1]; d = partes[2];
+                } else if (partes[2].length === 4) {
+                    const p0 = parseInt(partes[0], 10);
+                    const p1 = parseInt(partes[1], 10);
+                    y = partes[2];
+                    if (p0 > 12) { d = partes[0]; m = partes[1]; }
+                    else if (p1 > 12) { m = partes[0]; d = partes[1]; }
+                    else { d = partes[0]; m = partes[1]; }
+                } else {
+                    return null;
+                }
+                return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+            }
+            return null;
         }
 
         function atualizarDashboard() {
@@ -1216,16 +1202,40 @@
 
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
 
+
         /* =========================================================================
-           SCRIPT INJETADO: INFORMATIVO DIÁRIO 
-           (AGORA PUXANDO DA BASE DE DADOS REAL E USANDO PARSE DE HORA)
+           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO 
+           (Isolado para não quebrar o Ticket)
            ========================================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById("dataInicio").value = hoje;
-            document.getElementById("dataFim").value = hoje;
+            const hojeIso = new Date().toISOString().split('T')[0];
+            // Agora preenche o input "datetime-local" com as horas iniciais e finais
+            document.getElementById("dataInicio").value = hojeIso + "T00:00";
+            document.getElementById("dataFim").value = hojeIso + "T23:59";
         });
+
+        // Função interna apenas do informativo para ler a data da planilha
+        function lerDataHoraInformativo(str) {
+            if (!str || str === '---') return null;
+            let partes = str.trim().split(/[ T]/);
+            let datePart = partes[0];
+            let timePart = partes[1] || "00:00:00";
+
+            let d, m, y;
+            if (datePart.includes('/')) {
+                let p = datePart.split('/');
+                if(p[2].length === 4) { d = p[0]; m = p[1]; y = p[2]; } 
+                else if (p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; }
+            } else if (datePart.includes('-')) {
+                let p = datePart.split('-');
+                if(p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; } 
+                else { d = p[0]; m = p[1]; y = p[2]; }
+            } else { return null; }
+
+            let t = timePart.split(':');
+            return new Date(y, m - 1, d, t[0] || 0, t[1] || 0, t[2] || 0);
+        }
 
         async function processarInformativo() {
             const dtInicio = document.getElementById("dataInicio").value;
@@ -1233,10 +1243,7 @@
             const tipoCargaFiltro = document.getElementById("tipoCarga").value;
 
             try {
-                // USA OS DADOS REAIS DA BALANÇA CARREGADOS NA ABA 1 e 2
                 const dadosBalanca = ticketsCache; 
-                
-                // (WMS permanece o mock anterior. Se houver API para ele, substitua aqui)
                 const dadosWMS = buscarDadosWMSSimulados();
 
                 let volRecebido = 0;
@@ -1245,21 +1252,21 @@
                 let carrosDisponiveis = new Set();
                 let ultimaHoraSaida = null;
 
-                const dateStart = new Date(dtInicio + 'T00:00:00');
-                const dateEnd = new Date(dtFim + 'T23:59:59');
+                const dateStart = new Date(dtInicio);
+                const dateEnd = new Date(dtFim);
 
                 dadosBalanca.forEach(lancamento => {
-                    // UTILIZA A NOVA FUNÇÃO QUE LÊ CORRETAMENTE DD/MM/AAAA e a Hora Exata
-                    const dataHora = parseDataBR(lancamento.dataEntradaRaw);
+                    const dataHora = lerDataHoraInformativo(lancamento.dataEntradaRaw);
                     
                     if(dataHora && !isNaN(dataHora.getTime())) {
+                        
                         if(dataHora >= dateStart && dataHora <= dateEnd) {
                             
                             const passaFiltroTela = (tipoCargaFiltro === "TODOS" || lancamento.tipoCarga === tipoCargaFiltro);
                             
                             if(passaFiltroTela) {
                                 const hora = dataHora.getHours();
-                                const peso = lancamento.pesoNf || 0; // Utilizando o Peso da NF
+                                const peso = lancamento.pesoNf || 0; 
                                 
                                 if (lancamento.tipoCarga === "Transferencias" && hora >= 7 && hora < 19) {
                                     volRecebido += peso;
@@ -1340,7 +1347,7 @@
             }
         }
 
-        // Função Mock apenas para Ocupação do WMS (O restante foi integrado ao banco real acima)
+        // Mock do WMS mantido
         function buscarDadosWMSSimulados() {
             return [
                 { camara: "CONGELADO", localizacao: "A-01-01" },
