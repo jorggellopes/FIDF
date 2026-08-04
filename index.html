@@ -264,7 +264,7 @@
         }
 
         /* -------------------------------------------------------------
-           CSS ADICIONAL PARA O INFORMATIVO DIÁRIO 
+           CSS DO INFORMATIVO DIÁRIO 
            ------------------------------------------------------------- */
         .info-container {
             background: #f4f6f9;
@@ -729,8 +729,6 @@
 
 
     <script>
-        // SCRIPT ORIGINAL EXATAMENTE COMO VOCÊ ME PASSOU (Sem modificações de Data globais)
-
         const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
 
         let ticketsCache = [];
@@ -746,12 +744,58 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
+        // =========================================================================
+        // TRADUTOR DE DATA DEFINITIVO (Resolve o problema do MM/DD/AAAA)
+        // =========================================================================
+        function extrairDataISO(strData) {
+            if (!strData || strData === '---') return null;
+            let limpo = strData.split(' ')[0].split('T')[0].trim();
+            
+            // Se já for YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
+
+            let partes = limpo.split(/[\/\.-]/);
+            if (partes.length === 3) {
+                // Se a data vier no formato MM/DD/YYYY (Americano)
+                if (partes[2].length === 4) {
+                    let m = partes[0].padStart(2, '0');
+                    let d = partes[1].padStart(2, '0');
+                    let y = partes[2];
+                    
+                    // Tratamento de segurança: se o "mês" for maior que 12, significa
+                    // que a data já estava no padrão BR, então inverte.
+                    if (parseInt(m) > 12) {
+                        let temp = m; m = d; d = temp;
+                    }
+                    return `${y}-${m}-${d}`;
+                }
+            }
+            return null;
+        }
+
+        // Função para mostrar a data bonitinha na tela do Ticket e do Espelho
+        function formatarDataTela(strData) {
+            if (!strData || strData === '---') return '---';
+            const isoData = extrairDataISO(strData);
+            if (!isoData) return strData;
+
+            let partes = isoData.split('-');
+            let hora = '';
+            if (strData.includes(' ')) {
+                hora = ' ' + strData.split(' ')[1].substring(0, 5); // Pega só HH:mm
+            }
+            return `${partes[2]}/${partes[1]}/${partes[0]}${hora}`;
+        }
+        // =========================================================================
+
+
         function trocarAba(abaId, btnElement) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(abaId).classList.add('active');
             btnElement.classList.add('active');
             if (abaId === 'espelhoTab') filtrarEspelho();
+            if (abaId === 'informativoTab') processarInformativo();
         }
 
         async function carregarDadosPlanilha() {
@@ -772,9 +816,10 @@
                         tipoCarga: item.tipoCarga || '---',
                         numCarga: item.numCarga || '',
                         nf: item.nf || '',
+                        // AQUI FORÇAMOS A DATA A APARECER CORRETA NA TELA
                         dataEntradaRaw: item.dataEntradaTexto || '',
-                        dataEntradaTexto: item.dataEntradaTexto || '---',
-                        dataSaidaTexto: item.dataSaidaTexto || '---',
+                        dataEntradaTexto: formatarDataTela(item.dataEntradaTexto),
+                        dataSaidaTexto: formatarDataTela(item.dataSaidaTexto),
                         lacres: item.lacres || '---',
                         quantPallets: item.quantPallets || 0,
                         pesoPallets: item.pesoPallets || 0,
@@ -816,6 +861,10 @@
 
                 atualizarDashboard();
                 filtrarEspelho();
+
+                if (document.getElementById('informativoTab').classList.contains('active')) {
+                    processarInformativo();
+                }
 
                 if (ticketAtual) {
                     const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
@@ -859,34 +908,6 @@
             }
         }
 
-        // FUNÇÃO ORIGINAL RESTAURADA - SEM INVENTAR NADA NOVO
-        function extrairDataISO(strData) {
-            if (!strData || strData === '---') return null;
-            // Remove espaços, Ts e vírgulas perdidas do AppSheet na primeira fatia da data
-            const limpo = strData.split(' ')[0].split('T')[0].replace(/,/g, '').trim();
-
-            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
-
-            const partes = limpo.split(/[\/\.-]/);
-            if (partes.length === 3) {
-                let d, m, y;
-                if (partes[0].length === 4) {
-                    y = partes[0]; m = partes[1]; d = partes[2];
-                } else if (partes[2].length === 4) {
-                    const p0 = parseInt(partes[0], 10);
-                    const p1 = parseInt(partes[1], 10);
-                    y = partes[2];
-                    if (p0 > 12) { d = partes[0]; m = partes[1]; }
-                    else if (p1 > 12) { m = partes[0]; d = partes[1]; }
-                    else { d = partes[0]; m = partes[1]; }
-                } else {
-                    return null;
-                }
-                return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-            }
-            return null;
-        }
-
         function atualizarDashboard() {
             const filterInput = document.getElementById('filterDate');
             const dataFiltro = filterInput ? filterInput.value : '';
@@ -895,7 +916,7 @@
                 if (t.statusCalculado === 'S/D') return false;
                 if (!dataFiltro) return true;
                 const isoTicket = extrairDataISO(t.dataEntradaRaw);
-                return isoTicket === dataFiltro;
+                return isoTicket === dataFiltro; // AGORA VAI CRUZAR CERTO!
             });
 
             document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
@@ -1202,20 +1223,17 @@
 
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
 
-
         /* =========================================================================
            SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO 
-           (Isolado para não quebrar o Ticket)
            ========================================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
             const hojeIso = new Date().toISOString().split('T')[0];
-            // Agora preenche o input "datetime-local" com as horas iniciais e finais
             document.getElementById("dataInicio").value = hojeIso + "T00:00";
             document.getElementById("dataFim").value = hojeIso + "T23:59";
         });
 
-        // Função interna apenas do informativo para ler a data da planilha
+        // Este leitor extrai a HORA e o DIA exato do Formato Americano que vem da API
         function lerDataHoraInformativo(str) {
             if (!str || str === '---') return null;
             let partes = str.trim().split(/[ T]/);
@@ -1223,18 +1241,29 @@
             let timePart = partes[1] || "00:00:00";
 
             let d, m, y;
-            if (datePart.includes('/')) {
-                let p = datePart.split('/');
-                if(p[2].length === 4) { d = p[0]; m = p[1]; y = p[2]; } 
-                else if (p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; }
-            } else if (datePart.includes('-')) {
-                let p = datePart.split('-');
-                if(p[0].length === 4) { y = p[0]; m = p[1]; d = p[2]; } 
-                else { d = p[0]; m = p[1]; y = p[2]; }
-            } else { return null; }
+            let dPartes = datePart.split(/[\/\.-]/);
+            
+            if (dPartes.length === 3) {
+                // Se for MM/DD/YYYY (Americano)
+                if (dPartes[2].length === 4) { 
+                    m = dPartes[0];
+                    d = dPartes[1];
+                    y = dPartes[2];
+                    
+                    if (parseInt(m) > 12) { let temp = m; m = d; d = temp; }
+                } 
+                // Se já for YYYY-MM-DD
+                else if (dPartes[0].length === 4) { 
+                    y = dPartes[0];
+                    m = dPartes[1];
+                    d = dPartes[2];
+                }
+            } else {
+                return null;
+            }
 
             let t = timePart.split(':');
-            return new Date(y, m - 1, d, t[0] || 0, t[1] || 0, t[2] || 0);
+            return new Date(y, parseInt(m) - 1, d, parseInt(t[0]||0), parseInt(t[1]||0), parseInt(t[2]||0));
         }
 
         async function processarInformativo() {
@@ -1347,7 +1376,6 @@
             }
         }
 
-        // Mock do WMS mantido
         function buscarDadosWMSSimulados() {
             return [
                 { camara: "CONGELADO", localizacao: "A-01-01" },
