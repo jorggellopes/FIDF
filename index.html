@@ -1,1392 +1,1996 @@
-<!DOCTYPE html>
+script <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Balança - Frimesa Filial FIDF</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Balança - Frimesa Filial FIDF</title>
 
-    <meta name="theme-color" content="#8a2be2">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Sistema Balança">
-    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
+<meta name="theme-color" content="#8a2be2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sistema Balança">
+<link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
+<link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1LysK1PgzL3UP4KiuDa9SJmeZPOzgA7SA">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+* { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
 
-    <style>
-        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
 
-        body {
-            background: linear-gradient(135deg, #a259ff 0%, #6c2bd9 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            margin: 0;
-        }
 
-        .nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; flex-wrap: wrap; }
-        .nav-btn {
-            flex: 1; padding: 12px 8px; background-color: rgba(255, 255, 255, 0.2);
-            color: #fff; border: 2px solid transparent; border-radius: 6px; min-width: 150px;
-            font-weight: bold; font-size: 13px; cursor: pointer; text-align: center;
-            transition: all 0.2s ease; text-transform: uppercase;
-        }
-        .nav-btn:hover { background-color: rgba(255, 255, 255, 0.35); }
-        .nav-btn.active {
-            background-color: #ffffff; color: #511d9b; border-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
+body {
 
-        .status-bar {
-            background-color: rgba(0, 0, 0, 0.4); color: #ffffff; width: 100%;
-            max-width: 1080px; padding: 8px 15px; border-radius: 6px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
-            flex-wrap: wrap; gap: 8px;
-        }
-        .status-indicator { display: flex; align-items: center; gap: 6px; }
-        .status-dot {
-            width: 10px; height: 10px; border-radius: 50%; background-color: #ffcc00;
-            box-shadow: 0 0 6px rgba(0,0,0,0.5); transition: background-color 0.3s;
-        }
-        .status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
-        .status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
+background: linear-gradient(135deg, #a259ff 0%, #6c2bd9 100%);
 
-        .online-counter {
-            background-color: #0284c7; color: white; padding: 3px 8px; border-radius: 12px;
-            font-weight: bold; display: flex; align-items: center; gap: 4px; font-size: 10px;
-        }
+min-height: 100vh;
 
-        .btn-install {
-            display: none; background-color: #22c55e; color: white; border: none;
-            padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;
-            cursor: pointer; margin-left: 10px;
-        }
+display: flex;
 
-        .tab-content { display: none; width: 100%; max-width: 1080px; }
-        .tab-content.active { display: block; }
+flex-direction: column;
 
-        .search-container {
-            background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px; width: 100%;
-        }
-        .search-container label { font-weight: bold; color: #511d9b; font-size: 13px; white-space: nowrap; }
-        .search-container input {
-            flex: 1; padding: 10px; font-size: 14px; border: 2px solid #ddd;
-            border-radius: 4px; outline: none; text-transform: uppercase;
-        }
-        .search-container input:focus { border-color: #7c3aed; }
+align-items: center;
 
-        .btn-search {
-            background-color: #511d9b; color: white; border: none; padding: 10px 15px;
-            border-radius: 4px; cursor: pointer; font-size: 16px;
-        }
+padding: 15px;
 
-        .main-layout {
-            display: flex; flex-wrap: wrap; gap: 20px; width: 100%;
-            align-items: flex-start; justify-content: center;
-        }
+margin: 0;
 
-        .ticket-card {
-            flex: 1; min-width: 320px; max-width: 440px; background-color: #fff;
-            border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-radius: 4px; overflow: hidden; padding-bottom: 0;
-        }
+}
 
-        .ticket-actions {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-            padding: 8px; background-color: #f1f5f9; border-top: 1px solid #000;
-        }
-        .btn-action {
-            padding: 6px 8px; border: none; border-radius: 4px; font-size: 11px;
-            font-weight: bold; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; gap: 4px; color: white !important;
-            text-decoration: none !important; transition: opacity 0.2s; height: 32px;
-        }
-        .btn-action:hover { opacity: 0.85; }
-        .btn-wsp { background-color: #25d366; }
-        .btn-pdf { background-color: #ef4444; }
-        .btn-email { background-color: #0284c7; }
-        .btn-print { background-color: #475569; }
 
-        .dashboard-card {
-            flex: 1.3; min-width: 340px; max-width: 620px; background-color: #ffffff;
-            border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            border-radius: 4px; padding: 15px;
-        }
 
-        .dashboard-header {
-            background-color: #511d9b; color: white; padding: 8px 12px; font-weight: bold;
-            font-size: 14px; text-align: center; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase;
-        }
+.nav-menu { display: flex; gap: 10px; width: 100%; max-width: 1080px; margin-bottom: 12px; }
 
-        .filter-group {
-            display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
-            background-color: #f3e8ff; padding: 10px; border-radius: 4px; border: 1px solid #d8b4fe;
-        }
-        .filter-group label { font-size: 12px; font-weight: bold; color: #511d9b; }
-        .filter-group input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; flex: 1; }
+.nav-btn {
 
-        .stat-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat-box { background-color: #faf5ff; border: 1px solid #c084fc; border-radius: 4px; padding: 10px; text-align: center; }
-        .stat-box .number { font-size: 18px; font-weight: bold; color: #511d9b; }
-        .stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
+flex: 1; padding: 12px 8px; background-color: rgba(255, 255, 255, 0.2);
 
-        .dash-section-title {
-            font-size: 11px; font-weight: bold; color: #511d9b; border-bottom: 2px solid #511d9b;
-            padding-bottom: 3px; margin: 12px 0 6px 0; text-transform: uppercase;
-        }
+color: #fff; border: 2px solid transparent; border-radius: 6px;
 
-        .dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .dash-table th { background-color: #f3e8ff; color: #511d9b; font-size: 10px; text-transform: uppercase; padding: 5px; border: 1px solid #d8b4fe; }
-        .dash-table td { border: 1px solid #ddd; padding: 4px 6px; font-size: 11px; }
-        .dash-table .num-col { text-align: right; font-weight: bold; }
+font-weight: bold; font-size: 13px; cursor: pointer; text-align: center;
 
-        .logo-container { text-align: center; padding: 10px 10px 6px 10px; background-color: #fff; }
-        .logo-container svg { max-width: 180px; height: 50px; }
+transition: all 0.2s ease; text-transform: uppercase;
 
-        .header-title { text-align: center; font-weight: bold; font-size: 15px; padding: 3px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
-        .header-subtitle { text-align: center; font-size: 11px; padding: 3px 0; font-weight: bold; }
-        .header-date { background-color: #d9d9d9; text-align: center; padding: 3px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 11px; }
+}
 
-        table.ticket-tbl { width: 100%; border-collapse: collapse; }
-        table.ticket-tbl td { border: 1px solid #000; padding: 3px 5px; font-size: 11px; }
-        .label { font-weight: bold; text-transform: uppercase; width: 50%; }
-        .value { text-align: left; }
-        .value-highlight { background-color: #ffff00; font-weight: bold; }
+.nav-btn:hover { background-color: rgba(255, 255, 255, 0.35); }
 
-        .status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
-        .status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
-        .status-vazio { background-color: #0284c7; color: #ffffff; font-weight: bold; text-transform: uppercase; }
-        .status-sd { background-color: #e2e8f0; color: #475569; font-weight: bold; text-transform: uppercase; }
+.nav-btn.active {
 
-        .spacer-row td { border: none; height: 4px; }
+background-color: #ffffff; color: #511d9b; border-color: #ffffff;
 
-        .qr-footer {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 5px 8px; border-top: 1px solid #000; background-color: #fafafa;
-        }
-        .qr-info { font-size: 8px; color: #333; line-height: 1.2; }
-        .qr-info strong { display: block; color: #000; font-size: 8.5px; margin-bottom: 2px; }
-        .qr-img { width: 55px; height: 55px; object-fit: contain; }
+box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 
-        .espelho-card {
-            background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
-            padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
+}
 
-        .espelho-filters {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
-            border-radius: 6px; border: 1px solid #d8b4fe; align-items: end;
-        }
-        .espelho-filters label { display: block; font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; }
-        .espelho-filters input, .espelho-filters select {
-            width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
-        }
 
-        .btn-clear-filters {
-            background-color: #ef4444; color: white; border: none; padding: 7px 12px;
-            border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
-            height: 31px; display: flex; align-items: center; justify-content: center; gap: 4px;
-            transition: background-color 0.2s; width: 100%;
-        }
-        .btn-clear-filters:hover { background-color: #dc2626; }
 
-        .status-summary-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px; margin-bottom: 15px;
-        }
-        .status-summary-card { border-radius: 6px; padding: 10px; border: 1px solid #ccc; text-align: center; }
-        .summary-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
-        .summary-val { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
-        .summary-sub { font-size: 10px; opacity: 0.9; }
+.status-bar {
 
-        .card-st-vazio { background-color: #e0f2fe; border-color: #0284c7; color: #0369a1; }
-        .card-st-ok { background-color: #dcfce7; border-color: #16a34a; color: #15803d; }
-        .card-st-falta { background-color: #fef9c3; border-color: #ca8a04; color: #854d0e; }
-        .card-st-sobra { background-color: #fef3c7; border-color: #d97706; color: #92400e; }
+background-color: rgba(0, 0, 0, 0.4); color: #ffffff; width: 100%;
 
-        .espelho-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .btn-export {
-            background-color: #16a34a; color: white; border: none; padding: 8px 12px;
-            border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
-        }
+max-width: 1080px; padding: 8px 15px; border-radius: 6px; margin-bottom: 12px;
 
-        .table-responsive { width: 100%; overflow-x: auto; }
-        .espelho-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        .espelho-table th { background-color: #511d9b; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #3b1473; text-align: left; }
-        .espelho-table td { padding: 6px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
-        .espelho-table tr:nth-child(even) { background-color: #f8fafc; }
-        .espelho-table tr:hover { background-color: #f1f5f9; }
+display: flex; justify-content: space-between; align-items: center; font-size: 11px;
 
-        .btn-view-ticket {
-            background-color: #511d9b; color: white; border: none; padding: 3px 8px;
-            border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;
-        }
+flex-wrap: wrap; gap: 8px;
 
-        .pagination-container {
-            display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px;
-        }
-        .pagination-btns button {
-            background-color: #511d9b; color: white; border: none; padding: 6px 12px;
-            border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: 5px;
-        }
-        .pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
+}
 
-        .appsheet-box {
-            background-color: #ffffff;
-            border: 2px solid #000;
-            border-radius: 8px;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
+.status-indicator { display: flex; align-items: center; gap: 6px; }
 
-        .btn-appsheet-launch {
-            background-color: #511d9b;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 16px 32px;
-            font-weight: bold;
-            font-size: 15px;
-            border-radius: 6px;
-            display: inline-block;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-        }
-        .btn-appsheet-launch:hover {
-            background-color: #3b1473;
-            transform: translateY(-2px);
-        }
+.status-dot {
 
-        /* -------------------------------------------------------------
-           CSS DO INFORMATIVO DIÁRIO 
-           ------------------------------------------------------------- */
-        .info-container {
-            background: #f4f6f9;
-            padding: 20px;
-            border-radius: 8px;
-            border: 2px solid #000;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .info-filters-section {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: flex-end;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
-        }
-        .info-filter-group {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-width: 200px;
-        }
-        .info-filter-group label {
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #511d9b;
-            text-transform: uppercase;
-        }
-        .info-filter-group input, .info-filter-group select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 1rem;
-            outline: none;
-        }
-        .btn-filtrar-info {
-            background-color: #511d9b;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-            height: 42px;
-        }
-        .btn-filtrar-info:hover {
-            background-color: #3b1473;
-        }
-        .info-dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-        .info-card {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-top: 4px solid #511d9b;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .info-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 0.90rem;
-            color: #666;
-            text-transform: uppercase;
-        }
-        .info-card .info-value {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #511d9b;
-        }
-        .info-card .info-subtitle {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 5px;
-            line-height: 1.2;
-        }
-        .info-status-finalizado { color: #28a745 !important; }
-        .info-status-atrasado { color: #dc3545 !important; }
-        .info-bg-blue { border-top-color: #007bff; }
-        .info-bg-green { border-top-color: #28a745; }
-        .info-bg-orange { border-top-color: #fd7e14; }
-        .info-bg-cyan { border-top-color: #17a2b8; }
+width: 10px; height: 10px; border-radius: 50%; background-color: #ffcc00;
 
-        @media print {
-            body { background: none; padding: 0; }
-            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box, .info-filters-section { display: none !important; }
-            .main-layout { display: block; }
-            .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
-        }
-    </style>
+box-shadow: 0 0 6px rgba(0,0,0,0.5); transition: background-color 0.3s;
+
+}
+
+.status-dot.online { background-color: #00ff66; box-shadow: 0 0 8px #00ff66; }
+
+.status-dot.offline { background-color: #ff3333; box-shadow: 0 0 8px #ff3333; }
+
+
+
+.online-counter {
+
+background-color: #0284c7; color: white; padding: 3px 8px; border-radius: 12px;
+
+font-weight: bold; display: flex; align-items: center; gap: 4px; font-size: 10px;
+
+}
+
+
+
+.btn-install {
+
+display: none; background-color: #22c55e; color: white; border: none;
+
+padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;
+
+cursor: pointer; margin-left: 10px;
+
+}
+
+
+
+.tab-content { display: none; width: 100%; max-width: 1080px; }
+
+.tab-content.active { display: block; }
+
+
+
+.search-container {
+
+background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
+
+box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 20px;
+
+display: flex; align-items: center; gap: 10px; width: 100%;
+
+}
+
+.search-container label { font-weight: bold; color: #511d9b; font-size: 13px; white-space: nowrap; }
+
+.search-container input {
+
+flex: 1; padding: 10px; font-size: 14px; border: 2px solid #ddd;
+
+border-radius: 4px; outline: none; text-transform: uppercase;
+
+}
+
+.search-container input:focus { border-color: #7c3aed; }
+
+
+
+.btn-search {
+
+background-color: #511d9b; color: white; border: none; padding: 10px 15px;
+
+border-radius: 4px; cursor: pointer; font-size: 16px;
+
+}
+
+
+
+.main-layout {
+
+display: flex; flex-wrap: wrap; gap: 20px; width: 100%;
+
+align-items: flex-start; justify-content: center;
+
+}
+
+
+
+.ticket-card {
+
+flex: 1; min-width: 320px; max-width: 440px; background-color: #fff;
+
+border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+border-radius: 4px; overflow: hidden; padding-bottom: 0;
+
+}
+
+
+
+.ticket-actions {
+
+display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+
+padding: 8px; background-color: #f1f5f9; border-top: 1px solid #000;
+
+}
+
+.btn-action {
+
+padding: 6px 8px; border: none; border-radius: 4px; font-size: 11px;
+
+font-weight: bold; cursor: pointer; display: flex; align-items: center;
+
+justify-content: center; gap: 4px; color: white !important;
+
+text-decoration: none !important; transition: opacity 0.2s; height: 32px;
+
+}
+
+.btn-action:hover { opacity: 0.85; }
+
+.btn-wsp { background-color: #25d366; }
+
+.btn-pdf { background-color: #ef4444; }
+
+.btn-email { background-color: #0284c7; }
+
+.btn-print { background-color: #475569; }
+
+
+
+.dashboard-card {
+
+flex: 1.3; min-width: 340px; max-width: 620px; background-color: #ffffff;
+
+border: 2px solid #000; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+border-radius: 4px; padding: 15px;
+
+}
+
+
+
+.dashboard-header {
+
+background-color: #511d9b; color: white; padding: 8px 12px; font-weight: bold;
+
+font-size: 14px; text-align: center; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase;
+
+}
+
+
+
+.filter-group {
+
+display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
+
+background-color: #f3e8ff; padding: 10px; border-radius: 4px; border: 1px solid #d8b4fe;
+
+}
+
+.filter-group label { font-size: 12px; font-weight: bold; color: #511d9b; }
+
+.filter-group input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; flex: 1; }
+
+
+
+.stat-box-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+
+.stat-box { background-color: #faf5ff; border: 1px solid #c084fc; border-radius: 4px; padding: 10px; text-align: center; }
+
+.stat-box .number { font-size: 18px; font-weight: bold; color: #511d9b; }
+
+.stat-box .label { font-size: 10px; color: #6b21a8; text-transform: uppercase; font-weight: bold; width: 100%; }
+
+
+
+.dash-section-title {
+
+font-size: 11px; font-weight: bold; color: #511d9b; border-bottom: 2px solid #511d9b;
+
+padding-bottom: 3px; margin: 12px 0 6px 0; text-transform: uppercase;
+
+}
+
+
+
+.dash-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+
+.dash-table th { background-color: #f3e8ff; color: #511d9b; font-size: 10px; text-transform: uppercase; padding: 5px; border: 1px solid #d8b4fe; }
+
+.dash-table td { border: 1px solid #ddd; padding: 4px 6px; font-size: 11px; }
+
+.dash-table .num-col { text-align: right; font-weight: bold; }
+
+
+
+.logo-container { text-align: center; padding: 10px 10px 6px 10px; background-color: #fff; }
+
+.logo-container svg { max-width: 180px; height: 50px; }
+
+
+
+.header-title { text-align: center; font-weight: bold; font-size: 15px; padding: 3px 0; border-bottom: 1px solid #000; text-transform: uppercase; }
+
+.header-subtitle { text-align: center; font-size: 11px; padding: 3px 0; font-weight: bold; }
+
+.header-date { background-color: #d9d9d9; text-align: center; padding: 3px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 11px; }
+
+
+
+table.ticket-tbl { width: 100%; border-collapse: collapse; }
+
+table.ticket-tbl td { border: 1px solid #000; padding: 3px 5px; font-size: 11px; }
+
+.label { font-weight: bold; text-transform: uppercase; width: 50%; }
+
+.value { text-align: left; }
+
+.value-highlight { background-color: #ffff00; font-weight: bold; }
+
+
+
+.status-falta { background-color: #ffff00; color: #d00000; font-weight: bold; }
+
+.status-ok { background-color: #a8f0a8; color: #006000; font-weight: bold; }
+
+.status-vazio { background-color: #0284c7; color: #ffffff; font-weight: bold; text-transform: uppercase; }
+
+.status-sd { background-color: #e2e8f0; color: #475569; font-weight: bold; text-transform: uppercase; }
+
+
+
+.spacer-row td { border: none; height: 4px; }
+
+
+
+.qr-footer {
+
+display: flex; align-items: center; justify-content: space-between;
+
+padding: 5px 8px; border-top: 1px solid #000; background-color: #fafafa;
+
+}
+
+.qr-info { font-size: 8px; color: #333; line-height: 1.2; }
+
+.qr-info strong { display: block; color: #000; font-size: 8.5px; margin-bottom: 2px; }
+
+.qr-img { width: 55px; height: 55px; object-fit: contain; }
+
+
+
+.espelho-card {
+
+background-color: #ffffff; border: 2px solid #000; border-radius: 6px;
+
+padding: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+}
+
+
+
+.espelho-filters {
+
+display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+gap: 10px; margin-bottom: 12px; background-color: #f3e8ff; padding: 12px;
+
+border-radius: 6px; border: 1px solid #d8b4fe; align-items: end;
+
+}
+
+.espelho-filters label { display: block; font-size: 11px; font-weight: bold; color: #511d9b; margin-bottom: 4px; }
+
+.espelho-filters input, .espelho-filters select {
+
+width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
+
+}
+
+
+
+.btn-clear-filters {
+
+background-color: #ef4444; color: white; border: none; padding: 7px 12px;
+
+border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
+
+height: 31px; display: flex; align-items: center; justify-content: center; gap: 4px;
+
+transition: background-color 0.2s; width: 100%;
+
+}
+
+.btn-clear-filters:hover { background-color: #dc2626; }
+
+
+
+.status-summary-grid {
+
+display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+
+gap: 10px; margin-bottom: 15px;
+
+}
+
+.status-summary-card { border-radius: 6px; padding: 10px; border: 1px solid #ccc; text-align: center; }
+
+.summary-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
+
+.summary-val { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+
+.summary-sub { font-size: 10px; opacity: 0.9; }
+
+
+
+.card-st-vazio { background-color: #e0f2fe; border-color: #0284c7; color: #0369a1; }
+
+.card-st-ok { background-color: #dcfce7; border-color: #16a34a; color: #15803d; }
+
+.card-st-falta { background-color: #fef9c3; border-color: #ca8a04; color: #854d0e; }
+
+.card-st-sobra { background-color: #fef3c7; border-color: #d97706; color: #92400e; }
+
+
+
+.espelho-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.btn-export {
+
+background-color: #16a34a; color: white; border: none; padding: 8px 12px;
+
+border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer;
+
+}
+
+
+
+.table-responsive { width: 100%; overflow-x: auto; }
+
+.espelho-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+
+.espelho-table th { background-color: #511d9b; color: white; padding: 8px; font-size: 11px; text-transform: uppercase; border: 1px solid #3b1473; text-align: left; }
+
+.espelho-table td { padding: 6px 8px; border: 1px solid #e2e8f0; font-size: 11px; }
+
+.espelho-table tr:nth-child(even) { background-color: #f8fafc; }
+
+.espelho-table tr:hover { background-color: #f1f5f9; }
+
+
+
+.btn-view-ticket {
+
+background-color: #511d9b; color: white; border: none; padding: 3px 8px;
+
+border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;
+
+}
+
+
+
+.pagination-container {
+
+display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 12px;
+
+}
+
+.pagination-btns button {
+
+background-color: #511d9b; color: white; border: none; padding: 6px 12px;
+
+border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: 5px;
+
+}
+
+.pagination-btns button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+
+
+.appsheet-box {
+
+background-color: #ffffff;
+
+border: 2px solid #000;
+
+border-radius: 8px;
+
+padding: 40px 20px;
+
+text-align: center;
+
+box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+}
+
+
+
+.btn-appsheet-launch {
+
+background-color: #511d9b;
+
+color: #ffffff;
+
+text-decoration: none;
+
+padding: 16px 32px;
+
+font-weight: bold;
+
+font-size: 15px;
+
+border-radius: 6px;
+
+display: inline-block;
+
+box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+
+transition: all 0.2s ease;
+
+text-transform: uppercase;
+
+}
+
+.btn-appsheet-launch:hover {
+
+background-color: #3b1473;
+
+transform: translateY(-2px);
+
+}
+
+
+
+@media print {
+
+body { background: none; padding: 0; }
+
+.nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box { display: none !important; }
+
+.main-layout { display: block; }
+
+.ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
+
+}
+
+</style>
+
 </head>
+
 <body>
 
-    <div class="nav-menu">
-        <button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
-        <button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
-        <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos (AppSheet)</button>
-        <button class="nav-btn" onclick="trocarAba('informativoTab', this)">📈 Informativo Diário</button>
-    </div>
-
-    <div class="status-bar">
-        <div class="status-indicator">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">CONECTANDO A BASE DE DADOS...</span>
-        </div>
-
-        <div class="online-counter">
-            👥 ONLINE: <span id="activeUsersCount">1</span>
-        </div>
-
-        <div>
-            ÚLTIMA SYNC: <span id="lastSyncTime">--:--:--</span>
-            <button id="btnInstall" class="btn-install" onclick="instalarAtalho()">📲 Criar Atalho</button>
-        </div>
-    </div>
-
-    <!-- ABA 1: TICKET -->
-    <div id="ticketTab" class="tab-content active">
-        <div class="search-container">
-            <label for="inputId">PESQUISAR ID:</label>
-            <input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
-            <button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
-            <datalist id="idList"></datalist>
-        </div>
-
-        <div class="main-layout">
-            <div style="flex:1; min-width:320px; max-width:440px;">
-                <div class="ticket-card" id="ticket">
-                    <div class="logo-container">
-                        <svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="300" height="80" fill="#ffffff"/>
-                            <path d="M 20,15 L 280,15 L 280,65 L 20,65 Z" fill="none" stroke="#d00000" stroke-width="2"/>
-                            <text x="150" y="48" font-family="'Courier New', Courier, monospace" font-size="32" font-weight="900" fill="#d00000" text-anchor="middle" letter-spacing="2">FRIMESA</text>
-                            <text x="150" y="61" font-family="'Courier New', Courier, monospace" font-size="10" font-weight="bold" fill="#006000" text-anchor="middle" letter-spacing="1">FILIAL FIDF</text>
-                        </svg>
-                    </div>
-
-                    <div class="header-title">Frimesa Filial FIDF</div>
-                    <div class="header-subtitle">TICKET BALANÇA</div>
-                    <div class="header-date" id="dataEmissao">---</div>
-
-                    <table class="ticket-tbl">
-                        <tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
-                        <tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
-                        <tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
-                        <tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
-                        <tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
-                        <tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
-                        <tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
-                        <tr class="spacer-row"><td colspan="2"></td></tr>
-                        <tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
-                        <tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
-                        <tr class="spacer-row"><td colspan="2"></td></tr>
-                        <tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
-                        <tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
-                        <tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
-                        <tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
-                        <tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
-                        <tr>
-                            <td class="label" id="toleranciaRotuloText">TOLERÂNCIA TRUCK</td>
-                            <td class="value" id="toleranciaValor">---</td>
-                        </tr>
-                        <tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
-                        <tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
-                        <tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
-                    </table>
-
-                    <div class="qr-footer">
-                        <div class="qr-info">
-                            <strong>DOCUMENTO AUTENTICADO DIGITALMENTE</strong>
-                            <span>Frimesa Cooperativa Central - Filial FIDF</span><br>
-                            <span>Autenticação: <span id="authHash">---</span></span>
-                        </div>
-                        <img id="qrCodeImg" class="qr-img" src="" alt="QR Code Autenticação">
-                    </div>
-                </div>
-
-                <div class="ticket-actions">
-                    <a href="https://wa.me" target="_blank" class="btn-action btn-wsp">💬 WhatsApp</a>
-                    <button class="btn-action btn-pdf" onclick="baixarPDF()">📄 PDF</button>
-                    <button class="btn-action btn-email" onclick="enviarEmail()">✉️ E-mail</button>
-                    <button class="btn-action btn-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
-                </div>
-            </div>
-
-            <div class="dashboard-card">
-                <div class="dashboard-header">Resumo Diário da Operação</div>
-
-                <div class="filter-group">
-                    <label for="filterDate">FILTRAR DATA:</label>
-                    <input type="date" id="filterDate" onchange="atualizarDashboard()">
-                </div>
-
-                <div class="stat-box-container">
-                    <div class="stat-box">
-                        <div class="number" id="dashTotalVeiculos">0</div>
-                        <div class="label">Total Veículos</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number" id="dashTotalVolumeNf">0,00 KG</div>
-                        <div class="label">Volume (Peso NF)</div>
-                    </div>
-                </div>
-
-                <div class="dash-section-title">Por Tipo de Carga</div>
-                <table class="dash-table">
-                    <thead>
-                        <tr><th style="text-align:left;">Tipo Carga</th><th>Qt Veíc.</th><th>Peso NF (KG)</th></tr>
-                    </thead>
-                    <tbody id="dashTableCarga">
-                        <tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="dash-section-title">Por Movimento</div>
-                <table class="dash-table">
-                    <thead>
-                        <tr><th style="text-align:left;">Movimento</th><th>Qt Veíc.</th><th>Peso NF (KG)</th></tr>
-                    </thead>
-                    <tbody id="dashTableMovimento">
-                        <tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="dash-section-title">Produtividade por Conferente</div>
-                <table class="dash-table">
-                    <thead>
-                        <tr>
-                            <th style="text-align:left;">Conferente</th>
-                            <th>Qt Veíc.</th>
-                            <th>Volume (KG)</th>
-                            <th>% Vol.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dashTableConferente">
-                        <tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ABA 2: ESPELHO DA PLANILHA -->
-    <div id="espelhoTab" class="tab-content">
-        <div class="espelho-card">
-
-            <div class="espelho-filters">
-                <div>
-                    <label for="espFiltroBusca">PESQUISA (ID / Placa / Motorista):</label>
-                    <input type="text" id="espFiltroBusca" placeholder="Digite para filtrar..." oninput="filtrarEspelho()">
-                </div>
-                <div>
-                    <label for="espFiltroConferente">CONFERENTE:</label>
-                    <select id="espFiltroConferente" onchange="filtrarEspelho()">
-                        <option value="TODOS">TODOS OS CONFERENTES</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="espDataInicio">DATA INICIAL:</label>
-                    <input type="date" id="espDataInicio" onchange="filtrarEspelho()">
-                </div>
-                <div>
-                    <label for="espDataFim">DATA FINAL:</label>
-                    <input type="date" id="espDataFim" onchange="filtrarEspelho()">
-                </div>
-                <div>
-                    <label for="espFiltroStatus">STATUS:</label>
-                    <select id="espFiltroStatus" onchange="filtrarEspelho()">
-                        <option value="TODOS">TODOS OS STATUS</option>
-                        <option value="VAZIO">VAZIO (Azul)</option>
-                        <option value="OK">OK (Verde)</option>
-                        <option value="FALTA">FALTA (Amarelo)</option>
-                        <option value="SOBRA">SOBRA (Amarelo)</option>
-                        <option value="S/D">S/D (Sem Dados)</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
-                        🧹 Limpar Filtros
-                    </button>
-                </div>
-            </div>
-
-            <div class="status-summary-grid">
-                <div class="status-summary-card card-st-vazio">
-                    <div class="summary-title">🟦 Vazio</div>
-                    <div class="summary-val" id="stValVazio">0 veíc. (0%)</div>
-                    <div class="summary-sub" id="stVolVazio">0,00 KG (0%)</div>
-                </div>
-                <div class="status-summary-card card-st-ok">
-                    <div class="summary-title">🟩 OK</div>
-                    <div class="summary-val" id="stValOk">0 veíc. (0%)</div>
-                    <div class="summary-sub" id="stVolOk">0,00 KG (0%)</div>
-                </div>
-                <div class="status-summary-card card-st-falta">
-                    <div class="summary-title">🟨 Falta</div>
-                    <div class="summary-val" id="stValFalta">0 veíc. (0%)</div>
-                    <div class="summary-sub" id="stVolFalta">0,00 KG (0%)</div>
-                </div>
-                <div class="status-summary-card card-st-sobra">
-                    <div class="summary-title">🟧 Sobra</div>
-                    <div class="summary-val" id="stValSobra">0 veíc. (0%)</div>
-                    <div class="summary-sub" id="stVolSobra">0,00 KG (0%)</div>
-                </div>
-            </div>
-
-            <div class="espelho-tools">
-                <span id="espTotalRegistros" style="font-size:12px; font-weight:bold; color:#511d9b;">Listando 0 registros</span>
-                <button class="btn-export" onclick="exportarExcel()">🟢 Exportar Excel / CSV</button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="espelho-table">
-                    <thead>
-                        <tr>
-                            <th>Ação</th><th>ID</th><th>Placa</th><th>Veículo</th><th>Motorista</th><th>Entrada</th><th>Saída</th>
-                            <th>Peso NF</th><th>Divergência</th><th>Status</th><th>Conferente</th><th>Tipo Carga</th>
-                        </tr>
-                    </thead>
-                    <tbody id="espelhoTableBody">
-                        <tr><td colspan="12" style="text-align:center; padding: 20px;">Carregando...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pagination-container">
-                <div>Página <span id="currentPageNum">1</span> de <span id="totalPagesNum">1</span></div>
-                <div class="pagination-btns">
-                    <button id="btnPrevPage" onclick="mudarPagina(-1)">Anterior</button>
-                    <button id="btnNextPage" onclick="mudarPagina(1)">Próxima</button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- ABA 3: LANÇAMENTOS (APPSHEET DIRETO) -->
-    <div id="lancamentoTab" class="tab-content">
-        <div class="appsheet-box">
-            <h2 style="color: #511d9b; margin-top: 0; margin-bottom: 10px;">📝 MÓDULO DE LANÇAMENTOS</h2>
-            <p style="color: #444; font-size: 13px; max-width: 550px; margin: 0 auto 25px auto; line-height: 1.5;">
-                Clique no botão abaixo para abrir a página oficial do <strong>AppSheet Balança Gestão FIDF</strong> em uma nova janela. Faça o login na Frimesa e realize novos lançamentos ou edições com gravação 100% garantida na planilha.
-            </p>
-
-            <a href="https://www.appsheet.com/Account/Login?returnUrl=%2Fstart%2Fb5fbbbbc-a969-499f-858d-a50acab02d5c%3Fplatform%3Ddesktop&appId=b5fbbbbc-a969-499f-858d-a50acab02d5c#appName=Balan%C3%A7a-Gest%C3%A3oFIDF-320987412&vss=H4sIAAAAAAAAA6XOsQrCMBQF0H-5cxbXrOIgogiKi3GIzasE20SaVC0hH-O3-GO-qsVZHXPDue8mnC1dVlEXR8ht-rxm1EEiKay7EylIhbF3sfGVglBY6PoVLu-3g3V6pJCRd2LwkQJk-o7L_64LWEMu2tJS03f1kjvejr97xcFgkAXqNup9Rc_BbHLmrPRFG8hseMoPE8LUTa4n7czcG64sdRUoPwBx9iF9ZQEAAA==&view=P%C3%A1gina1&_mainprotocol=https:" 
-               target="_blank" 
-               class="btn-appsheet-launch">
-               🚀 Abrir Lançamentos no AppSheet (Nova Janela)
-            </a>
-        </div>
-    </div>
-
-    <!-- ABA 4: INFORMATIVO DIÁRIO -->
-    <div id="informativoTab" class="tab-content">
-        <div class="info-container">
-            <div class="dashboard-header" style="background-color: #511d9b; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; text-transform: uppercase; font-size: 18px; font-weight: bold;">
-                INFORMATIVO DIÁRIO DA OPERAÇÃO
-            </div>
-
-            <!-- Seção de Filtros (AGORA COM type="datetime-local" PARA DATA E HORA) -->
-            <div class="info-filters-section" id="filtroContainer">
-                <div class="info-filter-group">
-                    <label for="dataInicio">Data e Hora Início</label>
-                    <input type="datetime-local" id="dataInicio">
-                </div>
-                
-                <div class="info-filter-group">
-                    <label for="dataFim">Data e Hora Fim</label>
-                    <input type="datetime-local" id="dataFim">
-                </div>
-
-                <div class="info-filter-group">
-                    <label for="tipoCarga">Tipo de Carga</label>
-                    <select id="tipoCarga">
-                        <option value="TODOS">Todos</option>
-                        <option value="Transferencias">Transferências</option>
-                        <option value="Entregas">Entregas</option>
-                        <option value="CROSS">CROSS</option>
-                    </select>
-                </div>
-
-                <button class="btn-filtrar-info" onclick="processarInformativo()">Aplicar Filtros</button>
-            </div>
-
-            <!-- Dashboard -->
-            <div class="info-dashboard-grid">
-                
-                <div class="info-card">
-                    <h3>Volume Recebido</h3>
-                    <div class="info-value" id="valVolRecebido">0,00 KG</div>
-                    <div class="info-subtitle">Regra: Transferências (07h às 19h)</div>
-                </div>
-
-                <div class="info-card">
-                    <h3>Volume Disponível</h3>
-                    <div class="info-value" id="valVolDisponivel">0,00 KG</div>
-                    <div class="info-subtitle">Regra: Entregas (19h às 07h)</div>
-                </div>
-
-                <div class="info-card">
-                    <h3>Volume CROSS</h3>
-                    <div class="info-value" id="valVolCross">0,00 KG</div>
-                    <div class="info-subtitle">Regra: CROSS (19h às 07h)</div>
-                </div>
-
-                <div class="info-card info-bg-blue">
-                    <h3>Total Expedido</h3>
-                    <div class="info-value" id="valTotalExpedido">0,00 KG</div>
-                    <div class="info-subtitle">Soma: Vol. Disponível + Vol. CROSS</div>
-                </div>
-
-                <div class="info-card info-bg-orange">
-                    <h3>Carros Disponíveis</h3>
-                    <div class="info-value" id="valCarrosDisp">0</div>
-                    <div class="info-subtitle">Regra: Entregas (19h às 07h)</div>
-                </div>
-
-                <div class="info-card info-bg-orange">
-                    <h3>Hora da Largada</h3>
-                    <div class="info-value" id="valHoraLargada">--:--</div>
-                    <div class="info-subtitle">Regra: Última saída (Entregas e CROSS)</div>
-                </div>
-
-                <div class="info-card info-bg-orange">
-                    <h3>Status da Largada</h3>
-                    <div class="info-value" id="valStatusLargada">---</div>
-                    <div class="info-subtitle">Regra: Até 07h = Finalizado | Após = Atrasado</div>
-                </div>
-
-                <div class="info-card info-bg-cyan">
-                    <h3>Ocupação Congelado</h3>
-                    <div class="info-value" id="valOcupCongelado">0%</div>
-                    <div class="info-subtitle">Posições Únicas / 186 disponíveis</div>
-                </div>
-
-                <div class="info-card info-bg-cyan">
-                    <h3>Ocupação Resfriado</h3>
-                    <div class="info-value" id="valOcupResfriado">0%</div>
-                    <div class="info-subtitle">Posições Únicas / 334 disponíveis</div>
-                </div>
-
-                <div class="info-card info-bg-green">
-                    <h3>Ocupação do CD (Total)</h3>
-                    <div class="info-value" id="valOcupCD">0%</div>
-                    <div class="info-subtitle">Total posições únicas / 520 de capacidade</div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-
-    <script>
-        const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
-
-        let ticketsCache = [];
-        let filtradosEspelho = [];
-        let ticketAtual = null;
-
-        let paginaAtual = 1;
-        const itensPorPagina = 15;
-
-        const TABELA_TOLERANCIAS = {
-            "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
-            "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
-            "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
-        };
-
-        // =========================================================================
-        // TRADUTOR DE DATA DEFINITIVO (Resolve o problema do MM/DD/AAAA)
-        // =========================================================================
-        function extrairDataISO(strData) {
-            if (!strData || strData === '---') return null;
-            let limpo = strData.split(' ')[0].split('T')[0].trim();
-            
-            // Se já for YYYY-MM-DD
-            if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
-
-            let partes = limpo.split(/[\/\.-]/);
-            if (partes.length === 3) {
-                // Se a data vier no formato MM/DD/YYYY (Americano)
-                if (partes[2].length === 4) {
-                    let m = partes[0].padStart(2, '0');
-                    let d = partes[1].padStart(2, '0');
-                    let y = partes[2];
-                    
-                    // Tratamento de segurança: se o "mês" for maior que 12, significa
-                    // que a data já estava no padrão BR, então inverte.
-                    if (parseInt(m) > 12) {
-                        let temp = m; m = d; d = temp;
-                    }
-                    return `${y}-${m}-${d}`;
-                }
-            }
-            return null;
-        }
-
-        // Função para mostrar a data bonitinha na tela do Ticket e do Espelho
-        function formatarDataTela(strData) {
-            if (!strData || strData === '---') return '---';
-            const isoData = extrairDataISO(strData);
-            if (!isoData) return strData;
-
-            let partes = isoData.split('-');
-            let hora = '';
-            if (strData.includes(' ')) {
-                hora = ' ' + strData.split(' ')[1].substring(0, 5); // Pega só HH:mm
-            }
-            return `${partes[2]}/${partes[1]}/${partes[0]}${hora}`;
-        }
-        // =========================================================================
-
-
-        function trocarAba(abaId, btnElement) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(abaId).classList.add('active');
-            btnElement.classList.add('active');
-            if (abaId === 'espelhoTab') filtrarEspelho();
-            if (abaId === 'informativoTab') processarInformativo();
-        }
-
-        async function carregarDadosPlanilha() {
-            try {
-                const response = await fetch(API_JAVA_URL);
-                if (!response.ok) throw new Error("Status HTTP " + response.status);
-
-                const dados = await response.json();
-                if (!Array.isArray(dados)) throw new Error("Resposta inválida do servidor Java");
-
-                ticketsCache = dados.map(item => {
-                    return {
-                        id: item.id || '---',
-                        placa: item.placa || '---',
-                        veiculoModelo: item.veiculoModelo || '---',
-                        motorista: item.motorista || '---',
-                        movimento: item.movimento || '---',
-                        tipoCarga: item.tipoCarga || '---',
-                        numCarga: item.numCarga || '',
-                        nf: item.nf || '',
-                        // AQUI FORÇAMOS A DATA A APARECER CORRETA NA TELA
-                        dataEntradaRaw: item.dataEntradaTexto || '',
-                        dataEntradaTexto: formatarDataTela(item.dataEntradaTexto),
-                        dataSaidaTexto: formatarDataTela(item.dataSaidaTexto),
-                        lacres: item.lacres || '---',
-                        quantPallets: item.quantPallets || 0,
-                        pesoPallets: item.pesoPallets || 0,
-                        pesoCheio: item.pesoCheio || 0,
-                        pesoVazio: item.pesoVazio || 0,
-                        pesoLiquido: item.pesoLiquido || 0,
-                        pesoNf: item.pesoNf || 0,
-                        divergencia: item.divergencia || 0,
-                        conferente: item.conferente || '---',
-                        statusCalculado: item.status || 'S/D'
-                    };
-                });
-
-                atualizarFarol(true);
-
-                const datalist = document.getElementById('idList');
-                if (datalist) {
-                    datalist.innerHTML = "";
-                    ticketsCache.forEach(t => {
-                        if (t.id && t.id !== '---') {
-                            const opt = document.createElement('option');
-                            opt.value = t.id;
-                            opt.label = `${t.id} - ${t.placa}`;
-                            datalist.appendChild(opt);
-                        }
-                    });
-                }
-
-                popularSelectConferentes();
-
-                const filterInput = document.getElementById('filterDate');
-                if (!filterInput.value && ticketsCache.length > 0) {
-                    const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
-                    if (ultimoValido) {
-                        const iso = extrairDataISO(ultimoValido.dataEntradaRaw);
-                        if (iso) filterInput.value = iso;
-                    }
-                }
-
-                atualizarDashboard();
-                filtrarEspelho();
-
-                if (document.getElementById('informativoTab').classList.contains('active')) {
-                    processarInformativo();
-                }
-
-                if (ticketAtual) {
-                    const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
-                    if (recarregado) renderizarTicket(recarregado);
-                } else if (ticketsCache.length > 0) {
-                    const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
-                    if (ultimoValido) renderizarTicket(ultimoValido);
-                }
-            } catch (err) { 
-                console.error("Erro ao carregar do servidor Java:", err); 
-                atualizarFarol(false, "CONECTANDO VIA APPSHEET..."); 
-            }
-        }
-
-        function popularSelectConferentes() {
-            const select = document.getElementById('espFiltroConferente');
-            if (!select) return;
-
-            const valorSelecionado = select.value || 'TODOS';
-            select.innerHTML = '<option value="TODOS">TODOS OS CONFERENTES</option>';
-
-            const conjuntoConferentes = new Set();
-            ticketsCache.forEach(t => {
-                const conf = (t.conferente || '').trim();
-                if (conf && conf !== '---' && conf !== 'null') {
-                    conjuntoConferentes.add(conf);
-                }
-            });
-
-            Array.from(conjuntoConferentes).sort().forEach(conf => {
-                const opt = document.createElement('option');
-                opt.value = conf;
-                opt.textContent = conf;
-                select.appendChild(opt);
-            });
-
-            if (conjuntoConferentes.has(valorSelecionado)) {
-                select.value = valorSelecionado;
-            } else {
-                select.value = 'TODOS';
-            }
-        }
-
-        function atualizarDashboard() {
-            const filterInput = document.getElementById('filterDate');
-            const dataFiltro = filterInput ? filterInput.value : '';
-
-            const filtrados = ticketsCache.filter(t => {
-                if (t.statusCalculado === 'S/D') return false;
-                if (!dataFiltro) return true;
-                const isoTicket = extrairDataISO(t.dataEntradaRaw);
-                return isoTicket === dataFiltro; // AGORA VAI CRUZAR CERTO!
-            });
-
-            document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
-            const totalVol = filtrados.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
-            document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
-
-            const cargasM = {}; const movM = {}; const confM = {};
-
-            filtrados.forEach(t => {
-                const c = (t.tipoCarga || 'OUTROS').toUpperCase().trim();
-                if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
-                cargasM[c].v++; cargasM[c].p += (t.pesoNf || 0);
-
-                const m = (t.movimento || 'OUTROS').toUpperCase().trim();
-                if (!movM[m]) movM[m] = { v: 0, p: 0 };
-                movM[m].v++; movM[m].p += (t.pesoNf || 0);
-
-                const conf = (t.conferente || '').trim();
-                if (conf && conf !== '---') {
-                    if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
-                    confM[conf].v++; confM[conf].p += (t.pesoNf || 0);
-                }
-            });
-
-            const renderT = (id, map) => {
-                const tbody = document.getElementById(id); 
-                tbody.innerHTML = "";
-                const keys = Object.keys(map);
-                if (keys.length === 0) { 
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados para a data</td></tr>'; 
-                    return; 
-                }
-                keys.sort().forEach(k => {
-                    tbody.innerHTML += `<tr><td>${k}</td><td class="num-col">${map[k].v}</td><td class="num-col">${formatarNumero(map[k].p)}</td></tr>`;
-                });
-            };
-
-            renderT('dashTableCarga', cargasM);
-            renderT('dashTableMovimento', movM);
-
-            const tbodyConf = document.getElementById('dashTableConferente');
-            tbodyConf.innerHTML = "";
-            const confKeys = Object.keys(confM);
-
-            if (confKeys.length === 0) {
-                tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>';
-            } else {
-                confKeys.sort().forEach(k => {
-                    const volConf = confM[k].p;
-                    const pctVol = totalVol > 0 ? ((volConf / totalVol) * 100).toFixed(1) : "0.0";
-                    tbodyConf.innerHTML += `
-                        <tr>
-                            <td>${k}</td>
-                            <td class="num-col">${confM[k].v}</td>
-                            <td class="num-col">${formatarNumero(volConf)}</td>
-                            <td class="num-col" style="color:#511d9b;">${pctVol}%</td>
-                        </tr>`;
-                });
-            }
-        }
-
-        function limparFiltrosEspelho() {
-            document.getElementById('espFiltroBusca').value = '';
-            document.getElementById('espFiltroConferente').value = 'TODOS';
-            document.getElementById('espDataInicio').value = '';
-            document.getElementById('espDataFim').value = '';
-            document.getElementById('espFiltroStatus').value = 'TODOS';
-            filtrarEspelho();
-        }
-
-        function filtrarEspelho() {
-            const busca = (document.getElementById('espFiltroBusca').value || '').trim().toUpperCase();
-            const confFiltro = document.getElementById('espFiltroConferente').value;
-            const dtInicio = document.getElementById('espDataInicio').value;
-            const dtFim = document.getElementById('espDataFim').value;
-            const stFiltro = document.getElementById('espFiltroStatus').value;
-
-            filtradosEspelho = ticketsCache.filter(t => {
-                const matchTexto = !busca || 
-                                   t.id.toUpperCase().includes(busca) || 
-                                   t.placa.toUpperCase().includes(busca) || 
-                                   t.motorista.toUpperCase().includes(busca) ||
-                                   t.conferente.toUpperCase().includes(busca);
-
-                const matchConferente = (confFiltro === 'TODOS') || (t.conferente === confFiltro);
-                const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
-
-                let matchData = true;
-                const isoData = extrairDataISO(t.dataEntradaRaw);
-                if (isoData) {
-                    if (dtInicio && isoData < dtInicio) matchData = false;
-                    if (dtFim && isoData > dtFim) matchData = false;
-                }
-
-                return matchTexto && matchConferente && matchStatus && matchData;
-            });
-
-            atualizarCardsResumoEspelho();
-            paginaAtual = 1; 
-            renderizarTabelaEspelho();
-        }
-
-        function atualizarCardsResumoEspelho() {
-            let cntVazio = 0, cntOk = 0, cntFalta = 0, cntSobra = 0;
-            let volVazio = 0, volOk = 0, volFalta = 0, volSobra = 0;
-
-            const totalRegistros = filtradosEspelho.length;
-            const totalVolGeral = filtradosEspelho.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
-
-            filtradosEspelho.forEach(t => {
-                const st = t.statusCalculado;
-                const pNf = t.pesoNf || 0;
-
-                if (st === 'VAZIO') {
-                    cntVazio++; volVazio += pNf;
-                } else if (st === 'OK') {
-                    cntOk++; volOk += pNf;
-                } else if (st === 'FALTA') {
-                    cntFalta++; volFalta += pNf;
-                } else if (st === 'SOBRA') {
-                    cntSobra++; volSobra += pNf;
-                }
-            });
-
-            const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
-
-            document.getElementById('stValVazio').innerText = `${cntVazio} veíc. (${calcPct(cntVazio, totalRegistros)}%)`;
-            document.getElementById('stVolVazio').innerText = `${formatarNumero(volVazio)} KG (${calcPct(volVazio, totalVolGeral)}%)`;
-
-            document.getElementById('stValOk').innerText = `${cntOk} veíc. (${calcPct(cntOk, totalRegistros)}%)`;
-            document.getElementById('stVolOk').innerText = `${formatarNumero(volOk)} KG (${calcPct(volOk, totalVolGeral)}%)`;
-
-            document.getElementById('stValFalta').innerText = `${cntFalta} veíc. (${calcPct(cntFalta, totalRegistros)}%)`;
-            document.getElementById('stVolFalta').innerText = `${formatarNumero(volFalta)} KG (${calcPct(volFalta, totalVolGeral)}%)`;
-
-            document.getElementById('stValSobra').innerText = `${cntSobra} veíc. (${calcPct(cntSobra, totalRegistros)}%)`;
-            document.getElementById('stVolSobra').innerText = `${formatarNumero(volSobra)} KG (${calcPct(volSobra, totalVolGeral)}%)`;
-        }
-
-        function renderizarTabelaEspelho() {
-            const tbody = document.getElementById('espelhoTableBody'); tbody.innerHTML = "";
-            document.getElementById('espTotalRegistros').innerText = `Listando ${filtradosEspelho.length} registro(s)`;
-            if (filtradosEspelho.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px;">Nenhum registro encontrado.</td></tr>`;
-                actualizarPaginacao(0, 0); return;
-            }
-            const totalPaginas = Math.ceil(filtradosEspelho.length / itensPorPagina);
-            const inicio = (paginaAtual - 1) * itensPorPagina;
-            const paginaItens = filtradosEspelho.slice(inicio, inicio + itensPorPagina);
-
-            paginaItens.forEach(t => {
-                let stClass = 'status-ok';
-                if(t.statusCalculado === 'FALTA' || t.statusCalculado === 'SOBRA') stClass = 'status-falta';
-                else if(t.statusCalculado === 'VAZIO') stClass = 'status-vazio';
-                else if(t.statusCalculado === 'S/D') stClass = 'status-sd';
-
-                tbody.innerHTML += `<tr>
-                    <td style="text-align:center;"><button class="btn-view-ticket" onclick="abrirTicketPorId('${t.id}')">🎫 Ver</button></td>
-                    <td style="font-weight:bold; background-color:#ffffcc;">${t.id}</td><td style="font-weight:bold;">${t.placa}</td>
-                    <td>${t.veiculoModelo}</td><td>${t.motorista}</td><td>${t.dataEntradaTexto}</td><td>${t.dataSaidaTexto}</td>
-                    <td>${formatarNumero(t.pesoNf)}</td><td style="font-weight:bold;">${formatarNumero(t.divergencia)}</td>
-                    <td class="${stClass}" style="text-align:center;">${t.statusCalculado}</td><td>${t.conferente}</td><td>${t.tipoCarga}</td>
-                </tr>`;
-            });
-            actualizarPaginacao(paginaAtual, totalPaginas);
-        }
-
-        function actualizarPaginacao(atual, total) {
-            document.getElementById('currentPageNum').innerText = atual;
-            document.getElementById('totalPagesNum').innerText = total;
-            document.getElementById('btnPrevPage').disabled = (atual <= 1);
-            document.getElementById('btnNextPage').disabled = (atual >= total || total === 0);
-        }
-
-        function mudarPagina(delta) { paginaAtual += delta; renderizarTabelaEspelho(); }
-        function abrirTicketPorId(id) {
-            const enc = ticketsCache.find(x => x.id === id);
-            if (enc) { renderizarTicket(enc); trocarAba('ticketTab', document.querySelectorAll('.nav-btn')[0]); }
-        }
-
-        function exportarExcel() {
-            if (filtradosEspelho.length === 0) { alert("Nenhum dado para exportar!"); return; }
-            let csvStr = "ID;Placa;Veiculo;Motorista;Entrada;Saida;PesoNF;Divergencia;Status;Conferente;TipoCarga\n";
-            filtradosEspelho.forEach(t => { csvStr += `"${t.id}";"${t.placa}";"${t.veiculoModelo}";"${t.motorista}";"${t.dataEntradaTexto}";"${t.dataSaidaTexto}";"${t.pesoNf}";"${t.divergencia}";"${t.statusCalculado}";"${t.conferente}";"${t.tipoCarga}"\n`; });
-            const blob = new Blob(["\ufeff" + csvStr], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
-            link.setAttribute("download", `Espelho_Balanca_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
-
-        function atualizarFarol(online, msg) {
-            document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('statusText').innerText = online ? `CONECTADO VIA APPSHEET API (${ticketsCache.length})` : (msg || 'FALHA');
-            if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
-        }
-
-        function tratarKeyPress(e) { if (e.key === 'Enter') executarBusca(); }
-        function executarBusca() {
-            const rawVal = document.getElementById('inputId').value; if (!rawVal) return;
-            const tL = rawVal.trim().toUpperCase();
-            const enc = ticketsCache.find(x => x.id.toUpperCase() === tL || x.placa.toUpperCase() === tL);
-            if (enc) { document.getElementById('inputId').value = enc.id; renderizarTicket(enc); } else alert("Ticket não encontrado.");
-        }
-        function formatarNumero(num) { if (num === null || num === undefined) return "---"; return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-        
-        function identificarToleranciaPorVeiculo(veiculo) {
-            if (!veiculo) return 'TOLERÂNCIA TRUCK'; const v = veiculo.toUpperCase();
-            if (v.includes('VAN')) return 'TOLERÂNCIA VAN'; if (v.includes('VUC')) return 'TOLERÂNCIA VUC';
-            if (v.includes('3/4') || v.includes('34') || v.includes('3QT')) return 'TOLERÂNCIA 34'; if (v.includes('TOCO')) return 'TOLERÂNCIA TOCO';
-            if (v.includes('BITRUCK')) return 'TOLERÂNCIA BITRUCK'; if (v.includes('TRUCK')) return 'TOLERÂNCIA TRUCK';
-            if (v.includes('CARRETA') || v.includes('BITREM')) return 'TOLERÂNCIA CARRETA'; if (v.includes('UTILITARIO') || v.includes('PARTICULAR')) return 'TOLERÂNCIA UTILITARIO';
-            return 'TOLERÂNCIA TRUCK';
-        }
-
-        function renderizarTicket(t) {
-            ticketAtual = t; 
-            document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
-            document.getElementById('id').innerText = t.id; 
-            document.getElementById('placa').innerText = t.placa || '---';
-            document.getElementById('veiculoModelo').innerText = t.veiculoModelo || '---'; 
-            document.getElementById('motorista').innerText = t.motorista || '---';
-            document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---'; 
-            document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
-            document.getElementById('lacres').innerText = t.lacres || '---';
-
-            document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
-            document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
-
-            document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
-            document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
-
-            const pesoLiquido = (t.pesoCheio > 0 && t.pesoVazio > 0) ? (t.pesoCheio - t.pesoVazio) : null;
-            document.getElementById('pesoLiquido').innerText = pesoLiquido !== null ? formatarNumero(pesoLiquido) + ' KG' : '---';
-
-            document.getElementById('pesoNf').innerText = t.pesoNf > 0 ? formatarNumero(t.pesoNf) + ' KG' : '---';
-
-            document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
-            document.getElementById('conferente').innerText = t.conferente || '---';
-
-            const tolNome = identificarToleranciaPorVeiculo(t.veiculoModelo);
-            document.getElementById('toleranciaRotuloText').innerText = tolNome;
-
-            recalcularToleranciaManual(); 
-            gerarQRCodeNativo(t);
-        }
-
-        function recalcularToleranciaManual() {
-            if (!ticketAtual) return; 
-            const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
-            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0; 
-            const divergencia = ticketAtual.divergencia || 0.0;
-
-            document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
-
-            let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
-
-            let resultado = "FORA DA TOLERÂNCIA";
-            let stClass = 'value status-falta';
-
-            if(status === 'VAZIO') { resultado = "VEÍCULO VAZIO / PÁTIO"; stClass = 'value status-vazio'; }
-            else if(status === 'OK') { resultado = "DENTRO DA TOLERÂNCIA"; stClass = 'value status-ok'; }
-            else if(status === 'S/D') { resultado = "SEM DADOS REGISTRADOS"; stClass = 'value status-sd'; }
-
-            document.getElementById('resultado').innerText = resultado;
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = status; 
-            statusEl.className = stClass;
-        }
-
-        function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
-            if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') return 'S/D';
-            const cargaUpper = (tipoCarga || '').toUpperCase();
-            if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) return 'VAZIO';
-            if (pesoNf === 0) return 'OK';
-            return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
-        }
-
-        function gerarQRCodeNativo(t) {
-            const hash = `FRM-${t.id}-${t.placa}-${Math.abs(t.divergencia || 0).toFixed(0)}`;
-            document.getElementById('authHash').innerText = hash;
-            const payload = encodeURIComponent(`FRIMESA FIDF|TICKET:${t.id}|PLACA:${t.placa}|AUTH:${hash}`);
-            document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
-        }
-
-        function baixarPDF() {
-            if (!ticketAtual) return alert("Selecione um Ticket.");
-            html2pdf().set({
-                margin: [0.15, 0.15, 0.15, 0.15],
-                filename: `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-            }).from(document.getElementById('ticket')).save();
-        }
-
-        function enviarEmail() {
-            if (!ticketAtual) return alert("Selecione um Ticket.");
-            const assunto = encodeURIComponent(`Ticket Balança Frimesa FIDF - ID: ${ticketAtual.id} (${ticketAtual.placa})`);
-            const corpo = encodeURIComponent(`FRIMESA TICKET BALANÇA\nID: ${ticketAtual.id}\nPLACA: ${ticketAtual.placa}\nMOTORISTA: ${ticketAtual.motorista}\nENTRADA: ${ticketAtual.dataEntradaTexto}\nSTATUS: ${ticketAtual.statusCalculado}`);
-            window.location.href = `mailto:?subject=${assunto}&body=${corpo}`;
-        }
-
-        function imprimirTicket() { if (ticketAtual) window.print(); }
-
-        carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
-
-        /* =========================================================================
-           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO 
-           ========================================================================= */
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const hojeIso = new Date().toISOString().split('T')[0];
-            document.getElementById("dataInicio").value = hojeIso + "T00:00";
-            document.getElementById("dataFim").value = hojeIso + "T23:59";
-        });
-
-        // Este leitor extrai a HORA e o DIA exato do Formato Americano que vem da API
-        function lerDataHoraInformativo(str) {
-            if (!str || str === '---') return null;
-            let partes = str.trim().split(/[ T]/);
-            let datePart = partes[0];
-            let timePart = partes[1] || "00:00:00";
-
-            let d, m, y;
-            let dPartes = datePart.split(/[\/\.-]/);
-            
-            if (dPartes.length === 3) {
-                // Se for MM/DD/YYYY (Americano)
-                if (dPartes[2].length === 4) { 
-                    m = dPartes[0];
-                    d = dPartes[1];
-                    y = dPartes[2];
-                    
-                    if (parseInt(m) > 12) { let temp = m; m = d; d = temp; }
-                } 
-                // Se já for YYYY-MM-DD
-                else if (dPartes[0].length === 4) { 
-                    y = dPartes[0];
-                    m = dPartes[1];
-                    d = dPartes[2];
-                }
-            } else {
-                return null;
-            }
-
-            let t = timePart.split(':');
-            return new Date(y, parseInt(m) - 1, d, parseInt(t[0]||0), parseInt(t[1]||0), parseInt(t[2]||0));
-        }
-
-        async function processarInformativo() {
-            const dtInicio = document.getElementById("dataInicio").value;
-            const dtFim = document.getElementById("dataFim").value;
-            const tipoCargaFiltro = document.getElementById("tipoCarga").value;
-
-            try {
-                const dadosBalanca = ticketsCache; 
-                const dadosWMS = buscarDadosWMSSimulados();
-
-                let volRecebido = 0;
-                let volDisponivel = 0;
-                let volCross = 0;
-                let carrosDisponiveis = new Set();
-                let ultimaHoraSaida = null;
-
-                const dateStart = new Date(dtInicio);
-                const dateEnd = new Date(dtFim);
-
-                dadosBalanca.forEach(lancamento => {
-                    const dataHora = lerDataHoraInformativo(lancamento.dataEntradaRaw);
-                    
-                    if(dataHora && !isNaN(dataHora.getTime())) {
-                        
-                        if(dataHora >= dateStart && dataHora <= dateEnd) {
-                            
-                            const passaFiltroTela = (tipoCargaFiltro === "TODOS" || lancamento.tipoCarga === tipoCargaFiltro);
-                            
-                            if(passaFiltroTela) {
-                                const hora = dataHora.getHours();
-                                const peso = lancamento.pesoNf || 0; 
-                                
-                                if (lancamento.tipoCarga === "Transferencias" && hora >= 7 && hora < 19) {
-                                    volRecebido += peso;
-                                }
-                                if (lancamento.tipoCarga === "Entregas" && (hora >= 19 || hora < 7)) {
-                                    volDisponivel += peso;
-                                    carrosDisponiveis.add(lancamento.placa);
-                                }
-                                if (lancamento.tipoCarga === "CROSS" && (hora >= 19 || hora < 7)) {
-                                    volCross += peso;
-                                }
-                                if ((lancamento.tipoCarga === "Entregas" || lancamento.tipoCarga === "CROSS") && (hora >= 19 || hora < 7)) {
-                                    if (!ultimaHoraSaida || dataHora > ultimaHoraSaida) {
-                                        ultimaHoraSaida = dataHora;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-                const totalExpedido = volDisponivel + volCross;
-                let statusLargada = "---";
-                let strHoraLargada = "--:--";
-                let classStatus = "";
-
-                if (ultimaHoraSaida) {
-                    const hh = ultimaHoraSaida.getHours();
-                    const mm = ultimaHoraSaida.getMinutes().toString().padStart(2, '0');
-                    strHoraLargada = `${hh.toString().padStart(2, '0')}:${mm}`;
-                    
-                    if (hh < 7 || (hh === 7 && mm === '00')) {
-                        statusLargada = "FINALIZADO";
-                        classStatus = "info-status-finalizado";
-                    } else {
-                        statusLargada = "ATRASADO";
-                        classStatus = "info-status-atrasado";
-                    }
-                }
-
-                let posicoesCongelado = new Set();
-                let posicoesResfriado = new Set();
-
-                dadosWMS.forEach(item => {
-                    if (item.camara.toUpperCase() === "CONGELADO") {
-                        posicoesCongelado.add(item.localizacao);
-                    } else if (item.camara.toUpperCase() === "RESFRIADO") {
-                        posicoesResfriado.add(item.localizacao);
-                    }
-                });
-
-                const maxCongelado = 186;
-                const maxResfriado = 334;
-                const maxCD = 520;
-
-                const percCongelado = maxCongelado > 0 ? (posicoesCongelado.size / maxCongelado) * 100 : 0;
-                const percResfriado = maxResfriado > 0 ? (posicoesResfriado.size / maxResfriado) * 100 : 0;
-                const percCD = maxCD > 0 ? ((posicoesCongelado.size + posicoesResfriado.size) / maxCD) * 100 : 0;
-
-                document.getElementById("valVolRecebido").innerText = volRecebido.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
-                document.getElementById("valVolDisponivel").innerText = volDisponivel.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
-                document.getElementById("valVolCross").innerText = volCross.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
-                document.getElementById("valTotalExpedido").innerText = totalExpedido.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + " KG";
-                
-                document.getElementById("valCarrosDisp").innerText = carrosDisponiveis.size;
-                document.getElementById("valHoraLargada").innerText = strHoraLargada;
-                
-                const stLargadaEl = document.getElementById("valStatusLargada");
-                stLargadaEl.innerText = statusLargada;
-                stLargadaEl.className = "info-value " + classStatus;
-
-                document.getElementById("valOcupCongelado").innerText = percCongelado.toFixed(1) + "%";
-                document.getElementById("valOcupResfriado").innerText = percResfriado.toFixed(1) + "%";
-                document.getElementById("valOcupCD").innerText = percCD.toFixed(1) + "%";
-
-            } catch (error) {
-                console.error("Erro ao processar informativo:", error);
-            }
-        }
-
-        function buscarDadosWMSSimulados() {
-            return [
-                { camara: "CONGELADO", localizacao: "A-01-01" },
-                { camara: "CONGELADO", localizacao: "A-01-01" },
-                { camara: "CONGELADO", localizacao: "A-01-02" },
-                { camara: "RESFRIADO", localizacao: "B-01-01" },
-                { camara: "RESFRIADO", localizacao: "B-01-02" },
-                { camara: "RESFRIADO", localizacao: "B-01-03" }
-            ];
-        }
-
-    </script>
+
+
+<div class="nav-menu">
+
+<button class="nav-btn active" onclick="trocarAba('ticketTab', this)">🎫 Ticket Balança</button>
+
+<button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
+
+<button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos (AppSheet)</button>
+
+</div>
+
+
+
+<div class="status-bar">
+
+<div class="status-indicator">
+
+<span class="status-dot" id="statusDot"></span>
+
+<span id="statusText">CONECTANDO A BASE DE DADOS...</span>
+
+</div>
+
+
+
+<div class="online-counter">
+
+👥 ONLINE: <span id="activeUsersCount">1</span>
+
+</div>
+
+
+
+<div>
+
+ÚLTIMA SYNC: <span id="lastSyncTime">--:--:--</span>
+
+<button id="btnInstall" class="btn-install" onclick="instalarAtalho()">📲 Criar Atalho</button>
+
+</div>
+
+</div>
+
+
+
+<!-- ABA 1: TICKET -->
+
+<div id="ticketTab" class="tab-content active">
+
+<div class="search-container">
+
+<label for="inputId">PESQUISAR ID:</label>
+
+<input type="text" id="inputId" list="idList" placeholder="Digite ou cole o ID..." onkeypress="tratarKeyPress(event)">
+
+<button class="btn-search" onclick="executarBusca()" title="Buscar Ticket">🔍</button>
+
+<datalist id="idList"></datalist>
+
+</div>
+
+
+
+<div class="main-layout">
+
+<div style="flex:1; min-width:320px; max-width:440px;">
+
+<div class="ticket-card" id="ticket">
+
+<div class="logo-container">
+
+<svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+
+<rect width="300" height="80" fill="#ffffff"/>
+
+<path d="M 20,15 L 280,15 L 280,65 L 20,65 Z" fill="none" stroke="#d00000" stroke-width="2"/>
+
+<text x="150" y="48" font-family="'Courier New', Courier, monospace" font-size="32" font-weight="900" fill="#d00000" text-anchor="middle" letter-spacing="2">FRIMESA</text>
+
+<text x="150" y="61" font-family="'Courier New', Courier, monospace" font-size="10" font-weight="bold" fill="#006000" text-anchor="middle" letter-spacing="1">FILIAL FIDF</text>
+
+</svg>
+
+</div>
+
+
+
+<div class="header-title">Frimesa Filial FIDF</div>
+
+<div class="header-subtitle">TICKET BALANÇA</div>
+
+<div class="header-date" id="dataEmissao">---</div>
+
+
+
+<table class="ticket-tbl">
+
+<tr><td class="label">ID</td><td class="value value-highlight" id="id">---</td></tr>
+
+<tr><td class="label">PLACA</td><td class="value" id="placa">---</td></tr>
+
+<tr><td class="label">VEÍCULO / MODELO</td><td class="value" id="veiculoModelo">---</td></tr>
+
+<tr><td class="label">MOTORISTA</td><td class="value" id="motorista">---</td></tr>
+
+<tr><td class="label">DATA DE ENTRADA</td><td class="value" id="dataEntrada">---</td></tr>
+
+<tr><td class="label">DATA DE SAÍDA</td><td class="value" id="dataSaida">---</td></tr>
+
+<tr><td class="label">LACRE(s)</td><td class="value" id="lacres">---</td></tr>
+
+<tr class="spacer-row"><td colspan="2"></td></tr>
+
+<tr><td class="label">QUANT DE PALLETS</td><td class="value" id="quantPallets">---</td></tr>
+
+<tr><td class="label">PESO PALLETS</td><td class="value" id="pesoPallets">---</td></tr>
+
+<tr class="spacer-row"><td colspan="2"></td></tr>
+
+<tr><td class="label">PESO CHEIO</td><td class="value" id="pesoCheio">---</td></tr>
+
+<tr><td class="label">PESO VAZIO - TARA</td><td class="value" id="pesoVazio">---</td></tr>
+
+<tr><td class="label">PESO LIQUIDO</td><td class="value" id="pesoLiquido">---</td></tr>
+
+<tr><td class="label">PESO NF</td><td class="value" id="pesoNf">---</td></tr>
+
+<tr><td class="label">DIVERGÊNCIA</td><td class="value" id="divergencia">---</td></tr>
+
+<tr>
+
+<td class="label" id="toleranciaRotuloText">TOLERÂNCIA TRUCK</td>
+
+<td class="value" id="toleranciaValor">---</td>
+
+</tr>
+
+<tr><td class="label">RESULTADO</td><td class="value" id="resultado">---</td></tr>
+
+<tr><td class="label">STATUS</td><td class="value" id="status">---</td></tr>
+
+<tr><td class="label">CONFERENTE</td><td class="value" id="conferente">---</td></tr>
+
+</table>
+
+
+
+<div class="qr-footer">
+
+<div class="qr-info">
+
+<strong>DOCUMENTO AUTENTICADO DIGITALMENTE</strong>
+
+<span>Frimesa Cooperativa Central - Filial FIDF</span><br>
+
+<span>Autenticação: <span id="authHash">---</span></span>
+
+</div>
+
+<img id="qrCodeImg" class="qr-img" src="" alt="QR Code Autenticação">
+
+</div>
+
+</div>
+
+
+
+<div class="ticket-actions">
+
+<a href="https://wa.me" target="_blank" class="btn-action btn-wsp">💬 WhatsApp</a>
+
+<button class="btn-action btn-pdf" onclick="baixarPDF()">📄 PDF</button>
+
+<button class="btn-action btn-email" onclick="enviarEmail()">✉️ E-mail</button>
+
+<button class="btn-action btn-print" onclick="imprimirTicket()">🖨️ Imprimir</button>
+
+</div>
+
+</div>
+
+
+
+<div class="dashboard-card">
+
+<div class="dashboard-header">Resumo Diário da Operação</div>
+
+
+
+<div class="filter-group">
+
+<label for="filterDate">FILTRAR DATA:</label>
+
+<input type="date" id="filterDate" onchange="atualizarDashboard()">
+
+</div>
+
+
+
+<div class="stat-box-container">
+
+<div class="stat-box">
+
+<div class="number" id="dashTotalVeiculos">0</div>
+
+<div class="label">Total Veículos</div>
+
+</div>
+
+<div class="stat-box">
+
+<div class="number" id="dashTotalVolumeNf">0,00 KG</div>
+
+<div class="label">Volume (Peso NF)</div>
+
+</div>
+
+</div>
+
+
+
+<div class="dash-section-title">Por Tipo de Carga</div>
+
+<table class="dash-table">
+
+<thead>
+
+<tr><th style="text-align:left;">Tipo Carga</th><th>Qt Veíc.</th><th>Peso NF (KG)</th></tr>
+
+</thead>
+
+<tbody id="dashTableCarga">
+
+<tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>
+
+</tbody>
+
+</table>
+
+
+
+<div class="dash-section-title">Por Movimento</div>
+
+<table class="dash-table">
+
+<thead>
+
+<tr><th style="text-align:left;">Movimento</th><th>Qt Veíc.</th><th>Peso NF (KG)</th></tr>
+
+</thead>
+
+<tbody id="dashTableMovimento">
+
+<tr><td colspan="3" style="text-align:center;">Sem dados</td></tr>
+
+</tbody>
+
+</table>
+
+
+
+<div class="dash-section-title">Produtividade por Conferente</div>
+
+<table class="dash-table">
+
+<thead>
+
+<tr>
+
+<th style="text-align:left;">Conferente</th>
+
+<th>Qt Veíc.</th>
+
+<th>Volume (KG)</th>
+
+<th>% Vol.</th>
+
+</tr>
+
+</thead>
+
+<tbody id="dashTableConferente">
+
+<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- ABA 2: ESPELHO DA PLANILHA -->
+
+<div id="espelhoTab" class="tab-content">
+
+<div class="espelho-card">
+
+
+
+<div class="espelho-filters">
+
+<div>
+
+<label for="espFiltroBusca">PESQUISA (ID / Placa / Motorista):</label>
+
+<input type="text" id="espFiltroBusca" placeholder="Digite para filtrar..." oninput="filtrarEspelho()">
+
+</div>
+
+<div>
+
+<label for="espFiltroConferente">CONFERENTE:</label>
+
+<select id="espFiltroConferente" onchange="filtrarEspelho()">
+
+<option value="TODOS">TODOS OS CONFERENTES</option>
+
+</select>
+
+</div>
+
+<div>
+
+<label for="espDataInicio">DATA INICIAL:</label>
+
+<input type="date" id="espDataInicio" onchange="filtrarEspelho()">
+
+</div>
+
+<div>
+
+<label for="espDataFim">DATA FINAL:</label>
+
+<input type="date" id="espDataFim" onchange="filtrarEspelho()">
+
+</div>
+
+<div>
+
+<label for="espFiltroStatus">STATUS:</label>
+
+<select id="espFiltroStatus" onchange="filtrarEspelho()">
+
+<option value="TODOS">TODOS OS STATUS</option>
+
+<option value="VAZIO">VAZIO (Azul)</option>
+
+<option value="OK">OK (Verde)</option>
+
+<option value="FALTA">FALTA (Amarelo)</option>
+
+<option value="SOBRA">SOBRA (Amarelo)</option>
+
+<option value="S/D">S/D (Sem Dados)</option>
+
+</select>
+
+</div>
+
+<div>
+
+<button type="button" class="btn-clear-filters" onclick="limparFiltrosEspelho()" title="Limpar todos os filtros">
+
+🧹 Limpar Filtros
+
+</button>
+
+</div>
+
+</div>
+
+
+
+<div class="status-summary-grid">
+
+<div class="status-summary-card card-st-vazio">
+
+<div class="summary-title">🟦 Vazio</div>
+
+<div class="summary-val" id="stValVazio">0 veíc. (0%)</div>
+
+<div class="summary-sub" id="stVolVazio">0,00 KG (0%)</div>
+
+</div>
+
+<div class="status-summary-card card-st-ok">
+
+<div class="summary-title">🟩 OK</div>
+
+<div class="summary-val" id="stValOk">0 veíc. (0%)</div>
+
+<div class="summary-sub" id="stVolOk">0,00 KG (0%)</div>
+
+</div>
+
+<div class="status-summary-card card-st-falta">
+
+<div class="summary-title">🟨 Falta</div>
+
+<div class="summary-val" id="stValFalta">0 veíc. (0%)</div>
+
+<div class="summary-sub" id="stVolFalta">0,00 KG (0%)</div>
+
+</div>
+
+<div class="status-summary-card card-st-sobra">
+
+<div class="summary-title">🟧 Sobra</div>
+
+<div class="summary-val" id="stValSobra">0 veíc. (0%)</div>
+
+<div class="summary-sub" id="stVolSobra">0,00 KG (0%)</div>
+
+</div>
+
+</div>
+
+
+
+<div class="espelho-tools">
+
+<span id="espTotalRegistros" style="font-size:12px; font-weight:bold; color:#511d9b;">Listando 0 registros</span>
+
+<button class="btn-export" onclick="exportarExcel()">🟢 Exportar Excel / CSV</button>
+
+</div>
+
+
+
+<div class="table-responsive">
+
+<table class="espelho-table">
+
+<thead>
+
+<tr>
+
+<th>Ação</th><th>ID</th><th>Placa</th><th>Veículo</th><th>Motorista</th><th>Entrada</th><th>Saída</th>
+
+<th>Peso NF</th><th>Divergência</th><th>Status</th><th>Conferente</th><th>Tipo Carga</th>
+
+</tr>
+
+</thead>
+
+<tbody id="espelhoTableBody">
+
+<tr><td colspan="12" style="text-align:center; padding: 20px;">Carregando...</td></tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+
+
+<div class="pagination-container">
+
+<div>Página <span id="currentPageNum">1</span> de <span id="totalPagesNum">1</span></div>
+
+<div class="pagination-btns">
+
+<button id="btnPrevPage" onclick="mudarPagina(-1)">Anterior</button>
+
+<button id="btnNextPage" onclick="mudarPagina(1)">Próxima</button>
+
+</div>
+
+</div>
+
+
+
+</div>
+
+</div>
+
+
+
+<!-- ABA 3: LANÇAMENTOS (APPSHEET DIRETO) -->
+
+<div id="lancamentoTab" class="tab-content">
+
+<div class="appsheet-box">
+
+<h2 style="color: #511d9b; margin-top: 0; margin-bottom: 10px;">📝 MÓDULO DE LANÇAMENTOS</h2>
+
+<p style="color: #444; font-size: 13px; max-width: 550px; margin: 0 auto 25px auto; line-height: 1.5;">
+
+Clique no botão abaixo para abrir a página oficial do <strong>AppSheet Balança Gestão FIDF</strong> em uma nova janela. Faça o login na Frimesa e realize novos lançamentos ou edições com gravação 100% garantida na planilha.
+
+</p>
+
+
+
+<a href="https://www.appsheet.com/Account/Login?returnUrl=%2Fstart%2Fb5fbbbbc-a969-499f-858d-a50acab02d5c%3Fplatform%3Ddesktop&appId=b5fbbbbc-a969-499f-858d-a50acab02d5c#appName=Balan%C3%A7a-Gest%C3%A3oFIDF-320987412&vss=H4sIAAAAAAAAA6XOsQrCMBQF0H-5cxbXrOIgogiKi3GIzasE20SaVC0hH-O3-GO-qsVZHXPDue8mnC1dVlEXR8ht-rxm1EEiKay7EylIhbF3sfGVglBY6PoVLu-3g3V6pJCRd2LwkQJk-o7L_64LWEMu2tJS03f1kjvejr97xcFgkAXqNup9Rc_BbHLmrPRFG8hseMoPE8LUTa4n7czcG64sdRUoPwBx9iF9ZQEAAA==&view=P%C3%A1gina1&_mainprotocol=https:"
+
+target="_blank"
+
+class="btn-appsheet-launch">
+
+🚀 Abrir Lançamentos no AppSheet (Nova Janela)
+
+</a>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
+
+
+
+let ticketsCache = [];
+
+let filtradosEspelho = [];
+
+let ticketAtual = null;
+
+
+
+let paginaAtual = 1;
+
+const itensPorPagina = 15;
+
+
+
+const TABELA_TOLERANCIAS = {
+
+"TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
+
+"TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
+
+"TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
+
+};
+
+
+
+function trocarAba(abaId, btnElement) {
+
+document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+
+document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+document.getElementById(abaId).classList.add('active');
+
+btnElement.classList.add('active');
+
+if (abaId === 'espelhoTab') filtrarEspelho();
+
+}
+
+
+
+async function carregarDadosPlanilha() {
+
+try {
+
+const response = await fetch(API_JAVA_URL);
+
+if (!response.ok) throw new Error("Status HTTP " + response.status);
+
+
+
+const dados = await response.json();
+
+if (!Array.isArray(dados)) throw new Error("Resposta inválida do servidor Java");
+
+
+
+ticketsCache = dados.map(item => {
+
+return {
+
+id: item.id || '---',
+
+placa: item.placa || '---',
+
+veiculoModelo: item.veiculoModelo || '---',
+
+motorista: item.motorista || '---',
+
+movimento: item.movimento || '---',
+
+tipoCarga: item.tipoCarga || '---',
+
+numCarga: item.numCarga || '',
+
+nf: item.nf || '',
+
+dataEntradaRaw: item.dataEntradaTexto || '',
+
+dataEntradaTexto: item.dataEntradaTexto || '---',
+
+dataSaidaTexto: item.dataSaidaTexto || '---',
+
+lacres: item.lacres || '---',
+
+quantPallets: item.quantPallets || 0,
+
+pesoPallets: item.pesoPallets || 0,
+
+pesoCheio: item.pesoCheio || 0,
+
+pesoVazio: item.pesoVazio || 0,
+
+pesoLiquido: item.pesoLiquido || 0,
+
+pesoNf: item.pesoNf || 0,
+
+divergencia: item.divergencia || 0,
+
+conferente: item.conferente || '---',
+
+statusCalculado: item.status || 'S/D'
+
+};
+
+});
+
+
+
+atualizarFarol(true);
+
+
+
+// 1. Preenche a lista da Lupa independente do status do ticket!
+
+const datalist = document.getElementById('idList');
+
+if (datalist) {
+
+datalist.innerHTML = "";
+
+ticketsCache.forEach(t => {
+
+if (t.id && t.id !== '---') {
+
+const opt = document.createElement('option');
+
+opt.value = t.id;
+
+opt.label = `${t.id} - ${t.placa}`;
+
+datalist.appendChild(opt);
+
+}
+
+});
+
+}
+
+
+
+popularSelectConferentes();
+
+
+
+const filterInput = document.getElementById('filterDate');
+
+if (!filterInput.value && ticketsCache.length > 0) {
+
+const ultimoValido = [...ticketsCache].reverse().find(t => t.dataEntradaRaw && t.dataEntradaRaw !== '---');
+
+if (ultimoValido) {
+
+const iso = extrairDataISO(ultimoValido.dataEntradaRaw);
+
+if (iso) filterInput.value = iso;
+
+}
+
+}
+
+
+
+atualizarDashboard();
+
+filtrarEspelho();
+
+
+
+if (ticketAtual) {
+
+const recarregado = ticketsCache.find(x => x.id === ticketAtual.id);
+
+if (recarregado) renderizarTicket(recarregado);
+
+} else if (ticketsCache.length > 0) {
+
+const ultimoValido = [...ticketsCache].reverse().find(t => t.statusCalculado !== 'S/D');
+
+if (ultimoValido) renderizarTicket(ultimoValido);
+
+}
+
+} catch (err) {
+
+console.error("Erro ao carregar do servidor Java:", err);
+
+atualizarFarol(false, "CONECTANDO VIA APPSHEET...");
+
+}
+
+}
+
+
+
+function popularSelectConferentes() {
+
+const select = document.getElementById('espFiltroConferente');
+
+if (!select) return;
+
+
+
+const valorSelecionado = select.value || 'TODOS';
+
+select.innerHTML = '<option value="TODOS">TODOS OS CONFERENTES</option>';
+
+
+
+const conjuntoConferentes = new Set();
+
+ticketsCache.forEach(t => {
+
+const conf = (t.conferente || '').trim();
+
+if (conf && conf !== '---' && conf !== 'null') {
+
+conjuntoConferentes.add(conf);
+
+}
+
+});
+
+
+
+Array.from(conjuntoConferentes).sort().forEach(conf => {
+
+const opt = document.createElement('option');
+
+opt.value = conf;
+
+opt.textContent = conf;
+
+select.appendChild(opt);
+
+});
+
+
+
+if (conjuntoConferentes.has(valorSelecionado)) {
+
+select.value = valorSelecionado;
+
+} else {
+
+select.value = 'TODOS';
+
+}
+
+}
+
+
+
+function extrairDataISO(strData) {
+
+if (!strData || strData === '---') return null;
+
+// Remove espaços, Ts e vírgulas perdidas do AppSheet na primeira fatia da data
+
+const limpo = strData.split(' ')[0].split('T')[0].replace(/,/g, '').trim();
+
+
+
+if (/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return limpo;
+
+
+
+const partes = limpo.split(/[\/\.-]/);
+
+if (partes.length === 3) {
+
+let d, m, y;
+
+if (partes[0].length === 4) {
+
+y = partes[0]; m = partes[1]; d = partes[2];
+
+} else if (partes[2].length === 4) {
+
+const p0 = parseInt(partes[0], 10);
+
+const p1 = parseInt(partes[1], 10);
+
+y = partes[2];
+
+if (p0 > 12) { d = partes[0]; m = partes[1]; }
+
+else if (p1 > 12) { m = partes[0]; d = partes[1]; }
+
+else { d = partes[0]; m = partes[1]; }
+
+} else {
+
+return null;
+
+}
+
+return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+
+}
+
+return null;
+
+}
+
+
+
+function atualizarDashboard() {
+
+const filterInput = document.getElementById('filterDate');
+
+const dataFiltro = filterInput ? filterInput.value : '';
+
+
+
+const filtrados = ticketsCache.filter(t => {
+
+if (t.statusCalculado === 'S/D') return false;
+
+if (!dataFiltro) return true;
+
+const isoTicket = extrairDataISO(t.dataEntradaRaw);
+
+return isoTicket === dataFiltro;
+
+});
+
+
+
+document.getElementById('dashTotalVeiculos').innerText = filtrados.length;
+
+const totalVol = filtrados.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
+
+document.getElementById('dashTotalVolumeNf').innerText = formatarNumero(totalVol) + " KG";
+
+
+
+const cargasM = {}; const movM = {}; const confM = {};
+
+
+
+filtrados.forEach(t => {
+
+const c = (t.tipoCarga || 'OUTROS').toUpperCase().trim();
+
+if (!cargasM[c]) cargasM[c] = { v: 0, p: 0 };
+
+cargasM[c].v++; cargasM[c].p += (t.pesoNf || 0);
+
+
+
+const m = (t.movimento || 'OUTROS').toUpperCase().trim();
+
+if (!movM[m]) movM[m] = { v: 0, p: 0 };
+
+movM[m].v++; movM[m].p += (t.pesoNf || 0);
+
+
+
+const conf = (t.conferente || '').trim();
+
+if (conf && conf !== '---') {
+
+if (!confM[conf]) confM[conf] = { v: 0, p: 0 };
+
+confM[conf].v++; confM[conf].p += (t.pesoNf || 0);
+
+}
+
+});
+
+
+
+const renderT = (id, map) => {
+
+const tbody = document.getElementById(id);
+
+tbody.innerHTML = "";
+
+const keys = Object.keys(map);
+
+if (keys.length === 0) {
+
+tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sem dados para a data</td></tr>';
+
+return;
+
+}
+
+keys.sort().forEach(k => {
+
+tbody.innerHTML += `<tr><td>${k}</td><td class="num-col">${map[k].v}</td><td class="num-col">${formatarNumero(map[k].p)}</td></tr>`;
+
+});
+
+};
+
+
+
+renderT('dashTableCarga', cargasM);
+
+renderT('dashTableMovimento', movM);
+
+
+
+const tbodyConf = document.getElementById('dashTableConferente');
+
+tbodyConf.innerHTML = "";
+
+const confKeys = Object.keys(confM);
+
+
+
+if (confKeys.length === 0) {
+
+tbodyConf.innerHTML = '<tr><td colspan="4" style="text-align:center;">Sem dados para a data</td></tr>';
+
+} else {
+
+confKeys.sort().forEach(k => {
+
+const volConf = confM[k].p;
+
+const pctVol = totalVol > 0 ? ((volConf / totalVol) * 100).toFixed(1) : "0.0";
+
+tbodyConf.innerHTML += `
+
+<tr>
+
+<td>${k}</td>
+
+<td class="num-col">${confM[k].v}</td>
+
+<td class="num-col">${formatarNumero(volConf)}</td>
+
+<td class="num-col" style="color:#511d9b;">${pctVol}%</td>
+
+</tr>`;
+
+});
+
+}
+
+}
+
+
+
+function limparFiltrosEspelho() {
+
+document.getElementById('espFiltroBusca').value = '';
+
+document.getElementById('espFiltroConferente').value = 'TODOS';
+
+document.getElementById('espDataInicio').value = '';
+
+document.getElementById('espDataFim').value = '';
+
+document.getElementById('espFiltroStatus').value = 'TODOS';
+
+filtrarEspelho();
+
+}
+
+
+
+function filtrarEspelho() {
+
+const busca = (document.getElementById('espFiltroBusca').value || '').trim().toUpperCase();
+
+const confFiltro = document.getElementById('espFiltroConferente').value;
+
+const dtInicio = document.getElementById('espDataInicio').value;
+
+const dtFim = document.getElementById('espDataFim').value;
+
+const stFiltro = document.getElementById('espFiltroStatus').value;
+
+
+
+filtradosEspelho = ticketsCache.filter(t => {
+
+const matchTexto = !busca ||
+
+t.id.toUpperCase().includes(busca) ||
+
+t.placa.toUpperCase().includes(busca) ||
+
+t.motorista.toUpperCase().includes(busca) ||
+
+t.conferente.toUpperCase().includes(busca);
+
+
+
+const matchConferente = (confFiltro === 'TODOS') || (t.conferente === confFiltro);
+
+const matchStatus = (stFiltro === 'TODOS') || (t.statusCalculado === stFiltro);
+
+
+
+let matchData = true;
+
+const isoData = extrairDataISO(t.dataEntradaRaw);
+
+if (isoData) {
+
+if (dtInicio && isoData < dtInicio) matchData = false;
+
+if (dtFim && isoData > dtFim) matchData = false;
+
+}
+
+
+
+return matchTexto && matchConferente && matchStatus && matchData;
+
+});
+
+
+
+atualizarCardsResumoEspelho();
+
+paginaAtual = 1;
+
+renderizarTabelaEspelho();
+
+}
+
+
+
+function atualizarCardsResumoEspelho() {
+
+let cntVazio = 0, cntOk = 0, cntFalta = 0, cntSobra = 0;
+
+let volVazio = 0, volOk = 0, volFalta = 0, volSobra = 0;
+
+
+
+const totalRegistros = filtradosEspelho.length;
+
+const totalVolGeral = filtradosEspelho.reduce((sum, item) => sum + (item.pesoNf || 0), 0);
+
+
+
+filtradosEspelho.forEach(t => {
+
+const st = t.statusCalculado;
+
+const pNf = t.pesoNf || 0;
+
+
+
+if (st === 'VAZIO') {
+
+cntVazio++; volVazio += pNf;
+
+} else if (st === 'OK') {
+
+cntOk++; volOk += pNf;
+
+} else if (st === 'FALTA') {
+
+cntFalta++; volFalta += pNf;
+
+} else if (st === 'SOBRA') {
+
+cntSobra++; volSobra += pNf;
+
+}
+
+});
+
+
+
+const calcPct = (parcial, total) => total > 0 ? ((parcial / total) * 100).toFixed(1) : "0.0";
+
+
+
+document.getElementById('stValVazio').innerText = `${cntVazio} veíc. (${calcPct(cntVazio, totalRegistros)}%)`;
+
+document.getElementById('stVolVazio').innerText = `${formatarNumero(volVazio)} KG (${calcPct(volVazio, totalVolGeral)}%)`;
+
+
+
+document.getElementById('stValOk').innerText = `${cntOk} veíc. (${calcPct(cntOk, totalRegistros)}%)`;
+
+document.getElementById('stVolOk').innerText = `${formatarNumero(volOk)} KG (${calcPct(volOk, totalVolGeral)}%)`;
+
+
+
+document.getElementById('stValFalta').innerText = `${cntFalta} veíc. (${calcPct(cntFalta, totalRegistros)}%)`;
+
+document.getElementById('stVolFalta').innerText = `${formatarNumero(volFalta)} KG (${calcPct(volFalta, totalVolGeral)}%)`;
+
+
+
+document.getElementById('stValSobra').innerText = `${cntSobra} veíc. (${calcPct(cntSobra, totalRegistros)}%)`;
+
+document.getElementById('stVolSobra').innerText = `${formatarNumero(volSobra)} KG (${calcPct(volSobra, totalVolGeral)}%)`;
+
+}
+
+
+
+function renderizarTabelaEspelho() {
+
+const tbody = document.getElementById('espelhoTableBody'); tbody.innerHTML = "";
+
+document.getElementById('espTotalRegistros').innerText = `Listando ${filtradosEspelho.length} registro(s)`;
+
+if (filtradosEspelho.length === 0) {
+
+tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px;">Nenhum registro encontrado.</td></tr>`;
+
+actualizarPaginacao(0, 0); return;
+
+}
+
+const totalPaginas = Math.ceil(filtradosEspelho.length / itensPorPagina);
+
+const inicio = (paginaAtual - 1) * itensPorPagina;
+
+const paginaItens = filtradosEspelho.slice(inicio, inicio + itensPorPagina);
+
+
+
+paginaItens.forEach(t => {
+
+let stClass = 'status-ok';
+
+if(t.statusCalculado === 'FALTA' || t.statusCalculado === 'SOBRA') stClass = 'status-falta';
+
+else if(t.statusCalculado === 'VAZIO') stClass = 'status-vazio';
+
+else if(t.statusCalculado === 'S/D') stClass = 'status-sd';
+
+
+
+tbody.innerHTML += `<tr>
+
+<td style="text-align:center;"><button class="btn-view-ticket" onclick="abrirTicketPorId('${t.id}')">🎫 Ver</button></td>
+
+<td style="font-weight:bold; background-color:#ffffcc;">${t.id}</td><td style="font-weight:bold;">${t.placa}</td>
+
+<td>${t.veiculoModelo}</td><td>${t.motorista}</td><td>${t.dataEntradaTexto}</td><td>${t.dataSaidaTexto}</td>
+
+<td>${formatarNumero(t.pesoNf)}</td><td style="font-weight:bold;">${formatarNumero(t.divergencia)}</td>
+
+<td class="${stClass}" style="text-align:center;">${t.statusCalculado}</td><td>${t.conferente}</td><td>${t.tipoCarga}</td>
+
+</tr>`;
+
+});
+
+actualizarPaginacao(paginaAtual, totalPaginas);
+
+}
+
+
+
+function actualizarPaginacao(atual, total) {
+
+document.getElementById('currentPageNum').innerText = atual;
+
+document.getElementById('totalPagesNum').innerText = total;
+
+document.getElementById('btnPrevPage').disabled = (atual <= 1);
+
+document.getElementById('btnNextPage').disabled = (atual >= total || total === 0);
+
+}
+
+
+
+function mudarPagina(delta) { paginaAtual += delta; renderizarTabelaEspelho(); }
+
+function abrirTicketPorId(id) {
+
+const enc = ticketsCache.find(x => x.id === id);
+
+if (enc) { renderizarTicket(enc); trocarAba('ticketTab', document.querySelectorAll('.nav-btn')[0]); }
+
+}
+
+
+
+function exportarExcel() {
+
+if (filtradosEspelho.length === 0) { alert("Nenhum dado para exportar!"); return; }
+
+let csvStr = "ID;Placa;Veiculo;Motorista;Entrada;Saida;PesoNF;Divergencia;Status;Conferente;TipoCarga\n";
+
+filtradosEspelho.forEach(t => { csvStr += `"${t.id}";"${t.placa}";"${t.veiculoModelo}";"${t.motorista}";"${t.dataEntradaTexto}";"${t.dataSaidaTexto}";"${t.pesoNf}";"${t.divergencia}";"${t.statusCalculado}";"${t.conferente}";"${t.tipoCarga}"\n`; });
+
+const blob = new Blob(["\ufeff" + csvStr], { type: 'text/csv;charset=utf-8;' });
+
+const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
+
+link.setAttribute("download", `Espelho_Balanca_${new Date().toISOString().split('T')[0]}.csv`);
+
+document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+}
+
+
+
+function atualizarFarol(online, msg) {
+
+document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
+
+document.getElementById('statusText').innerText = online ? `CONECTADO VIA APPSHEET API (${ticketsCache.length})` : (msg || 'FALHA');
+
+if (online) document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString('pt-BR');
+
+}
+
+
+
+function tratarKeyPress(e) { if (e.key === 'Enter') executarBusca(); }
+
+function executarBusca() {
+
+const rawVal = document.getElementById('inputId').value; if (!rawVal) return;
+
+const tL = rawVal.trim().toUpperCase();
+
+const enc = ticketsCache.find(x => x.id.toUpperCase() === tL || x.placa.toUpperCase() === tL);
+
+if (enc) { document.getElementById('inputId').value = enc.id; renderizarTicket(enc); } else alert("Ticket não encontrado.");
+
+}
+
+function formatarNumero(num) { if (num === null || num === undefined) return "---"; return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function identificarToleranciaPorVeiculo(veiculo) {
+
+if (!veiculo) return 'TOLERÂNCIA TRUCK'; const v = veiculo.toUpperCase();
+
+if (v.includes('VAN')) return 'TOLERÂNCIA VAN'; if (v.includes('VUC')) return 'TOLERÂNCIA VUC';
+
+if (v.includes('3/4') || v.includes('34') || v.includes('3QT')) return 'TOLERÂNCIA 34'; if (v.includes('TOCO')) return 'TOLERÂNCIA TOCO';
+
+if (v.includes('BITRUCK')) return 'TOLERÂNCIA BITRUCK'; if (v.includes('TRUCK')) return 'TOLERÂNCIA TRUCK';
+
+if (v.includes('CARRETA') || v.includes('BITREM')) return 'TOLERÂNCIA CARRETA'; if (v.includes('UTILITARIO') || v.includes('PARTICULAR')) return 'TOLERÂNCIA UTILITARIO';
+
+return 'TOLERÂNCIA TRUCK';
+
+}
+
+
+
+function renderizarTicket(t) {
+
+ticketAtual = t;
+
+document.getElementById('dataEmissao').innerText = new Date().toLocaleString('pt-BR');
+
+document.getElementById('id').innerText = t.id;
+
+document.getElementById('placa').innerText = t.placa || '---';
+
+document.getElementById('veiculoModelo').innerText = t.veiculoModelo || '---';
+
+document.getElementById('motorista').innerText = t.motorista || '---';
+
+document.getElementById('dataEntrada').innerText = t.dataEntradaTexto || '---';
+
+document.getElementById('dataSaida').innerText = t.dataSaidaTexto || '---';
+
+document.getElementById('lacres').innerText = t.lacres || '---';
+
+
+
+document.getElementById('quantPallets').innerText = t.quantPallets > 0 ? t.quantPallets : '---';
+
+document.getElementById('pesoPallets').innerText = t.pesoPallets > 0 ? formatarNumero(t.pesoPallets) + ' KG' : '---';
+
+
+
+document.getElementById('pesoCheio').innerText = t.pesoCheio > 0 ? formatarNumero(t.pesoCheio) + ' KG' : '---';
+
+document.getElementById('pesoVazio').innerText = t.pesoVazio > 0 ? formatarNumero(t.pesoVazio) + ' KG' : '---';
+
+
+
+const pesoLiquido = (t.pesoCheio > 0 && t.pesoVazio > 0) ? (t.pesoCheio - t.pesoVazio) : null;
+
+document.getElementById('pesoLiquido').innerText = pesoLiquido !== null ? formatarNumero(pesoLiquido) + ' KG' : '---';
+
+
+
+document.getElementById('pesoNf').innerText = t.pesoNf > 0 ? formatarNumero(t.pesoNf) + ' KG' : '---';
+
+
+
+document.getElementById('divergencia').innerText = (pesoLiquido !== null && t.pesoNf >= 0) ? formatarNumero(t.divergencia) + ' KG' : '---';
+
+document.getElementById('conferente').innerText = t.conferente || '---';
+
+
+
+const tolNome = identificarToleranciaPorVeiculo(t.veiculoModelo);
+
+document.getElementById('toleranciaRotuloText').innerText = tolNome;
+
+
+
+recalcularToleranciaManual();
+
+gerarQRCodeNativo(t);
+
+}
+
+
+
+function recalcularToleranciaManual() {
+
+if (!ticketAtual) return;
+
+const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
+
+const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0;
+
+const divergencia = ticketAtual.divergencia || 0.0;
+
+
+
+document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
+
+
+
+let status = calcularStatusInteligente(ticketAtual.placa, ticketAtual.dataEntradaRaw, ticketAtual.dataSaidaTexto, ticketAtual.tipoCarga, ticketAtual.pesoNf, divergencia, limiteKg);
+
+
+
+let resultado = "FORA DA TOLERÂNCIA";
+
+let stClass = 'value status-falta';
+
+
+
+if(status === 'VAZIO') { resultado = "VEÍCULO VAZIO / PÁTIO"; stClass = 'value status-vazio'; }
+
+else if(status === 'OK') { resultado = "DENTRO DA TOLERÂNCIA"; stClass = 'value status-ok'; }
+
+else if(status === 'S/D') { resultado = "SEM DADOS REGISTRADOS"; stClass = 'value status-sd'; }
+
+
+
+document.getElementById('resultado').innerText = resultado;
+
+const statusEl = document.getElementById('status');
+
+statusEl.innerText = status;
+
+statusEl.className = stClass;
+
+}
+
+
+
+function calcularStatusInteligente(placa, dataEntradaRaw, dataSaidaTexto, tipoCarga, pesoNf, divergencia, limiteKg) {
+
+if (!placa || placa === '---' || !dataEntradaRaw || dataEntradaRaw === '---') return 'S/D';
+
+const cargaUpper = (tipoCarga || '').toUpperCase();
+
+if (cargaUpper.includes('VAZIO') || cargaUpper.includes('PATIO')) return 'VAZIO';
+
+if (pesoNf === 0) return 'OK';
+
+return Math.abs(divergencia) <= limiteKg ? "OK" : (divergencia < 0 ? "FALTA" : "SOBRA");
+
+}
+
+
+
+function gerarQRCodeNativo(t) {
+
+const hash = `FRM-${t.id}-${t.placa}-${Math.abs(t.divergencia || 0).toFixed(0)}`;
+
+document.getElementById('authHash').innerText = hash;
+
+const payload = encodeURIComponent(`FRIMESA FIDF|TICKET:${t.id}|PLACA:${t.placa}|AUTH:${hash}`);
+
+document.getElementById('qrCodeImg').src = `https://quickchart.io/qr?text=${payload}&size=120&margin=1`;
+
+}
+
+
+
+function baixarPDF() {
+
+if (!ticketAtual) return alert("Selecione um Ticket.");
+
+html2pdf().set({
+
+margin: [0.15, 0.15, 0.15, 0.15],
+
+filename: `Ticket_Balanca_${ticketAtual.id}_${ticketAtual.placa}.pdf`,
+
+image: { type: 'jpeg', quality: 0.98 },
+
+html2canvas: { scale: 2, useCORS: true },
+
+jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+
+}).from(document.getElementById('ticket')).save();
+
+}
+
+
+
+function enviarEmail() {
+
+if (!ticketAtual) return alert("Selecione um Ticket.");
+
+const assunto = encodeURIComponent(`Ticket Balança Frimesa FIDF - ID: ${ticketAtual.id} (${ticketAtual.placa})`);
+
+const corpo = encodeURIComponent(`FRIMESA TICKET BALANÇA\nID: ${ticketAtual.id}\nPLACA: ${ticketAtual.placa}\nMOTORISTA: ${ticketAtual.motorista}\nENTRADA: ${ticketAtual.dataEntradaTexto}\nSTATUS: ${ticketAtual.statusCalculado}`);
+
+window.location.href = `mailto:?subject=${assunto}&body=${corpo}`;
+
+}
+
+
+
+function imprimirTicket() { if (ticketAtual) window.print(); }
+
+
+
+carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
+
+</script>
+
 </body>
-</html>
+
+</html> 
+
