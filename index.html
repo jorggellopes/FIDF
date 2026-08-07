@@ -264,7 +264,7 @@
         }
 
         /* -------------------------------------------------------------
-           CSS DO INFORMATIVO DIÁRIO
+           CSS DO INFORMATIVO DIÁRIO (MÉTRICAS SECUNDÁRIAS)
            ------------------------------------------------------------- */
         .info-container {
             background: #f4f6f9;
@@ -345,6 +345,15 @@
             font-size: 1.6rem;
             font-weight: bold;
             color: #511d9b;
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+        .info-card .info-subvalue {
+            font-size: 0.85rem;
+            font-weight: normal;
+            color: #666;
+            margin-left: 6px;
         }
         .info-card .info-subtitle {
             font-size: 0.75rem;
@@ -635,7 +644,7 @@
                 INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF
             </div>
 
-            <!-- Seção de Filtros (type="datetime-local" PARA SELEÇÃO DE DATA E HORA EXATA) -->
+            <!-- Seção de Filtros -->
             <div class="info-filters-section" id="filtroContainer">
                 <div class="info-filter-group">
                     <label for="dataInicio">Data e Hora Início</label>
@@ -672,13 +681,13 @@
                 <div class="info-card">
                     <h3>Volume Disponível</h3>
                     <div class="info-value" id="valVolDisponivel">0,00 KG</div>
-                    <div class="info-subtitle">Regra: Entregas (19h às 07h)</div>
+                    <div class="info-subtitle">Regra: Entregas (19h às 07h ou Peso NF > 0)</div>
                 </div>
 
                 <div class="info-card">
                     <h3>Volume CROSS</h3>
                     <div class="info-value" id="valVolCross">0,00 KG</div>
-                    <div class="info-subtitle">Regra: CROSS (19h às 07h)</div>
+                    <div class="info-subtitle">Regra: CROSS (19h às 07h ou Peso NF > 0)</div>
                 </div>
 
                 <div class="info-card info-bg-blue">
@@ -689,7 +698,10 @@
 
                 <div class="info-card info-bg-blue">
                     <h3>% Capacidade de Expedição</h3>
-                    <div class="info-value" id="valPctCapacidadeExp">0%</div>
+                    <div class="info-value">
+                        <span id="valPctCapacidadeExp">0%</span>
+                        <span class="info-subvalue" id="valPctCapacidadeExpSub">| 0% Oportunidade</span>
+                    </div>
                     <div class="info-subtitle">Regra: Total Expedido / 38 Tons/dia (38.000 KG)</div>
                 </div>
 
@@ -701,7 +713,10 @@
 
                 <div class="info-card info-bg-orange">
                     <h3>% Utilização da Frota</h3>
-                    <div class="info-value" id="valPctFrota">0%</div>
+                    <div class="info-value">
+                        <span id="valPctFrota">0%</span>
+                        <span class="info-subvalue" id="valPctFrotaSub">| 0% Ociosidade</span>
+                    </div>
                     <div class="info-subtitle">Regra: Carros Utilizados / 12 veículos da frota</div>
                 </div>
 
@@ -719,19 +734,28 @@
 
                 <div class="info-card info-bg-cyan">
                     <h3>Ocupação Congelado</h3>
-                    <div class="info-value" id="valOcupCongelado">0%</div>
+                    <div class="info-value">
+                        <span id="valOcupCongelado">0%</span>
+                        <span class="info-subvalue" id="valOcupCongeladoSub">| 0% Disponível</span>
+                    </div>
                     <div class="info-subtitle">Posições Ocupadas / 186 totais</div>
                 </div>
 
                 <div class="info-card info-bg-cyan">
                     <h3>Ocupação Resfriado</h3>
-                    <div class="info-value" id="valOcupResfriado">0%</div>
+                    <div class="info-value">
+                        <span id="valOcupResfriado">0%</span>
+                        <span class="info-subvalue" id="valOcupResfriadoSub">| 0% Disponível</span>
+                    </div>
                     <div class="info-subtitle">Posições Ocupadas / 334 totais</div>
                 </div>
 
                 <div class="info-card info-bg-green">
                     <h3>Ocupação do CD (Total)</h3>
-                    <div class="info-value" id="valOcupCD">0%</div>
+                    <div class="info-value">
+                        <span id="valOcupCD">0%</span>
+                        <span class="info-subvalue" id="valOcupCDSub">| 0% Disponível</span>
+                    </div>
                     <div class="info-subtitle">Total posições ocupadas / 520 do CD</div>
                 </div>
 
@@ -756,7 +780,6 @@
             "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
         };
 
-        // PARSER SEGURO DE DATA/HORA PARA TRATAR FORMATOS DIVERGENTES DA API
         function extrairDataISO(strData) {
             if (!strData || strData === '---') return null;
             let limpo = strData.split(' ')[0].split('T')[0].trim();
@@ -907,7 +930,6 @@
             }
         }
 
-        // RESUMO DIÁRIO: MODELO PURO DO SITE (SEM EXIBIÇÃO DE PLACAS)
         function atualizarDashboard() {
             const filterInput = document.getElementById('filterDate');
             const dataFiltro = filterInput ? filterInput.value : '';
@@ -1224,7 +1246,7 @@
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
 
         /* =========================================================================
-           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF (CORRIGIDO)
+           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF (REFINADO COM DUPLA CHECAGEM)
            ========================================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -1275,9 +1297,7 @@
                 const dateEnd = new Date(dtFimVal);
 
                 dadosBalanca.forEach(lancamento => {
-                    // Data de entrada para validar a janela geral
                     const dataHoraEntrada = lerDataHoraInformativo(lancamento.dataEntradaRaw);
-                    // Data/Hora de Saída específica para determinar a Hora da Largada
                     const dataHoraSaida = lerDataHoraInformativo(lancamento.dataSaidaRaw) || dataHoraEntrada;
                     
                     if (dataHoraEntrada && !isNaN(dataHoraEntrada.getTime())) {
@@ -1300,18 +1320,22 @@
                                     volRecebido += peso;
                                 }
 
-                                // Volume Disponível: Entregas (19:00 às 07:00)
-                                if (tipoCargaStr.includes("ENTREGAS") && (hora >= 19 || hora < 7)) {
+                                // REGRA REFINADA - Volume Disponível (ENTREGAS):
+                                // Condição 1: Horário Noturno de Separação (19h às 07h)
+                                // OU
+                                // Condição 2: Exceção de Saída Antecipada (Peso NF preenchido > 0)
+                                if (tipoCargaStr.includes("ENTREGAS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volDisponivel += peso;
                                 }
 
-                                // Volume CROSS: CROSS (19:00 às 07:00)
-                                if (tipoCargaStr.includes("CROSS") && (hora >= 19 || hora < 7)) {
+                                // REGRA REFINADA - Volume CROSS:
+                                // Condição 1: Horário Noturno (19h às 07h) OU Condição 2: Peso NF > 0
+                                if (tipoCargaStr.includes("CROSS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volCross += peso;
                                 }
 
-                                // Captura a Data/Hora DE SAÍDA do último carro para a Largada
-                                if ((tipoCargaStr.includes("ENTREGAS") || tipoCargaStr.includes("CROSS")) && (hora >= 19 || hora < 7)) {
+                                // Captura a Data/Hora DE SAÍDA do último carro para a Hora da Largada
+                                if ((tipoCargaStr.includes("ENTREGAS") || tipoCargaStr.includes("CROSS")) && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     if (dataHoraSaida && (!ultimaDataHoraSaida || dataHoraSaida > ultimaDataHoraSaida)) {
                                         ultimaDataHoraSaida = dataHoraSaida;
                                     }
@@ -1331,7 +1355,6 @@
                     const mm = ultimaDataHoraSaida.getMinutes().toString().padStart(2, '0');
                     strHoraLargada = `${hh.toString().padStart(2, '0')}:${mm}`;
                     
-                    // Saídas até as 07:00:00 -> FINALIZADO
                     if (hh < 7 || (hh === 7 && mm === '00')) {
                         statusLargada = "FINALIZADO";
                         classStatus = "info-status-finalizado";
@@ -1341,26 +1364,39 @@
                     }
                 }
 
-                // CÁLCULOS DOS NOVOS INDICADORES DE PERFORMANCE
+                // CÁLCULOS DOS NOVOS INDICADORES DE PERFORMANCE E SEUS COMPLEMENTOS
                 const capacidadeExpedicaoKg = 38000; // 38 Tons/dia
                 const frotaTotalVeiculos = 12; // 12 Veículos
                 
                 const pctCapacidadeExp = capacidadeExpedicaoKg > 0 ? (totalExpedido / capacidadeExpedicaoKg) * 100 : 0;
-                const pctFrotaUtilizada = frotaTotalVeiculos > 0 ? (conjuntoCarros.size / frotaTotalVeiculos) * 100 : 0;
+                const pctCapacidadeOportunidade = Math.max(0, 100 - pctCapacidadeExp);
 
-                // CÁLCULO DA OCUPAÇÃO INVERTIDA DO WMS
+                const pctFrotaUtilizada = frotaTotalVeiculos > 0 ? (conjuntoCarros.size / frotaTotalVeiculos) * 100 : 0;
+                const pctFrotaOciosa = Math.max(0, 100 - pctFrotaUtilizada);
+
+                // OCUPAÇÃO DO WMS E DISPONIBILIDADE
                 const percCongeladoOcupado = 87.6;
+                const percCongeladoDisp = (100 - percCongeladoOcupado).toFixed(1);
+
                 const percResfriadoOcupado = 82.3;
+                const percResfriadoDisp = (100 - percResfriadoOcupado).toFixed(1);
+
                 const percCDOcupado = 84.2;
+                const percCDDisp = (100 - percCDOcupado).toFixed(1);
 
                 document.getElementById("valVolRecebido").innerText = formatarNumero(volRecebido) + " KG";
                 document.getElementById("valVolDisponivel").innerText = formatarNumero(volDisponivel) + " KG";
                 document.getElementById("valVolCross").innerText = formatarNumero(volCross) + " KG";
                 document.getElementById("valTotalExpedido").innerText = formatarNumero(totalExpedido) + " KG";
                 
+                // Atualização dos cards com valores principais e secundários
                 document.getElementById("valPctCapacidadeExp").innerText = pctCapacidadeExp.toFixed(1) + "%";
+                document.getElementById("valPctCapacidadeExpSub").innerText = `| ${pctCapacidadeOportunidade.toFixed(1)}% Oportunidade`;
+
                 document.getElementById("valCarrosDisp").innerText = conjuntoCarros.size;
+                
                 document.getElementById("valPctFrota").innerText = pctFrotaUtilizada.toFixed(1) + "%";
+                document.getElementById("valPctFrotaSub").innerText = `| ${pctFrotaOciosa.toFixed(1)}% Ociosidade`;
 
                 document.getElementById("valHoraLargada").innerText = strHoraLargada;
                 
@@ -1369,8 +1405,13 @@
                 stLargadaEl.className = "info-value " + classStatus;
 
                 document.getElementById("valOcupCongelado").innerText = percCongeladoOcupado.toFixed(1) + "%";
+                document.getElementById("valOcupCongeladoSub").innerText = `| ${percCongeladoDisp}% Disponível`;
+
                 document.getElementById("valOcupResfriado").innerText = percResfriadoOcupado.toFixed(1) + "%";
+                document.getElementById("valOcupResfriadoSub").innerText = `| ${percResfriadoDisp}% Disponível`;
+
                 document.getElementById("valOcupCD").innerText = percCDOcupado.toFixed(1) + "%";
+                document.getElementById("valOcupCDSub").innerText = `| ${percCDDisp}% Disponível`;
 
             } catch (error) {
                 console.error("Erro ao processar informativo:", error);
