@@ -263,9 +263,7 @@
             transform: translateY(-2px);
         }
 
-        /* -------------------------------------------------------------
-           CSS DO INFORMATIVO DIÁRIO (MÉTRICAS SECUNDÁRIAS)
-           ------------------------------------------------------------- */
+        /* INFORMATIVO DIÁRIO */
         .info-container {
             background: #f4f6f9;
             padding: 20px;
@@ -368,9 +366,66 @@
         .info-bg-orange { border-top-color: #fd7e14; }
         .info-bg-cyan { border-top-color: #17a2b8; }
 
+        /* ESTILOS DA ABA PALLETS */
+        .pallets-container {
+            background-color: #ffffff;
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .pallets-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .pallets-table th {
+            background-color: #511d9b;
+            color: white;
+            padding: 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            border: 1px solid #3b1473;
+            text-align: left;
+        }
+        .pallets-table td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .pallets-table tr:nth-child(even) { background-color: #f8fafc; }
+        .pallets-table .num-col { text-align: right; font-weight: bold; }
+        .saldo-devedor-negativo { color: #dc2626; font-weight: bold; }
+        .saldo-devedor-positivo { color: #16a34a; font-weight: bold; }
+
+        .btn-cobranca {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-cobranca:hover { background-color: #b91c1c; }
+
+        /* IMPRESSÃO DA NOTIFICAÇÃO DE COBRANÇA */
+        #notificacaoImpressao {
+            display: none;
+            background: #ffffff;
+            padding: 30px;
+            border: 2px solid #000;
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+
         @media print {
             body { background: none; padding: 0; }
-            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box, .info-filters-section { display: none !important; }
+            .nav-menu, .status-bar, .search-container, .dashboard-card, .ticket-actions, .espelho-card, .appsheet-box, .info-filters-section, .pallets-container { display: none !important; }
+            #notificacaoImpressao { display: block !important; border: none; padding: 0; }
             .main-layout { display: block; }
             .ticket-card { box-shadow: none; border: 2px solid #000; max-width: 100%; width: 100%; }
         }
@@ -383,6 +438,7 @@
         <button class="nav-btn" onclick="trocarAba('espelhoTab', this)">📊 Espelho da Planilha</button>
         <button class="nav-btn" onclick="trocarAba('lancamentoTab', this)">📝 Lançamentos (AppSheet)</button>
         <button class="nav-btn" onclick="trocarAba('informativoTab', this)">📈 Informativo Diário</button>
+        <button class="nav-btn" onclick="trocarAba('palletsTab', this)">📦 Pallets</button>
     </div>
 
     <div class="status-bar">
@@ -763,6 +819,109 @@
         </div>
     </div>
 
+    <!-- ABA 5: CONTROLE DE PALLETS -->
+    <div id="palletsTab" class="tab-content">
+        <div class="pallets-container">
+            <div class="dashboard-header" style="background-color: #511d9b; color: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; text-transform: uppercase; font-size: 18px; font-weight: bold;">
+                CONTROLE DE PALLETS FIDF
+            </div>
+
+            <!-- TABELA 1: RESUMO POR TIPO DE OPERAÇÃO -->
+            <div class="dash-section-title" style="font-size: 13px; margin-bottom: 10px;">Consolidado por Tipo de Operação</div>
+            <table class="pallets-table">
+                <thead>
+                    <tr>
+                        <th>Tipo de Operação</th>
+                        <th style="text-align: right;">Saídas (Qt)</th>
+                        <th style="text-align: right;">Entradas (Qt)</th>
+                        <th style="text-align: right;">Saldo (Entrada - Saída)</th>
+                    </tr>
+                </thead>
+                <tbody id="palletsTableOperacao">
+                    <tr><td colspan="4" style="text-align:center;">Carregando dados...</td></tr>
+                </tbody>
+            </table>
+
+            <!-- TABELA 2: POSIÇÃO POR PLACA -->
+            <div class="dash-section-title" style="font-size: 13px; margin-bottom: 10px; margin-top: 30px;">Posição e Saldo Devedor por Veículo / Placa</div>
+            <table class="pallets-table">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Modelo / Veículo</th>
+                        <th style="text-align: right;">Qt Saída</th>
+                        <th style="text-align: right;">Qt Entrada</th>
+                        <th style="text-align: right;">Saldo Devedor (Qt)</th>
+                        <th style="text-align: center;">Cobrança</th>
+                    </tr>
+                </thead>
+                <tbody id="palletsTablePlacas">
+                    <tr><td colspan="6" style="text-align:center;">Carregando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- NOTIFICAÇÃO DE COBRANÇA IMPRESSA -->
+        <div id="notificacaoImpressao">
+            <div class="logo-container" style="text-align: left; margin-bottom: 20px;">
+                <svg viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" style="max-width: 150px;">
+                    <rect width="300" height="80" fill="#ffffff"/>
+                    <path d="M 20,15 L 280,15 L 280,65 L 20,65 Z" fill="none" stroke="#d00000" stroke-width="2"/>
+                    <text x="150" y="48" font-family="'Courier New', Courier, monospace" font-size="32" font-weight="900" fill="#d00000" text-anchor="middle" letter-spacing="2">FRIMESA</text>
+                    <text x="150" y="61" font-family="'Courier New', Courier, monospace" font-size="10" font-weight="bold" fill="#006000" text-anchor="middle" letter-spacing="1">FILIAL FIDF</text>
+                </svg>
+            </div>
+            
+            <h2 style="font-size: 16px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase;">
+                NOTIFICAÇÃO DE DÉBITO DE PALLETS — FRIMESA FILIAL FIDF
+            </h2>
+
+            <p style="font-size: 13px; line-height: 1.6; margin-bottom: 15px;">
+                Caro transportador, identificamos que a placa <strong id="notifPlaca">---</strong> possui débitos de pallets a serem devolvidos à Frimesa.
+            </p>
+
+            <p style="font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                Informamos que caso o débito não seja sanado, estaremos realizando o desconto em sua fatura. O valor unitário do pallet é de <strong>R$ 20,00 (Vinte reais)</strong>.
+            </p>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #000;">
+                <tr style="background-color: #f2f2f2;">
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px;">VEÍCULO / MODELO:</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-size: 12px;" id="notifVeiculo">---</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px;">PALLETS RETIRADOS (SAÍDA):</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-size: 12px;" id="notifSaida">0</td>
+                </tr>
+                <tr style="background-color: #f2f2f2;">
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px;">PALLETS DEVOLVIDOS (ENTRADA):</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-size: 12px;" id="notifEntrada">0</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px; color: #dc2626;">SALDO DEVEDOR:</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px; color: #dc2626;" id="notifSaldo">0 pallets</td>
+                </tr>
+                <tr style="background-color: #ffffcc;">
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 12px;">VALOR TOTAL DO DÉBITO:</td>
+                    <td style="padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 13px;" id="notifValorTotal">R$ 0,00</td>
+                </tr>
+            </table>
+
+            <p style="font-size: 12px; font-weight: bold; margin-bottom: 40px;">
+                Informamos que este saldo é válido para a data de hoje, dia <span id="notifData">--/--/----</span>.
+            </p>
+
+            <div style="margin-top: 60px; display: flex; justify-content: space-between; text-align: center;">
+                <div style="width: 45%; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; font-weight: bold;">
+                    FRIMESA COOPERATIVA CENTRAL<br>FILIAL FIDF
+                </div>
+                <div style="width: 45%; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; font-weight: bold;">
+                    CIENTE DO TRANSPORTADOR<br>ASSINATURA / CARIMBO
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const API_JAVA_URL = "https://fidf-api.onrender.com/api/tickets";
@@ -774,10 +933,11 @@
         let paginaAtual = 1;
         const itensPorPagina = 15;
 
+        // TABELA DE TOLERÂNCIAS ATUALIZADA
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
-            "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 24.0,
-            "TOLERÂNCIA BITRUCK": 32.0, "TOLERÂNCIA CARRETA": 56.0
+            "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 14.0,
+            "TOLERÂNCIA BITRUCK": 16.0, "TOLERÂNCIA CARRETA": 20.0
         };
 
         function extrairDataISO(strData) {
@@ -818,6 +978,7 @@
             btnElement.classList.add('active');
             if (abaId === 'espelhoTab') filtrarEspelho();
             if (abaId === 'informativoTab') processarInformativo();
+            if (abaId === 'palletsTab') processarPallets();
         }
 
         async function carregarDadosPlanilha() {
@@ -886,6 +1047,10 @@
 
                 if (document.getElementById('informativoTab').classList.contains('active')) {
                     processarInformativo();
+                }
+
+                if (document.getElementById('palletsTab').classList.contains('active')) {
+                    processarPallets();
                 }
 
                 if (ticketAtual) {
@@ -1116,7 +1281,7 @@
         function mudarPagina(delta) { paginaAtual += delta; renderizarTabelaEspelho(); }
         function abrirTicketPorId(id) {
             const enc = ticketsCache.find(x => x.id === id);
-            if (enc) { renderizarTicket(enc); trocarAba('ticketTab', document.querySelectorAll('.nav-btn')[0]); }
+            if (enc) { renderizarTicket(enc); trocarAba('ticketTab', documentquerySelectorAll('.nav-btn')[0]); }
         }
 
         function exportarExcel() {
@@ -1188,7 +1353,7 @@
         function recalcularToleranciaManual() {
             if (!ticketAtual) return; 
             const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
-            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 24.0; 
+            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 14.0; 
             const divergencia = ticketAtual.divergencia || 0.0;
 
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
@@ -1246,7 +1411,7 @@
         carregarDadosPlanilha(); setInterval(carregarDadosPlanilha, 10000);
 
         /* =========================================================================
-           SCRIPT EXCLUSIVO DO INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF (REFINADO COM DUPLA CHECAGEM)
+           INFORMATIVO DIÁRIO DA OPERAÇÃO FIDF
            ========================================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -1320,16 +1485,12 @@
                                     volRecebido += peso;
                                 }
 
-                                // REGRA REFINADA - Volume Disponível (ENTREGAS):
-                                // Condição 1: Horário Noturno de Separação (19h às 07h)
-                                // OU
-                                // Condição 2: Exceção de Saída Antecipada (Peso NF preenchido > 0)
+                                // REGRA REFINADA - Volume Disponível (ENTREGAS)
                                 if (tipoCargaStr.includes("ENTREGAS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volDisponivel += peso;
                                 }
 
-                                // REGRA REFINADA - Volume CROSS:
-                                // Condição 1: Horário Noturno (19h às 07h) OU Condição 2: Peso NF > 0
+                                // REGRA REFINADA - Volume CROSS
                                 if (tipoCargaStr.includes("CROSS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volCross += peso;
                                 }
@@ -1416,6 +1577,142 @@
             } catch (error) {
                 console.error("Erro ao processar informativo:", error);
             }
+        }
+
+        /* =========================================================================
+           ABA PALLETS (CONTROLE, SALDO DEVEDOR E NOTIFICAÇÃO DE COBRANÇA)
+           ========================================================================= */
+
+        let mapaPlacasGlobal = {};
+
+        function processarPallets() {
+            try {
+                const dados = ticketsCache;
+
+                let opTransferencia = { saida: 0, entrada: 0 };
+                let opEntregas = { saida: 0, entrada: 0 };
+                let opDevolucaoPallets = { saida: 0, entrada: 0 };
+
+                mapaPlacasGlobal = {};
+
+                dados.forEach(t => {
+                    const tipoCargaStr = (t.tipoCarga || '').toUpperCase().trim();
+                    const movimentoStr = (t.movimento || '').toUpperCase().trim();
+                    const modo = movimentoStr.includes('SAÍDA') || movimentoStr.includes('SAIDA') ? 'SAIDA' : 'ENTRADA';
+                    const qtdPallets = parseInt(t.quantPallets) || 0;
+
+                    // 1. Agrupamento por Operação
+                    if (tipoCargaStr.includes('TRANSFERÊNCIA') || tipoCargaStr.includes('TRANSFERENCIA')) {
+                        if (modo === 'SAIDA') opTransferencia.saida += qtdPallets;
+                        else opTransferencia.entrada += qtdPallets;
+                    } 
+                    else if (tipoCargaStr.includes('ENTREGAS')) {
+                        if (modo === 'SAIDA') opEntregas.saida += qtdPallets;
+                        else opEntregas.entrada += qtdPallets;
+                    }
+                    else if (tipoCargaStr.includes('DEVOLUÇÃO DE PALLETS') || tipoCargaStr.includes('DEVOLUCAO DE PALLETS') || movimentoStr.includes('DEVOLUÇÃO DE PALLETS')) {
+                        if (modo === 'SAIDA') opDevolucaoPallets.saida += qtdPallets;
+                        else opDevolucaoPallets.entrada += qtdPallets;
+                    }
+
+                    // 2. Agrupamento por Placa
+                    if (t.placa && t.placa !== '---') {
+                        const plc = t.placa.toUpperCase().trim();
+                        if (!mapaPlacasGlobal[plc]) {
+                            mapaPlacasGlobal[plc] = {
+                                veiculo: t.veiculoModelo || '---',
+                                saida: 0,
+                                entrada: 0
+                            };
+                        }
+
+                        if (modo === 'SAIDA') {
+                            mapaPlacasGlobal[plc].saida += qtdPallets;
+                        } else {
+                            mapaPlacasGlobal[plc].entrada += qtdPallets;
+                        }
+                    }
+                });
+
+                // Renderiza Tabela 1 (Resumo Operacional)
+                const tbodyOp = document.getElementById('palletsTableOperacao');
+                tbodyOp.innerHTML = `
+                    <tr>
+                        <td><strong>TRANSFERÊNCIAS</strong></td>
+                        <td class="num-col">${opTransferencia.saida}</td>
+                        <td class="num-col">${opTransferencia.entrada}</td>
+                        <td class="num-col">${opTransferencia.entrada - opTransferencia.saida}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ENTREGAS</strong></td>
+                        <td class="num-col">${opEntregas.saida}</td>
+                        <td class="num-col">${opEntregas.entrada}</td>
+                        <td class="num-col">${opEntregas.entrada - opEntregas.saida}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DEVOLUÇÃO DE PALLETS</strong></td>
+                        <td class="num-col">${opDevolucaoPallets.saida}</td>
+                        <td class="num-col">${opDevolucaoPallets.entrada}</td>
+                        <td class="num-col">${opDevolucaoPallets.entrada - opDevolucaoPallets.saida}</td>
+                    </tr>
+                `;
+
+                // Renderiza Tabela 2 (Posição por Placa)
+                const tbodyPlc = document.getElementById('palletsTablePlacas');
+                tbodyPlc.innerHTML = "";
+
+                const chavesPlaca = Object.keys(mapaPlacasGlobal);
+                if (chavesPlaca.length === 0) {
+                    tbodyPlc.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum registro de pallets encontrado.</td></tr>';
+                    return;
+                }
+
+                chavesPlaca.sort().forEach(plc => {
+                    const item = mapaPlacasGlobal[plc];
+                    const saldoDevedor = item.entrada - item.saida;
+                    const classeSaldo = saldoDevedor < 0 ? 'saldo-devedor-negativo' : (saldoDevedor > 0 ? 'saldo-devedor-positivo' : '');
+
+                    // Botão de notificação exibido apenas quando houver saldo devedor negativo
+                    let btnCobrancaHtml = '---';
+                    if (saldoDevedor < 0) {
+                        btnCobrancaHtml = `<button class="btn-cobranca" onclick="gerarNotificacaoCobranca('${plc}')">📄 Notificação</button>`;
+                    }
+
+                    tbodyPlc.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold;">${plc}</td>
+                            <td>${item.veiculo}</td>
+                            <td class="num-col">${item.saida}</td>
+                            <td class="num-col">${item.entrada}</td>
+                            <td class="num-col ${classeSaldo}">${saldoDevedor}</td>
+                            <td style="text-align:center;">${btnCobrancaHtml}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (e) {
+                console.error("Erro ao processar controle de pallets:", e);
+            }
+        }
+
+        function gerarNotificacaoCobranca(placa) {
+            const item = mapaPlacasGlobal[placa];
+            if (!item) return;
+
+            const saldoDevedorQtd = Math.abs(item.entrada - item.saida);
+            const valorUnitario = 20.00;
+            const valorTotal = saldoDevedorQtd * valorUnitario;
+            const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+            document.getElementById('notifPlaca').innerText = placa;
+            document.getElementById('notifVeiculo').innerText = item.veiculo;
+            document.getElementById('notifSaida').innerText = item.saida;
+            document.getElementById('notifEntrada').innerText = item.entrada;
+            document.getElementById('notifSaldo').innerText = `${saldoDevedorQtd} pallet(s)`;
+            document.getElementById('notifValorTotal').innerText = `R$ ${formatarNumero(valorTotal)}`;
+            document.getElementById('notifData').innerText = dataHoje;
+
+            window.print();
         }
 
     </script>
