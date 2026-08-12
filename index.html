@@ -936,8 +936,8 @@
         // TABELA DE TOLERÂNCIAS ATUALIZADA
         const TABELA_TOLERANCIAS = {
             "TOLERÂNCIA UTILITARIO": 1.5, "TOLERÂNCIA VAN": 3.0, "TOLERÂNCIA VUC": 5.0,
-            "TOLERÂNCIA 34": 8.0, "TOLERÂNCIA TOCO": 12.0, "TOLERÂNCIA TRUCK": 14.0,
-            "TOLERÂNCIA BITRUCK": 16.0, "TOLERÂNCIA CARRETA": 20.0
+            "TOLERÂNCIA 34": 12.0, "TOLERÂNCIA TOCO": 18.0, "TOLERÂNCIA TRUCK": 20.0,
+            "TOLERÂNCIA BITRUCK": 28.0, "TOLERÂNCIA CARRETA": 36.0
         };
 
         function extrairDataISO(strData) {
@@ -1243,6 +1243,7 @@
             document.getElementById('stVolSobra').innerText = `${formatarNumero(volSobra)} KG (${calcPct(volSobra, totalVolGeral)}%)`;
         }
 
+        // ESPELHO DA PLANILHA: EXIBIÇÃO DIRETA DO STATUS SEM RECÁLCULO LOCAL
         function renderizarTabelaEspelho() {
             const tbody = document.getElementById('espelhoTableBody'); tbody.innerHTML = "";
             document.getElementById('espTotalRegistros').innerText = `Listando ${filtradosEspelho.length} registro(s)`;
@@ -1256,9 +1257,10 @@
 
             paginaItens.forEach(t => {
                 let stClass = 'status-ok';
-                if(t.statusCalculado === 'FALTA' || t.statusCalculado === 'SOBRA') stClass = 'status-falta';
-                else if(t.statusCalculado === 'VAZIO') stClass = 'status-vazio';
-                else if(t.statusCalculado === 'S/D') stClass = 'status-sd';
+                const stUpper = (t.statusCalculado || '').toUpperCase();
+                if(stUpper.includes('FALTA') || stUpper.includes('SOBRA')) stClass = 'status-falta';
+                else if(stUpper.includes('VAZIO')) stClass = 'status-vazio';
+                else if(stUpper.includes('S/D')) stClass = 'status-sd';
 
                 tbody.innerHTML += `<tr>
                     <td style="text-align:center;"><button class="btn-view-ticket" onclick="abrirTicketPorId('${t.id}')">🎫 Ver</button></td>
@@ -1281,7 +1283,7 @@
         function mudarPagina(delta) { paginaAtual += delta; renderizarTabelaEspelho(); }
         function abrirTicketPorId(id) {
             const enc = ticketsCache.find(x => x.id === id);
-            if (enc) { renderizarTicket(enc); trocarAba('ticketTab', documentquerySelectorAll('.nav-btn')[0]); }
+            if (enc) { renderizarTicket(enc); trocarAba('ticketTab', document.querySelectorAll('.nav-btn')[0]); }
         }
 
         function exportarExcel() {
@@ -1353,7 +1355,7 @@
         function recalcularToleranciaManual() {
             if (!ticketAtual) return; 
             const tolNome = identificarToleranciaPorVeiculo(ticketAtual.veiculoModelo);
-            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 14.0; 
+            const limiteKg = TABELA_TOLERANCIAS[tolNome] || 20.0; 
             const divergencia = ticketAtual.divergencia || 0.0;
 
             document.getElementById('toleranciaValor').innerText = formatarNumero(limiteKg) + " KG";
@@ -1475,27 +1477,22 @@
                                 const hora = dataHoraEntrada.getHours();
                                 const peso = lancamento.pesoNf || 0; 
 
-                                // Carros da operação
                                 if (lancamento.placa && lancamento.placa !== '---') {
                                     conjuntoCarros.add(lancamento.placa);
                                 }
                                 
-                                // Volume Recebido: Transferências (07:00 às 19:00)
                                 if (tipoCargaStr.includes("TRANSFERÊNCIA") && hora >= 7 && hora < 19) {
                                     volRecebido += peso;
                                 }
 
-                                // REGRA REFINADA - Volume Disponível (ENTREGAS)
                                 if (tipoCargaStr.includes("ENTREGAS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volDisponivel += peso;
                                 }
 
-                                // REGRA REFINADA - Volume CROSS
                                 if (tipoCargaStr.includes("CROSS") && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     volCross += peso;
                                 }
 
-                                // Captura a Data/Hora DE SAÍDA do último carro para a Hora da Largada
                                 if ((tipoCargaStr.includes("ENTREGAS") || tipoCargaStr.includes("CROSS")) && ((hora >= 19 || hora < 7) || peso > 0)) {
                                     if (dataHoraSaida && (!ultimaDataHoraSaida || dataHoraSaida > ultimaDataHoraSaida)) {
                                         ultimaDataHoraSaida = dataHoraSaida;
@@ -1525,9 +1522,8 @@
                     }
                 }
 
-                // CÁLCULOS DOS NOVOS INDICADORES DE PERFORMANCE E SEUS COMPLEMENTOS
-                const capacidadeExpedicaoKg = 38000; // 38 Tons/dia
-                const frotaTotalVeiculos = 12; // 12 Veículos
+                const capacidadeExpedicaoKg = 38000;
+                const frotaTotalVeiculos = 12;
                 
                 const pctCapacidadeExp = capacidadeExpedicaoKg > 0 ? (totalExpedido / capacidadeExpedicaoKg) * 100 : 0;
                 const pctCapacidadeOportunidade = Math.max(0, 100 - pctCapacidadeExp);
@@ -1535,7 +1531,6 @@
                 const pctFrotaUtilizada = frotaTotalVeiculos > 0 ? (conjuntoCarros.size / frotaTotalVeiculos) * 100 : 0;
                 const pctFrotaOciosa = Math.max(0, 100 - pctFrotaUtilizada);
 
-                // OCUPAÇÃO DO WMS E DISPONIBILIDADE
                 const percCongeladoOcupado = 87.6;
                 const percCongeladoDisp = (100 - percCongeladoOcupado).toFixed(1);
 
@@ -1550,7 +1545,6 @@
                 document.getElementById("valVolCross").innerText = formatarNumero(volCross) + " KG";
                 document.getElementById("valTotalExpedido").innerText = formatarNumero(totalExpedido) + " KG";
                 
-                // Atualização dos cards com valores principais e secundários
                 document.getElementById("valPctCapacidadeExp").innerText = pctCapacidadeExp.toFixed(1) + "%";
                 document.getElementById("valPctCapacidadeExpSub").innerText = `| ${pctCapacidadeOportunidade.toFixed(1)}% Oportunidade`;
 
@@ -1672,7 +1666,6 @@
                     const saldoDevedor = item.entrada - item.saida;
                     const classeSaldo = saldoDevedor < 0 ? 'saldo-devedor-negativo' : (saldoDevedor > 0 ? 'saldo-devedor-positivo' : '');
 
-                    // Botão de notificação exibido apenas quando houver saldo devedor negativo
                     let btnCobrancaHtml = '---';
                     if (saldoDevedor < 0) {
                         btnCobrancaHtml = `<button class="btn-cobranca" onclick="gerarNotificacaoCobranca('${plc}')">📄 Notificação</button>`;
